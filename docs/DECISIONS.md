@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — Collection gaps are accepted and not displayed
+- Decision: no coverage detection and no warning banner for now. A period when the collector heard nothing (bot stopped, Pi off, connection lost) stays a gap in the statistics, shown as if nobody was in voice, apart from the sessions the collector closes at the moment a loss began and the resync on reconnection.
+- Why: owner's choice ("on va laisser des trous"). Discord provides no voice history, so a gap cannot be filled, only signalled.
+- Alternatives rejected: a coverage figure and banner built from the heartbeat table (gaps longer than about 2.5 minutes), days marked incomplete on the activity chart, and a count of time attributed across an outage ("uncertain time"). All are feasible later without any schema change, because the heartbeats are already stored, but only heartbeats written after the 2026-11-18 collector fix are trustworthy for connection losses; older ones cover process and Pi outages only.
+- Consequences / risks accepted: statistics can undercount after an outage without saying so; totals should be read as "at least". Revisit if a missing stretch ever misleads someone.
+
 ## 2026-11-18 — better-sqlite3 ships its own binaries; compiling is never needed
 - Decision: nothing changes in the stack. Recorded so the earlier "arm64 binary not verified" note is closed: better-sqlite3 13.2.0 contains `prebuilds/` for linux-arm64, linux-x64, linuxmusl, darwin and win32. npm still tries an implicit `node-gyp rebuild` because the package has a `binding.gyp`; on a machine without a C++ toolchain a clean `npm ci` then fails, and `npm ci --ignore-scripts` works (checked in a clean checkout on Windows without Visual Studio).
 - Why: found while validating the collector commit in a clean checkout. The Pi built it fine (the owner ran the database check there), so no change is needed there.
