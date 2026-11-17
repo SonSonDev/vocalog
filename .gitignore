@@ -1,0 +1,27 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Databases and backups (personal data). SQLite in WAL mode also writes -wal and -shm files.
+data/
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+backups/
+
+# Logs and editor files
+*.log
+.DS_Store
+.vscode/
+.idea/
