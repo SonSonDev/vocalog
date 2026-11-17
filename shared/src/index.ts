@@ -4,7 +4,7 @@ export { deriveSessions, durationMs, totalByUser } from './sessions.ts';
 export { overlapMs, pairKey, togetherByPair } from './together.ts';
 export { planReconcile } from './reconcile.ts';
 export { PERIODS } from './api.ts';
-export type { GuildInfo, MemberProfile, NamedRef, Period, Summary } from './api.ts';
+export type { GuildInfo, MemberProfile, MeResponse, NamedRef, Period, Summary } from './api.ts';
 export { aggregate, clipSessions, streaks } from './aggregate.ts';
 export { flagTimesByUser } from './flags.ts';
 export type { FlagTimes } from './flags.ts';

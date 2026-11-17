@@ -16,7 +16,7 @@ function seeded() {
   // Another server must never leak into g1.
   addEvent(db, { guildId: 'g2', userId: 'u1', channelId: 'c9', kind: 'join', atMs: NOW - 10 * HOUR });
   addEvent(db, { guildId: 'g2', userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - 9 * HOUR });
-  return buildApp({ db, timeZone: 'UTC', webDir: null, now: () => NOW });
+  return buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
 }
 
 describe('GET /api/guilds', () => {
@@ -74,7 +74,7 @@ describe('GET /api/guilds/:guildId/summary', () => {
     addNames(db);
     addEvent(db, { userId: 'u-unknown-1234', channelId: 'c-unknown-5678', kind: 'join', atMs: NOW - 2 * HOUR });
     addEvent(db, { userId: 'u-unknown-1234', channelId: null, kind: 'leave', atMs: NOW - HOUR });
-    const app = buildApp({ db, timeZone: 'UTC', webDir: null, now: () => NOW });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
     const body = (await app.inject('/api/guilds/g1/summary')).json();
     expect(body.members[0].user.name).toBe('Membre 1234');
     expect(body.channels[0].channel.name).toBe('Salon 5678');
@@ -83,7 +83,7 @@ describe('GET /api/guilds/:guildId/summary', () => {
   it('answers with empty statistics for a server with no events', async () => {
     const db = testDb();
     addNames(db);
-    const app = buildApp({ db, timeZone: 'UTC', webDir: null, now: () => NOW });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
     const body = (await app.inject('/api/guilds/g1/summary?period=all')).json();
     expect(body.totals.totalMs).toBe(0);
     expect(body.members).toEqual([]);
@@ -142,7 +142,7 @@ describe('names shown on a server', () => {
     addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - HOUR });
     addEvent(db, { guildId: 'g2', userId: 'u1', channelId: 'c9', kind: 'join', atMs: NOW - 2 * HOUR });
     addEvent(db, { guildId: 'g2', userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - HOUR });
-    const app = buildApp({ db, timeZone: 'UTC', webDir: null, now: () => NOW });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
 
     const onG1 = (await app.inject('/api/guilds/g1/summary')).json();
     expect(onG1.members[0].user.name).toBe('Alexandre');

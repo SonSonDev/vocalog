@@ -6,7 +6,10 @@ export default defineConfig({
   oxc: { jsx: { runtime: 'automatic', importSource: 'preact' } },
   server: {
     port: 5173,
-    proxy: { '/api': `http://127.0.0.1:${process.env.API_PORT ?? '3000'}` },
+    proxy: {
+      '/api': `http://127.0.0.1:${process.env.API_PORT ?? '3000'}`,
+      '/auth': `http://127.0.0.1:${process.env.API_PORT ?? '3000'}`,
+    },
   },
   build: { outDir: 'dist', emptyOutDir: true },
 });

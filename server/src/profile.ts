@@ -4,7 +4,19 @@ import { periodWindow } from './period.ts';
 import { channelNames, firstEventMs, loadGuildEvents, userNames } from './queries.ts';
 import type { Db } from './queries.ts';
 
-export function buildMemberProfile(db: Db, guild: GuildInfo, userId: string, period: Period, nowMs: number, timeZone: string): MemberProfile {
+/**
+ * `restricted` removes what only the person concerned may see (microphone, headphones, screen sharing and camera
+ * time, and the group's muted share that would reveal it). It is removed here, not hidden by the web app.
+ */
+export function buildMemberProfile(
+  db: Db,
+  guild: GuildInfo,
+  userId: string,
+  period: Period,
+  nowMs: number,
+  timeZone: string,
+  restricted: boolean,
+): MemberProfile {
   const { fromMs, toMs } = periodWindow(period, nowMs, firstEventMs(db, guild.id));
   const events = loadGuildEvents(db, guild.id);
   const sessions = deriveSessions(events);
@@ -15,9 +27,12 @@ export function buildMemberProfile(db: Db, guild: GuildInfo, userId: string, per
   const user = (id: string): NamedRef => ({ id, name: users.get(id) ?? `Membre ${id.slice(-4)}` });
   const channel = (id: string): NamedRef => ({ id, name: channels.get(id) ?? `Salon ${id.slice(-4)}` });
 
-  const { userId: _userId, channels: statChannels, together, longestSession, ...rest } = stats;
+  const { userId: _userId, channels: statChannels, together, longestSession, voiceStates, group, ...rest } = stats;
   return {
     ...rest,
+    group: restricted ? { ...group, mutedShare: null } : group,
+    restricted,
+    voiceStates: restricted ? null : voiceStates,
     guild,
     user: user(userId),
     period,

@@ -29,13 +29,17 @@ Status: `done`
 - Builds sessions (user, channel, start, end) from the journal; rebuildable at any time; unit-tested with gaps, moves and duplicate events.
 
 ## F4 — Discord login and access
-Status: `planned`
-- OAuth2 with scopes `identify guilds`; signed HTTP-only session cookie.
-- A user sees only servers they belong to and where the bot is present.
-- States: logged out, no server, error, content.
+Status: `in progress` (built and covered by tests with a fake Discord; the real Discord round trip and the screens in a browser are not yet checked)
+- OAuth2 with the two non-privileged scopes `identify` and `guilds`. The Discord access token is used once at login and never stored, logged or put in a cookie.
+- Signed session cookie (`HttpOnly`, `SameSite=Lax`, `Secure` over https), valid 7 days. It holds the Discord id, the name and the servers the person shares with Vocalog, fixed at login: leaving a server takes effect at the next login or when the cookie expires. A forged, altered or expired cookie counts as nobody.
+- Every statistics route answers 401 without a session. Only `/api/me` is open, to say whether a login is needed. A person sees only servers they belong to and that Vocalog records; any other server answers exactly like one that does not exist (404).
+- Visibility of a member page: a person sees their own page in full. On anyone else's page the server removes microphone, headphones, screen-sharing and camera time, and the group's muted share, so they are not in the response at all; the page says so.
+- Screens: login (with the reasons for a refusal), logged in with the name and a logout button, "toi" marked in the member list.
+- Local development without login only with `INSECURE_NO_AUTH=1`, which the server refuses to combine with the login settings.
+- Not covered: a person in more than 200 servers (Discord returns 200 per request); CSRF tokens on logout (cookies are `SameSite=Lax`, which blocks cross-site POSTs); a content security policy (to add after checking the page in a browser).
 
 ## F5 — Summary dashboard
-Status: `in progress` (API and page built and unit-tested; not yet checked in a browser; no login yet, so local use only)
+Status: `in progress` (API and page built and unit-tested; not yet checked in a browser; behind the Discord login of F4)
 - Key figures (average per day, total, longest session, current streak), member table with hourly profile, day × hour heatmap, records, pairs and channels.
 
 ## F6 — Time together

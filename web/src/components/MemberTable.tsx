@@ -7,7 +7,7 @@ import { Link } from './Link.tsx';
  * One row per member: time, sessions and a 24-hour profile. A list rather than a table so it reflows on phones.
  * `search` is the current `?serveur=...&periode=...` so a member page opens on the same server and period.
  */
-export function MemberTable({ members, search }: { members: Summary['members']; search: string }) {
+export function MemberTable({ members, search, viewerId }: { members: Summary['members']; search: string; viewerId: string | null }) {
   return (
     <section class="card" id="membres" aria-labelledby="membres-title">
       <h2 id="membres-title">Membres</h2>
@@ -25,6 +25,7 @@ export function MemberTable({ members, search }: { members: Summary['members']; 
             <li class="member" key={member.user.id}>
               <span class="member-name">
                 <Link to={memberPath(member.user.id, search)}>{member.user.name}</Link>
+                {member.user.id === viewerId && <span class="you"> · toi</span>}
               </span>
               <span class="member-time mono">{formatDuration(member.totalMs)}</span>
               <span class="member-sessions mono">

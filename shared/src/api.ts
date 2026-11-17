@@ -1,4 +1,5 @@
 /** Types of the JSON API, shared by the server and the web app. */
+import type { FlagTimes } from './flags.ts';
 import type { MemberStats } from './profile.ts';
 
 export const PERIODS = ['7d', '30d', '1y', 'all'] as const;
@@ -38,7 +39,7 @@ export interface Summary {
 }
 
 /** Personal statistics of one member, with names resolved. */
-export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' | 'together' | 'longestSession'> {
+export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' | 'together' | 'longestSession' | 'voiceStates'> {
   guild: GuildInfo;
   user: NamedRef;
   period: Period;
@@ -46,6 +47,10 @@ export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' |
   toMs: number;
   timeZone: string;
   generatedAtMs: number;
+  /** True when the viewer is not this member: the sensitive fields below are removed by the server. */
+  restricted: boolean;
+  /** Microphone, headphones, screen sharing and camera time. Null when `restricted`. */
+  voiceStates: FlagTimes | null;
   longestSession: { channel: NamedRef; startMs: number; durationMs: number } | null;
   channels: { channel: NamedRef; totalMs: number }[];
   together: {
@@ -53,4 +58,10 @@ export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' |
     aloneMs: number;
     top: { user: NamedRef; ms: number }[];
   };
+}
+
+/** Who is looking: the answer of GET /api/me. The `authMode` 'none' exists only for local development. */
+export interface MeResponse {
+  authMode: 'discord' | 'none';
+  user: NamedRef | null;
 }

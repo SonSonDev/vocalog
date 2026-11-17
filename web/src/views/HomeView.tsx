@@ -50,7 +50,7 @@ export function HomeView({ guildId, period, search, controls }: Props) {
           {summary.members.length > 0 ? (
             <div class="dashboard">
               <div class="col-7">
-                <MemberTable members={summary.members} search={search} />
+                <MemberTable members={summary.members} search={search} viewerId={controls.viewer?.id ?? null} />
               </div>
               <div class="col-5">
                 <Heatmap heat={summary.heat} />

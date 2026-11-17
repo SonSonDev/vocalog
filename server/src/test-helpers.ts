@@ -16,12 +16,12 @@ export function testDb(): Db {
 
 export function addEvent(
   db: Db,
-  event: { guildId?: string; userId: string; channelId: string | null; kind: 'join' | 'leave' | 'move' | 'state'; atMs: number },
+  event: { guildId?: string; userId: string; channelId: string | null; kind: 'join' | 'leave' | 'move' | 'state'; atMs: number; flags?: number },
 ): void {
   db.prepare(
     `INSERT INTO voice_events (guild_id, user_id, channel_id, kind, flags, at_ms, source, raw_json)
-     VALUES (?, ?, ?, ?, 0, ?, 'live', '{}')`,
-  ).run(event.guildId ?? 'g1', event.userId, event.channelId, event.kind, event.atMs);
+     VALUES (?, ?, ?, ?, ?, ?, 'live', '{}')`,
+  ).run(event.guildId ?? 'g1', event.userId, event.channelId, event.kind, event.flags ?? 0, event.atMs);
 }
 
 export function addNames(db: Db): void {

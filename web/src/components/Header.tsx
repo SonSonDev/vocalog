@@ -1,5 +1,5 @@
 import { PERIODS } from '@vocalog/shared';
-import type { GuildInfo, Period } from '@vocalog/shared';
+import type { GuildInfo, NamedRef, Period } from '@vocalog/shared';
 import type { Theme } from '../theme.ts';
 import { Link } from './Link.tsx';
 
@@ -14,6 +14,9 @@ export interface Controls {
   onGuild: (id: string) => void;
   onPeriod: (period: Period) => void;
   onTheme: () => void;
+  /** The logged-in person, or null when login is off (local development). */
+  viewer: NamedRef | null;
+  onLogout: () => void;
 }
 
 interface Props {
@@ -24,7 +27,7 @@ interface Props {
 }
 
 export function Header({ controls, title, eyebrow, back }: Props) {
-  const { guilds, guildId, period, theme, onGuild, onPeriod, onTheme } = controls;
+  const { guilds, guildId, period, theme, onGuild, onPeriod, onTheme, viewer, onLogout } = controls;
   return (
     <header class="header">
       <div class="header-title">
@@ -57,6 +60,14 @@ export function Header({ controls, title, eyebrow, back }: Props) {
         <button type="button" class="theme-toggle" onClick={onTheme} aria-label={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'}>
           {theme === 'dark' ? 'Clair' : 'Sombre'}
         </button>
+        {viewer && (
+          <div class="viewer">
+            <span class="muted">{viewer.name}</span>
+            <button type="button" class="theme-toggle" onClick={onLogout}>
+              Se déconnecter
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

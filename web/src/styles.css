@@ -707,3 +707,42 @@ select {
     order: 3;
   }
 }
+
+/* Login and viewer. */
+.login {
+  max-width: 560px;
+  margin: 8vh auto 0;
+  padding: 24px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  text-decoration: none;
+  align-self: flex-start;
+}
+
+.viewer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.you {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 699px) {
+  .viewer {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+}

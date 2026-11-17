@@ -74,5 +74,7 @@
 - Bot: `node --env-file=.env bot/src/index.ts`. `DB_PATH` is required and absolute (the folder is created if missing). Copy `.env.example` to `.env` for local values; never read or print the token. Deployment steps are in README.md.
 - Build the web app: `npm run build` (output in `web/dist`).
 - Demo data (fictional members, never the real database): `node scripts/seed-demo.ts <absolute path of a NEW file>`; it refuses to overwrite.
-- Local dashboard: `DB_PATH=<db> WEB_DIR=<abs path of web/dist> PORT=3111 INSECURE_NO_AUTH=1 node server/src/index.ts`, then open `http://127.0.0.1:3111`. For live reload run `npm run dev -w web` with `API_PORT=3111` (Vite proxies `/api`). The server opens the database read-only.
-- **Never set `INSECURE_NO_AUTH=1` on the Pi or anywhere a tunnel can reach**: Discord login is not built yet.
+- Local dashboard without login (development only): `DB_PATH=<db> WEB_DIR=<abs path of web/dist> PORT=3111 INSECURE_NO_AUTH=1 node server/src/index.ts`, then open `http://127.0.0.1:3111`. For live reload run `npm run dev -w web` with `API_PORT=3111` (Vite proxies `/api` and `/auth`). The server opens the database read-only.
+- Dashboard with the real login: set `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `SESSION_SECRET` and `PUBLIC_URL` instead of the flag (see README). The server refuses both together.
+- **Never set `INSECURE_NO_AUTH=1` on the Pi or anywhere a tunnel can reach.** Never print or commit the client secret or the session secret.
+- Security rules for the server: statistics routes need a session; a person only sees servers they belong to; sensitive per-member fields are removed on the server, not hidden in the browser; the Discord access token is never stored.

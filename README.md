@@ -2,7 +2,13 @@
 
 A Discord bot that records voice-channel activity into a permanent event journal (SQLite), and a web dashboard (planned) that turns it into statistics. See `docs/BRIEF.md` and `docs/SPEC.md`.
 
-Status: the collector (`bot/`) works and is deployed. The dashboard (`server/`, `web/`) is built for local use only: Discord login is not built yet, so the server refuses to start without `INSECURE_NO_AUTH=1` and must **not** be deployed or exposed.
+Status: the collector (`bot/`) works and is deployed. The dashboard (`server/`, `web/`) has a Discord login and is covered by tests, but has not been checked against the real Discord login or in a browser, and raspi-manager cannot yet run it next to the bot (see `docs/RASPI-MANAGER-REQUESTS.md`). Do not expose it before that check.
+
+### Dashboard login (Discord developer portal)
+1. In your application, OAuth2 page: copy the **Client ID** and the **Client Secret**.
+2. Add the redirect `<PUBLIC_URL>/auth/callback` (for example `https://your-host.example/auth/callback`; for a local test `http://localhost:3111/auth/callback`).
+3. Put `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `SESSION_SECRET` (32+ random characters) and `PUBLIC_URL` in the server's environment. Only the scopes `identify` and `guilds` are requested; no privileged intent and no Discord review are needed.
+4. Without these four variables the server refuses to start, unless `INSECURE_NO_AUTH=1` is set for local development (it refuses that flag together with the login variables). Never set the flag on a host reachable from outside, and never share the Client Secret.
 
 ## Development
 - `npm ci`, then `npm test` and `npm run typecheck`.

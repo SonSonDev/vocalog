@@ -28,7 +28,10 @@ server/   Fastify API. Opens the bot's database READ-ONLY. Serves web/dist when 
   src/profile.ts    builds a MemberProfile: events -> sessions + flag times -> buildMemberStats -> names
   src/queries.ts    read-only SQL (guilds, names, events of one server)
   src/period.ts     period windows; src/static.ts safe static file serving with SPA fallback
-  src/config.ts     env validation (DB_PATH, PORT, STATS_TIME_ZONE, WEB_DIR, INSECURE_NO_AUTH)
+  src/config.ts     env validation (DB_PATH, PORT, STATS_TIME_ZONE, WEB_DIR, the four Discord login variables, or INSECURE_NO_AUTH, never both)
+  src/auth.ts       login routes (/auth/login, /auth/callback, /auth/logout), the viewer, which servers a request may see
+  src/oauth.ts      Discord authorize URL and the code exchange; the access token never leaves this function
+  src/session.ts    signed session cookie (HMAC-SHA256, constant-time check), cookie parsing and serialising
 web/      Vite + Preact app, French UI, design "Rail and table" (built; not yet checked in a browser)
   src/App.tsx       shell: theme, server list, controls shared by the pages, route choice
   src/router.ts     tiny History-API router, no dependency: `/` and `/membres/<id>`, state in `?serveur=&periode=`
@@ -61,9 +64,9 @@ Heartbeats feed reconciliation only.
 - Migrations: numbered SQL files, each covered by a test. Backup: nightly `VACUUM INTO`.
 
 ## API surface
-Built: `GET /api/guilds`, `GET /api/guilds/:guildId/summary?period=7d|30d|1y|all` (default 30d; 400 on a bad period, 404 on an unknown server) and `GET /api/guilds/:guildId/members/:userId?period=` (404 for a member with no event on that server). All are unauthenticated for now: the server refuses to start unless `INSECURE_NO_AUTH=1`.
+Built: `GET /api/guilds`, `GET /api/guilds/:guildId/summary?period=7d|30d|1y|all` (default 30d; 400 on a bad period, 404 on an unknown server) and `GET /api/guilds/:guildId/members/:userId?period=` (404 for a member with no event on that server). Also `GET /api/me` (open: `{ authMode, user }`), `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout`. With Discord login on, every `/api/guilds...` route needs a valid session (401 otherwise) and only serves servers listed in the session; the member route removes the voice-state fields when the viewer is not that member (`restricted: true`). Answers under `/api/` and `/auth/` are `no-store`; every response carries `nosniff`, `X-Frame-Options: DENY` and `same-origin` referrer policy. Without login the server refuses to start unless `INSECURE_NO_AUTH=1`, and then nothing is restricted.
 Period windows never start before the first recorded event of the server, so a young journal is not averaged over unrecorded days.
-Planned: `GET /api/me`, login routes. When login is added, `/api/guilds` and the summary must be limited to the servers the user belongs to.
+ When login is added, `/api/guilds` and the summary must be limited to the servers the user belongs to.
 
 ## Conventions
 - UTC epoch milliseconds everywhere in storage.
