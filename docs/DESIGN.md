@@ -11,8 +11,9 @@
 - **Tone (3 words)**: sober, serious, precise. **Anti-goals**: playful or decorative styles (arcade, kawaii, brutalism), giant numerals, several accent colours, gaming-neon look, anything that looks like a copy of Discord.
 - **Constraints**: French UI text, light and dark themes, no external chart library, fast on phone, WCAG AA contrast.
 
-## Direction chosen: "Rail and table" (mockup 23)
-A narrow navigation rail on the left (bottom bar on compact widths), a period selector (7 days / 30 days / 1 year), a strip of key figures, a member table with an hourly mini-bar profile, a day × hour heatmap and a records list. Strict grid, hairline borders, one accent colour per theme, tabular figures in a monospaced font.
+## Direction chosen: "Rail and table" (mockup 23), without the rail since 2026-11-18
+Update 2026-11-18: the side rail and the bottom bar were removed after the owner's feedback (see DECISIONS). The page is one full-width dashboard grid; navigation returns, probably as top tabs, when a second page exists. The rest below still holds.
+Original description: a narrow navigation rail on the left (bottom bar on compact widths), a period selector (7 days / 30 days / 1 year), a strip of key figures, a member table with an hourly mini-bar profile, a day × hour heatmap and a records list. Strict grid, hairline borders, one accent colour per theme, tabular figures in a monospaced font.
 Why it fits: the audience reads statistics often and wants density without noise; the table scales from 5 to 20 members; the structure maps directly to the three main tasks.
 
 ## Directions rejected
@@ -33,7 +34,7 @@ Arcade, full-screen recap, audio studio, neo-brutalism, Japanese minimalism, ter
 | accent | `#0E7C66` | `#3DDBB5` |
 | text on accent | `#FFFFFF` | `#06201A` |
 - Heatmap: accent colour with opacity from 0.07 to 1.0 by value, so one hue carries the whole scale.
-- Type: Public Sans for text; JetBrains Mono for figures. Sizes: 12 px labels, 14–15 px body, 26 px page title, 26–30 px key figures.
+- Type: Public Sans for text; JetBrains Mono for figures. **Currently system font stacks** (privacy: no external font service; self-host after a licence check, see DECISIONS). Sizes: 12 px labels, 14–15 px body, 26 px page title, 26–30 px key figures.
 - Spacing: 4 px base; card padding 14–16 px; gaps 12–20 px. Radius 8 px on cards, 2 px on heatmap cells. Borders 1 px.
 - Motion: none by default; any transition at most 150 ms and removed under `prefers-reduced-motion`.
 

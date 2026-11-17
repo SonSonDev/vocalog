@@ -7,10 +7,13 @@
   },
   "workspaces": [
     "shared",
-    "bot"
+    "bot",
+    "server",
+    "web"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
+    "build": "npm run build -w web",
     "test": "vitest run"
   },
   "devDependencies": {

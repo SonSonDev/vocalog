@@ -5,6 +5,7 @@ Updated whenever a structural element is added, moved or removed. Principles liv
 ```
 bot/      Discord collector. Depends on shared/. Writes voice_events and heartbeats. (built)
   src/index.ts      process entry: client, ready/reconcile, voiceStateUpdate, heartbeat, shutdown
+  src/liveness.ts   shouldWriteHeartbeat() and the loss tracker: since when events may have been missed (pure)
   src/config.ts     reads and validates DISCORD_TOKEN, ALLOWED_GUILD_IDS, DB_PATH (pure, fail-fast)
   src/allowlist.ts  parses ALLOWED_GUILD_IDS and filters servers (pure)
   src/events.ts     discord.js VoiceState -> VoiceStateLike -> journal event (pure)
@@ -16,8 +17,27 @@ shared/   Types and pure calculations. No I/O. (built)
   src/sessions.ts   deriveSessions, durationMs, totalByUser
   src/together.ts   overlapMs, pairKey, togetherByPair
   src/reconcile.ts  planReconcile (restart synthetic events)
-server/   Fastify API, Discord OAuth2, session cookies, serves web/dist. Reads the database read-only. (planned)
-web/      Vite + Preact app (French UI). Talks to server/ through the JSON API only. (planned)
+  src/aggregate.ts  aggregate(): totals, members, hourly profile, heat map, pairs, channels, records, streak (pure, time-zone aware)
+  src/api.ts        types of the JSON API (Summary, MemberProfile, Period, GuildInfo), used by server and web
+  src/flags.ts      flagTimesByUser(): time muted, deafened, sharing screen, on camera, from the journal states
+  src/profile.ts    buildMemberStats(): everything on a member page (habits, activity buckets, room roles, group comparison)
+server/   Fastify API. Opens the bot's database READ-ONLY. Serves web/dist when WEB_DIR is set. (built; Discord login not built)
+  src/index.ts      process entry: config, read-only database, listen on 127.0.0.1
+  src/app.ts        routes: GET /api/guilds, GET /api/guilds/:guildId/summary, GET /api/guilds/:guildId/members/:userId (period=7d|30d|1y|all); static fallback
+  src/summary.ts    builds the Summary: sessions -> aggregate -> names
+  src/profile.ts    builds a MemberProfile: events -> sessions + flag times -> buildMemberStats -> names
+  src/queries.ts    read-only SQL (guilds, names, events of one server)
+  src/period.ts     period windows; src/static.ts safe static file serving with SPA fallback
+  src/config.ts     env validation (DB_PATH, PORT, STATS_TIME_ZONE, WEB_DIR, INSECURE_NO_AUTH)
+web/      Vite + Preact app, French UI, design "Rail and table" (built; not yet checked in a browser)
+  src/App.tsx       shell: theme, server list, controls shared by the pages, route choice
+  src/router.ts     tiny History-API router, no dependency: `/` and `/membres/<id>`, state in `?serveur=&periode=`
+  src/useRemote.ts  loads data for a key; never shows the previous key's data; retry
+  src/views/        HomeView (summary), MemberView (profile)
+  src/components/   Header (with back link), Link, KeyFigures, MemberTable (list, links to profiles), Heatmap, Lists (Records, Channels), ProfileCards (member figures, activity, together, voice states, habits, group, rooms)
+  src/format.ts     durations, dates, bars (pure, tested); src/theme.ts light/dark with storage fallbacks
+  src/styles.css    tokens from docs/DESIGN.md; system fonts
+scripts/  seed-demo.ts: demo database with fictional members (refuses to overwrite an existing file)
 db/       Numbered SQL migrations (001_init.sql). (built)
 docs/     BRIEF, SPEC, ARCHITECTURE, DECISIONS, QUESTIONS, DESIGN.
 ```
@@ -36,12 +56,14 @@ Heartbeats feed reconciliation only.
 ## Data model (sketch)
 - `voice_events(id, guild_id, user_id, channel_id, kind, flags, at_ms, source, raw_json)` — append-only.
 - `heartbeats(at_ms)`.
-- `guilds`, `channels`, `users` with names and a name-history table.
+- `guilds` (name, `afk_channel_id`), `channels` (name, `type` 2 voice / 13 stage), `users` (global username), `members` (name shown on one server, `is_bot`), `name_history` (every name seen, by kind). Added by migration 002, which is additive so the previous bot version keeps working on it.
 - `sessions` — derived, rebuildable.
 - Migrations: numbered SQL files, each covered by a test. Backup: nightly `VACUUM INTO`.
 
 ## API surface
-Planned, not final: `GET /api/me`, `GET /api/guilds`, `GET /api/guilds/:id/summary?period=`, `.../members`, `.../pairs`, `.../channels`, `GET /api/guilds/:id/members/:userId`.
+Built: `GET /api/guilds`, `GET /api/guilds/:guildId/summary?period=7d|30d|1y|all` (default 30d; 400 on a bad period, 404 on an unknown server) and `GET /api/guilds/:guildId/members/:userId?period=` (404 for a member with no event on that server). All are unauthenticated for now: the server refuses to start unless `INSECURE_NO_AUTH=1`.
+Period windows never start before the first recorded event of the server, so a young journal is not averaged over unrecorded days.
+Planned: `GET /api/me`, login routes. When login is added, `/api/guilds` and the summary must be limited to the servers the user belongs to.
 
 ## Conventions
 - UTC epoch milliseconds everywhere in storage.

@@ -18,3 +18,19 @@ Gaps found while making this app deployable. Paste a section into a raspi-manage
 - **Where it likely lives**: `core/` (app model), `services/`, `gui/`. Docs first: `WORKFLOW.md`, then SPEC, ARCHITECTURE, DECISIONS.
 - **Acceptance**: tests with fakes for creating, starting, stopping and updating two units; try read-only on a real Pi.
 - **Out of scope**: a process manager inside the app. **Open question**: how the owner wants updates to be ordered (database migrations run by the bot at start).
+
+## 2026-11-17 — Move an app, with its data, to another device
+- **App / commit**: Vocalog, written from commit `b0869b3`.
+- **Need**: move an app from one device to another without losing its data. For Vocalog the data is an append-only SQLite journal of voice events that cannot be rebuilt (Discord provides no voice history), so a lost or inconsistent copy is permanent loss. Without a guided move, the owner copies files by hand and risks copying a SQLite file in WAL mode while the app runs (inconsistent copy), or running two instances at once (duplicate events).
+- **Observed behaviour today** in raspi-manager: an app is installed on one Pi (clone, build, unit, route). No operation to relocate an app with its data (inferred from the contract, not from its repository; check its SPEC for a planned item).
+- **Proposed behaviour**: GUI first (App, Move to another device...), CLI twin.
+  1. Read-only preflight: target reachable, same Node and architecture requirements, free disk space, `requires` folders and their sizes, env file keys present on the target, no instance already running there.
+  2. Show the exact plan and ask for confirmation: stop on the source, copy each `requires` folder and the env file to the target, install the same commit, start, compare, then leave the source stopped.
+  3. Stop the app on the source first (a clean `SIGTERM` lets this app checkpoint its database), then copy the folders. Never copy a data folder while the app runs.
+  4. Verify after the copy: file sizes and checksums match; optional app-provided check command (here: `PRAGMA integrity_check` and an event count).
+  5. Start on the target; keep the source unit stopped and disabled, never delete its data automatically.
+  Idempotent where possible, `--dry-run`, abort and restart the source on any failure before the target is started. Pi changes only by the owner through the GUI.
+- **Where it likely lives**: `core/` (plan and preflight, pure), `ssh/` (transfer, relayed through the owner's machine if the two devices cannot reach each other), `services/` (stop, copy, verify, start), `gui/` (wizard). Update `WORKFLOW.md` first, then SPEC, ARCHITECTURE, DECISIONS.
+- **Acceptance**: tests with fakes: plan, confirm, stop, copy, verify, start; failure before target start restarts the source; checksum mismatch aborts; refuses when the target already runs the app. On a real Pi, try the read-only preflight only.
+- **Out of scope**: live replication, moving from a development PC that is not a raspi-manager target (a one-time manual copy, with the app stopped, covers that), automatic deletion of the source data, secret transfer beyond the declared env file.
+- **Open questions for the owner**: should the env file be copied or re-entered on the target (secrets); where the transfer is relayed when the two devices cannot reach each other; keep the source data for how long.

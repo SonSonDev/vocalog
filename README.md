@@ -2,7 +2,7 @@
 
 A Discord bot that records voice-channel activity into a permanent event journal (SQLite), and a web dashboard (planned) that turns it into statistics. See `docs/BRIEF.md` and `docs/SPEC.md`.
 
-Status: the collector (`bot/`) works; the web dashboard (`server/`, `web/`) is not built yet.
+Status: the collector (`bot/`) works and is deployed. The dashboard (`server/`, `web/`) is built for local use only: Discord login is not built yet, so the server refuses to start without `INSECURE_NO_AUTH=1` and must **not** be deployed or exposed.
 
 ## Development
 - `npm ci`, then `npm test` and `npm run typecheck`.
@@ -13,7 +13,7 @@ Status: the collector (`bot/`) works; the web dashboard (`server/`, `web/`) is n
 
 Currently deployable: the bot only.
 
-- **Build:** `npm ci`
+- **Build:** `npm ci`. If it fails while compiling `better-sqlite3` (no C++ toolchain on the machine), use `npm ci --ignore-scripts` instead: the package ships prebuilt binaries (linux-arm64, linux-x64, win32-x64 and others) and never needs to compile.
 - **Run:** `node bot/src/index.ts`
 - **Runtime:** Node 24 (`.nvmrc`, `engines.node >= 24`). It must support native type stripping. The native module `better-sqlite3` must install on Debian arm64: check with `npm ci` on the Pi first.
 - **Port:** none (the bot only opens an outgoing connection to Discord).
@@ -29,7 +29,7 @@ The bot exits with a non-zero status and a message naming the missing key when a
 
 - **Data:** the SQLite file lives at `DB_PATH` (WAL mode: `-wal` and `-shm` files sit next to it). Updates and rollbacks replace the application folder, so keep the data elsewhere, for example `~/data/vocalog/`.
 - **`requires` line for raspi-manager:** `folder|/home/<user>/data/vocalog` (use the real absolute path).
-- **Database migrations** run at start (`db/migrations`, numbered, applied once). A migration must stay compatible with the previous commit, or a rollback needs a restore of the database file.
+- **Database migrations** run at start (`db/migrations`, numbered, applied once). A migration must stay compatible with the previous commit, or a rollback needs a restore of the database file. Migration 002 only adds tables and columns, so rolling back to the previous commit keeps working.
 - **Backups:** the nightly `VACUUM INTO` backup is not available through raspi-manager yet; see `docs/RASPI-MANAGER-REQUESTS.md`. Until then, copy the database file while the bot is stopped, or use `sqlite3 <db> "VACUUM INTO '<backup>'"`.
 
 ### Steps for the owner
