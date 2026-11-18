@@ -1,5 +1,6 @@
 import type { Period } from '@vocalog/shared';
 import { fetchMemberProfile } from '../api.ts';
+import { Avatar } from '../components/Avatar.tsx';
 import { Header } from '../components/Header.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Heatmap } from '../components/Heatmap.tsx';
@@ -29,6 +30,7 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
         title={profile?.user.name ?? 'Membre'}
         eyebrow={profile?.guild.name ?? 'Vocalog'}
         handle={profile ? visibleHandle(profile.user.name, profile.user.handle) : null}
+        avatar={profile && guildId ? <Avatar user={profile.user} guildId={guildId} size={44} /> : null}
         back={{ to: `/${search}`, label: 'Tous les membres' }}
       />
 
@@ -64,7 +66,7 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
               <Heatmap heat={profile.heat} />
             </div>
             <div class="col-6">
-              <Together together={profile.together} totalMs={profile.totalMs} />
+              <Together together={profile.together} totalMs={profile.totalMs} guildId={guildId!} />
             </div>
             <div class="col-6">
               <VoiceStates states={profile.voiceStates} />

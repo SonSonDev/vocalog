@@ -1,0 +1,316 @@
+/* Avatars, per-day presence strips (home) and the day page. One hue (the accent), like the heat map. */
+
+.avatar {
+  flex: none;
+  width: var(--size, 28px);
+  height: var(--size, 28px);
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--line);
+}
+
+.avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: calc(var(--size, 28px) * 0.4);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.with-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Day strips on the home page. */
+.day-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+a.day-row:hover,
+a.day-row:focus-visible {
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.day-label {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.day-total {
+  text-align: right;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.day-cells {
+  display: flex;
+  gap: 1px;
+}
+
+.day-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 22px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) calc(var(--v, 0) * 93% + 7%), var(--card));
+}
+
+.day-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.day-axis-row {
+  min-height: 0;
+}
+
+/* Day page. */
+.day-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.day-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a.day-nav-link:hover {
+  border-color: var(--accent);
+}
+
+.day-nav-link.disabled {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.figures.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 210px) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.tl-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tl-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.tl-who {
+  padding-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+a.tl-who {
+  color: var(--fg);
+  text-underline-offset: 2px;
+}
+
+a.tl-who:hover {
+  color: var(--accent);
+}
+
+.tl-sub {
+  font-size: 12px;
+}
+
+.tl-track {
+  position: relative;
+  height: 28px;
+  border-radius: 4px;
+  /* A hairline at every time mark of the axis, to read the time without a label on each bar. */
+  background-image: repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px var(--tick, 12.5%));
+}
+
+.tl-cells {
+  display: flex;
+  gap: 1px;
+  background-image: none;
+}
+
+.tl-cells .day-cell {
+  height: 100%;
+}
+
+.tl-span {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  box-sizing: border-box;
+  padding: 0 6px;
+  overflow: hidden;
+  border-right: 2px solid var(--card);
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-axis {
+  position: relative;
+  height: 14px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.tl-axis span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.tl-axis span.first {
+  transform: none;
+}
+
+.tl-axis span.last {
+  transform: translateX(-100%);
+}
+
+.avatar-spacer {
+  flex: none;
+  width: 28px;
+}
+
+.tl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tl-zoom {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+}
+
+.tl-zoom:hover {
+  border-color: var(--accent);
+}
+
+.tl-table summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tl-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tl-table th,
+.tl-table td {
+  padding: 6px 8px 6px 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tl-table-span {
+  display: block;
+}
+
+@media (max-width: 699px) {
+  .day-row {
+    grid-template-columns: 74px minmax(0, 1fr) 52px;
+    gap: 6px;
+  }
+
+  .day-label {
+    font-size: 11px;
+  }
+
+  .day-cell {
+    height: 26px;
+  }
+
+  .tl-row {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .tl-name {
+    gap: 6px;
+  }
+
+  .figures.three {
+    grid-template-columns: 1fr;
+  }
+}
+
+.col-12 {
+  grid-column: 1 / -1;
+}

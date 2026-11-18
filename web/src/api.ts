@@ -1,4 +1,4 @@
-import type { GuildInfo, MemberProfile, MeResponse, Period, Summary } from '@vocalog/shared';
+import type { DayView, GuildInfo, MemberProfile, MeResponse, Period, Summary } from '@vocalog/shared';
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { headers: { accept: 'application/json' } });
@@ -18,6 +18,10 @@ export function fetchSummary(guildId: string, period: Period): Promise<Summary> 
 
 export function fetchMemberProfile(guildId: string, userId: string, period: Period): Promise<MemberProfile> {
   return getJson<MemberProfile>(`/api/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}?period=${period}`);
+}
+
+export function fetchDay(guildId: string, dayKey: string): Promise<DayView> {
+  return getJson<DayView>(`/api/guilds/${encodeURIComponent(guildId)}/days/${encodeURIComponent(dayKey)}`);
 }
 
 export function fetchMe(): Promise<MeResponse> {

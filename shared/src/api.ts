@@ -1,6 +1,7 @@
 /** Types of the JSON API, shared by the server and the web app. */
 import type { FlagTimes } from './flags.ts';
 import type { MemberStats } from './profile.ts';
+import type { DayStrip } from './timeline.ts';
 
 export const PERIODS = ['7d', '30d', '1y', 'all'] as const;
 export type Period = (typeof PERIODS)[number];
@@ -15,6 +16,8 @@ export interface NamedRef {
   name: string;
   /** The Discord username (the @handle), when known. `name` is what the person shows on that server. */
   handle?: string;
+  /** Hash of the person's Discord avatar when they have one. The image is served by `/api/guilds/<id>/avatars/<user>`. */
+  avatar?: string;
 }
 
 export interface Summary {
@@ -38,6 +41,26 @@ export interface Summary {
   channels: { channel: NamedRef; totalMs: number }[];
   /** Voice time in ms, indexed [weekday 0=Monday..6=Sunday][local hour 0..23]. */
   heat: number[][];
+  /** One presence strip per day (06:00 to 06:00) of the period, newest first, at most 31. */
+  days: DayStrip[];
+}
+
+/** One day in detail: who was in voice and when. */
+export interface DayView {
+  guild: GuildInfo;
+  dayKey: string;
+  startMs: number;
+  endMs: number;
+  timeZone: string;
+  generatedAtMs: number;
+  /** The neighbouring days that can be opened, or null at either end. */
+  prevDayKey: string | null;
+  nextDayKey: string | null;
+  totalMs: number;
+  peak: { count: number; atMs: number } | null;
+  /** Average number of people in each quarter hour from `startMs`. */
+  bins: number[];
+  members: { user: NamedRef; totalMs: number; spans: { channel: NamedRef; startMs: number; endMs: number }[] }[];
 }
 
 /** Personal statistics of one member, with names resolved. */

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  binClock,
+  formatDayLong,
+  formatDayShort,
+  formatHourLabel,
+  formatPeople,
+  timelineView,
+  initialsOf,
   barPercent,
   busiestCell,
   busiestHour,
@@ -140,5 +147,64 @@ describe('visibleHandle', () => {
     expect(visibleHandle('Alex', '')).toBeNull();
     expect(visibleHandle('Alex', 'alex')).toBeNull();
     expect(visibleHandle(' Alex ', 'ALEX')).toBeNull();
+  });
+});
+
+describe('timeline helpers', () => {
+  it('writes a day key as a French date', () => {
+    expect(formatDayLong('2026-11-17')).toBe('mardi 17 novembre');
+    expect(formatDayShort('2026-11-17')).toBe('mar. 17 nov.');
+  });
+
+  it('gives the clock time of a bin on a day that starts at 06:00', () => {
+    expect(binClock(0, 30)).toBe('06:00');
+    expect(binClock(29, 30)).toBe('20:30');
+    expect(binClock(36, 30)).toBe('00:00');
+    expect(binClock(47, 30)).toBe('05:30');
+    expect(binClock(1, 15)).toBe('06:15');
+  });
+
+  it('says how many people', () => {
+    expect(formatPeople(0)).toBe('personne');
+    expect(formatPeople(1)).toBe('1 personne');
+    expect(formatPeople(2)).toBe('2 personnes');
+    expect(formatPeople(1.5)).toBe('1,5 personne');
+  });
+
+  it('builds initials for a picture-less avatar', () => {
+    expect(initialsOf('Alex Martin')).toBe('AM');
+    expect(initialsOf('boogy')).toBe('B');
+    expect(initialsOf('  zzz best game ever ')).toBe('ZB');
+    expect(initialsOf('🎮 Gamer')).toBe('🎮G');
+    expect(initialsOf('')).toBe('?');
+  });
+});
+
+describe('timelineView', () => {
+  const H = 3_600_000;
+  const day = { startMs: Date.UTC(2026, 10, 17, 6), endMs: Date.UTC(2026, 10, 18, 6) };
+  const at = (hour: number, minute = 0) => Date.UTC(2026, 10, 17, hour, minute);
+
+  it('frames the activity with a margin, on whole hours', () => {
+    const view = timelineView(day, at(21, 12), at(23, 40));
+    expect(view).toEqual({ startMs: at(20), endMs: at(25), stepMs: H });
+  });
+
+  it('keeps at least three hours and stays inside the day', () => {
+    const view = timelineView(day, at(6, 5), at(6, 20));
+    expect(view.startMs).toBe(day.startMs);
+    expect(view.endMs - view.startMs).toBe(3 * H);
+    const late = timelineView(day, Date.UTC(2026, 10, 18, 5, 40), Date.UTC(2026, 10, 18, 5, 55));
+    expect(late.endMs).toBe(day.endMs);
+    expect(late.startMs).toBeGreaterThanOrEqual(day.startMs);
+  });
+
+  it('widens the step of the time marks for a long activity', () => {
+    expect(timelineView(day, at(10), at(18)).stepMs).toBe(2 * H);
+    expect(timelineView(day, at(8), at(23)).stepMs).toBe(3 * H);
+  });
+
+  it('labels a whole hour', () => {
+    expect(formatHourLabel(at(21), 'UTC')).toBe('21 h');
   });
 });

@@ -3,7 +3,7 @@ export { VoiceFlag } from './types.ts';
 export { deriveSessions, durationMs, totalByUser } from './sessions.ts';
 export { planReconcile } from './reconcile.ts';
 export { PERIODS } from './api.ts';
-export type { GuildInfo, MemberProfile, MeResponse, NamedRef, Period, Summary } from './api.ts';
+export type { DayView, GuildInfo, MemberProfile, MeResponse, NamedRef, Period, Summary } from './api.ts';
 export { aggregate, clipSessions, streaks } from './aggregate.ts';
 export { flagTimesByUser } from './flags.ts';
 export type { FlagTimes } from './flags.ts';
@@ -11,3 +11,6 @@ export { activityBuckets, averageMinute, buildMemberStats, partsOfDay, roomRoles
 export type { ActivityBucket, MemberStats, PartsOfDay } from './profile.ts';
 export { togetherWithUser } from './together.ts';
 export type { Aggregate, AggregateOptions, ChannelStat, MemberStat } from './aggregate.ts';
+export { buildDayTimeline, dayStrips, isDayKey, presenceBins, timelineDayKey, timelineDayWindow, TIMELINE_DAY_START_HOUR } from './timeline.ts';
+export type { DayStrip, DayTimeline } from './timeline.ts';
+export { dayKeyOf, dayNumber } from './aggregate.ts';

@@ -71,6 +71,22 @@ export function userHandles(db: Db): Map<string, string> {
   return new Map(rows.map((row) => [row.id, row.name]));
 }
 
+const avatarColumnSeen = new WeakSet<Db>();
+
+/**
+ * Avatar hashes by user id. The column is added by a migration that the bot applies when it starts, and the server
+ * can be updated first: until then there are simply no avatars (initials are shown), never an error.
+ */
+export function userAvatars(db: Db): Map<string, string> {
+  if (!avatarColumnSeen.has(db)) {
+    const columns = db.prepare("SELECT name FROM pragma_table_info('users')").all() as { name: string }[];
+    if (!columns.some((column) => column.name === 'avatar')) return new Map();
+    avatarColumnSeen.add(db);
+  }
+  const rows = db.prepare('SELECT id, avatar FROM users WHERE avatar IS NOT NULL').all() as { id: string; avatar: string }[];
+  return new Map(rows.map((row) => [row.id, row.avatar]));
+}
+
 export function channelNames(db: Db, guildId: string): Map<string, string> {
   const rows = db.prepare('SELECT id, name FROM channels WHERE guild_id = ?').all(guildId) as { id: string; name: string }[];
   return new Map(rows.map((row) => [row.id, row.name]));

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { buildSearch, memberPath, parseRoute, readParams } from './router.ts';
+import { buildSearch, dayPath, memberPath, parseRoute, readParams } from './router.ts';
 
 describe('parseRoute', () => {
+  it('recognises a day page and only a real-looking date', () => {
+    expect(parseRoute('/jours/2026-11-17')).toEqual({ name: 'day', dayKey: '2026-11-17' });
+    expect(parseRoute('/jours/2026-11-17/')).toEqual({ name: 'day', dayKey: '2026-11-17' });
+    expect(parseRoute('/jours/hier')).toEqual({ name: 'home' });
+    expect(dayPath('2026-11-17', '?serveur=1&periode=30d')).toBe('/jours/2026-11-17?serveur=1&periode=30d');
+  });
+
   it('recognises the home page', () => {
     expect(parseRoute('/')).toEqual({ name: 'home' });
     expect(parseRoute('/nimporte-quoi')).toEqual({ name: 'home' });

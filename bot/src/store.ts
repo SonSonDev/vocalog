@@ -73,14 +73,14 @@ export function upsertChannel(db: Db, channel: { id: string; guildId: string; na
   })();
 }
 
-/** The global username of a person. */
-export function upsertUser(db: Db, id: string, name: string, nowMs: number): void {
+/** The global username of a person and the hash of their Discord avatar (null for a default avatar). */
+export function upsertUser(db: Db, id: string, name: string, nowMs: number, avatar: string | null = null): void {
   db.transaction(() => {
     const previous = db.prepare('SELECT name FROM users WHERE id = ?').get(id) as { name: string } | undefined;
     db.prepare(
-      `INSERT INTO users (id, name, updated_ms) VALUES (?, ?, ?)
-       ON CONFLICT (id) DO UPDATE SET name = excluded.name, updated_ms = excluded.updated_ms`,
-    ).run(id, name, nowMs);
+      `INSERT INTO users (id, name, avatar, updated_ms) VALUES (?, ?, ?, ?)
+       ON CONFLICT (id) DO UPDATE SET name = excluded.name, avatar = excluded.avatar, updated_ms = excluded.updated_ms`,
+    ).run(id, name, avatar, nowMs);
     logName(db, 'user', id, null, name, previous?.name, nowMs);
   })();
 }

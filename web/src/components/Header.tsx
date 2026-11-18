@@ -1,5 +1,6 @@
 import { PERIODS } from '@vocalog/shared';
 import type { GuildInfo, NamedRef, Period } from '@vocalog/shared';
+import type { ComponentChildren } from 'preact';
 import type { Theme } from '../theme.ts';
 import { Link } from './Link.tsx';
 
@@ -25,10 +26,12 @@ interface Props {
   eyebrow: string;
   /** A small @username shown after the title (member pages). */
   handle?: string | null;
+  /** A picture shown before the title (member pages). */
+  avatar?: ComponentChildren;
   back?: { to: string; label: string };
 }
 
-export function Header({ controls, title, eyebrow, handle, back }: Props) {
+export function Header({ controls, title, eyebrow, handle, avatar, back }: Props) {
   const { guilds, guildId, period, theme, onGuild, onPeriod, onTheme, viewer, onLogout } = controls;
   return (
     <header class="header">
@@ -39,9 +42,12 @@ export function Header({ controls, title, eyebrow, handle, back }: Props) {
           </Link>
         )}
         <p class="eyebrow">{eyebrow}</p>
-        <h1>
-          {title}
-          {handle && <span class="handle">{handle}</span>}
+        <h1 class={avatar ? 'with-avatar' : undefined}>
+          {avatar}
+          <span>
+            {title}
+            {handle && <span class="handle">{handle}</span>}
+          </span>
         </h1>
       </div>
       <div class="header-controls">

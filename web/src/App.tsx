@@ -8,6 +8,7 @@ import type { Theme } from './theme.ts';
 import { useRemote } from './useRemote.ts';
 import { HomeView } from './views/HomeView.tsx';
 import { LoginView } from './views/LoginView.tsx';
+import { DayPageView } from './views/DayPageView.tsx';
 import { MemberView } from './views/MemberView.tsx';
 
 const GUILD_KEY = 'vocalog-guild';
@@ -100,6 +101,8 @@ export function App() {
           status === 'ready' &&
           (route.name === 'member' ? (
             <MemberView guildId={guildId} userId={route.userId} period={period} search={search} controls={controls} />
+          ) : route.name === 'day' ? (
+            <DayPageView guildId={guildId} dayKey={route.dayKey} period={period} search={search} controls={controls} />
           ) : (
             <HomeView guildId={guildId} period={period} search={search} controls={controls} />
           ))}

@@ -4,6 +4,7 @@ import { Header } from '../components/Header.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Heatmap } from '../components/Heatmap.tsx';
 import { KeyFigures } from '../components/KeyFigures.tsx';
+import { DayStrips } from '../components/DayStrips.tsx';
 import { Channels, Records } from '../components/Lists.tsx';
 import { MemberTable } from '../components/MemberTable.tsx';
 import { formatClock } from '../format.ts';
@@ -21,7 +22,7 @@ export function HomeView({ guildId, period, search, controls }: Props) {
 
   return (
     <>
-      <Header controls={controls} title="Synthèse vocale" eyebrow="Vocalog" />
+      <Header controls={controls} title="Qui était en vocal" eyebrow="Vocalog" />
 
       {guildId === null && (
         <p class="notice" role="status">
@@ -50,11 +51,16 @@ export function HomeView({ guildId, period, search, controls }: Props) {
           {summary.members.length > 0 ? (
             <div class="dashboard">
               <div class="col-7">
-                <MemberTable members={summary.members} search={search} viewerId={controls.viewer?.id ?? null} />
+                <MemberTable members={summary.members} guildId={summary.guild.id} search={search} viewerId={controls.viewer?.id ?? null} />
               </div>
               <div class="col-5">
                 <Heatmap heat={summary.heat} />
               </div>
+              {summary.days.length > 0 && (
+                <div class="col-12">
+                  <DayStrips days={summary.days} search={search} />
+                </div>
+              )}
               <div class="col-6">
                 <Channels channels={summary.channels} />
               </div>

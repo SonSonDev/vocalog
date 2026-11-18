@@ -2,7 +2,7 @@ import { PERIODS } from '@vocalog/shared';
 import type { Period } from '@vocalog/shared';
 import { useEffect, useState } from 'preact/hooks';
 
-export type Route = { name: 'home' } | { name: 'member'; userId: string };
+export type Route = { name: 'home' } | { name: 'member'; userId: string } | { name: 'day'; dayKey: string };
 
 export function parseRoute(pathname: string): Route {
   const match = /^\/membres\/([^/]+)\/?$/.exec(pathname);
@@ -13,6 +13,8 @@ export function parseRoute(pathname: string): Route {
       return { name: 'home' };
     }
   }
+  const day = /^\/jours\/(\d{4}-\d{2}-\d{2})\/?$/.exec(pathname);
+  if (day) return { name: 'day', dayKey: day[1]! };
   return { name: 'home' };
 }
 
@@ -35,6 +37,10 @@ export function buildSearch(params: { guildId: string | null; period: Period }):
 
 export function memberPath(userId: string, search: string): string {
   return `/membres/${encodeURIComponent(userId)}${search}`;
+}
+
+export function dayPath(dayKey: string, search: string): string {
+  return `/jours/${dayKey}${search}`;
 }
 
 const EVENT = 'vocalog:navigate';

@@ -59,13 +59,14 @@ Heartbeats feed reconciliation only.
 ## Data model (sketch)
 - `voice_events(id, guild_id, user_id, channel_id, kind, flags, at_ms, source, raw_json)` — append-only.
 - `heartbeats(at_ms)`.
-- `guilds` (name, `afk_channel_id`), `channels` (name, `type` 2 voice / 13 stage), `users` (global username), `members` (name shown on one server, `is_bot`), `name_history` (every name seen, by kind). Added by migration 002, which is additive so the previous bot version keeps working on it.
+- `guilds` (name, `afk_channel_id`), `channels` (name, `type` 2 voice / 13 stage), `users` (global username, `avatar` hash added by migration 003), `members` (name shown on one server, `is_bot`), `name_history` (every name seen, by kind). Added by migration 002, which is additive so the previous bot version keeps working on it.
 - `sessions` — derived, rebuildable.
 - Migrations: numbered SQL files, each covered by a test. Backup: nightly `VACUUM INTO`.
 
 ## API surface
 Built: `GET /api/guilds`, `GET /api/guilds/:guildId/summary?period=7d|30d|1y|all` (default 30d; 400 on a bad period, 404 on an unknown server) and `GET /api/guilds/:guildId/members/:userId?period=` (404 for a member with no event on that server). Also `GET /api/me` (open: `{ authMode, user }`), `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout`. With Discord login on, every `/api/guilds...` route needs a valid session (401 otherwise) and only serves servers listed in the session; the member route removes the voice-state fields when the viewer is not that member (`restricted: true`). Answers under `/api/` and `/auth/` are `no-store`; every response carries `nosniff`, `X-Frame-Options: DENY` and `same-origin` referrer policy. Without login the server refuses to start unless `INSECURE_NO_AUTH=1`, and then nothing is restricted.
 Period windows never start before the first recorded event of the server, so a young journal is not averaged over unrecorded days.
+`GET /api/guilds/:guildId/days/:dayKey` (one day in detail: 400 for a bad date, 404 for a future day) and `GET /api/guilds/:guildId/avatars/:userId` (the picture, fetched by `server/src/avatar.ts` from Discord's image host with an address built from two checked database values, redirects refused, PNG only, at most 200 kB, kept in memory; 404 when there is none; the browser may keep it). The summary also carries `days` (the strips). `server/src/names.ts` resolves ids to names and avatar hashes for every route; the avatar column is optional until the bot has migrated. Day and strip calculations are pure, in `shared/src/timeline.ts`.
 Answers are kept in a small in-memory cache (`server/src/cache.ts`, 200 entries) keyed by route, server, member and period; an entry is reused while the last `voice_events` id and the current minute are unchanged. A server error is logged by route (never the query) and answered with a generic 500. `scripts/backup.ts` makes `VACUUM INTO` copies and prunes old ones.
 
 ## Conventions

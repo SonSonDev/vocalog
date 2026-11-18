@@ -226,3 +226,117 @@ describe('failures', () => {
     expect(response.statusCode).toBe(404);
   });
 });
+
+describe('GET /api/guilds/:guildId/days/:dayKey', () => {
+  it('gives who was in voice that day, with spans, names and neighbouring days', async () => {
+    const response = await seeded().inject('/api/guilds/g1/days/2026-11-17');
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.guild.id).toBe('g1');
+    expect(body.totalMs).toBe(4 * HOUR);
+    expect(body.members.map((m: { user: { name: string } }) => m.user.name)).toEqual(['Alex', 'Sam']);
+    expect(body.members[0].spans).toEqual([{ channel: { id: 'c1', name: 'General' }, startMs: NOW - 5 * HOUR, endMs: NOW - 2 * HOUR }]);
+    expect(body.peak.count).toBe(2);
+    expect(body.prevDayKey).toBeNull(); // the first event is on that day
+    expect(body.nextDayKey).toBeNull(); // and it is today
+    expect(body.bins).toHaveLength(96);
+  });
+
+  it('answers an empty day without failing', async () => {
+    const response = await seeded().inject('/api/guilds/g1/days/2026-11-16');
+    expect(response.statusCode).toBe(200);
+    expect(response.json().members).toEqual([]);
+    expect(response.json().nextDayKey).toBe('2026-11-17');
+  });
+
+  it('refuses a bad date, a day in the future and an unknown server', async () => {
+    const app = seeded();
+    expect((await app.inject('/api/guilds/g1/days/2026-02-30')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/days/..%2Fsecret')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/days/2026-11-18')).statusCode).toBe(404);
+    expect((await app.inject('/api/guilds/nope/days/2026-11-17')).statusCode).toBe(404);
+  });
+});
+
+describe('summary days', () => {
+  it('lists one presence strip per day of the period, newest first', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/summary?period=7d')).json();
+    expect(body.days[0].dayKey).toBe('2026-11-17');
+    expect(body.days[0].people).toBe(2);
+    expect(body.days[0].peak).toBe(2);
+    expect(body.days[0].bins).toHaveLength(48);
+    expect(body.days.length).toBeLessThanOrEqual(31);
+  });
+});
+
+describe('avatars', () => {
+  const HASH = 'a'.repeat(32);
+  const ID = '123456789012345678';
+  const png = Buffer.from('89504e470d0a1a0a', 'hex');
+
+  function withAvatar(fetchFn: typeof fetch, avatar: string | null = HASH) {
+    const db = testDb();
+    addNames(db);
+    db.prepare('UPDATE users SET id = ?, avatar = ? WHERE id = ?').run(ID, avatar, 'u1');
+    addEvent(db, { userId: ID, channelId: 'c1', kind: 'join', atMs: NOW - 2 * HOUR });
+    addEvent(db, { userId: ID, channelId: null, kind: 'leave', atMs: NOW - HOUR });
+    return buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW, fetch: fetchFn });
+  }
+  const pngResponse = () => new Response(png, { status: 200, headers: { 'content-type': 'image/png' } });
+
+  it('fetches the picture from Discord, serves it and lets the browser keep it', async () => {
+    const urls: string[] = [];
+    const app = withAvatar((async (url: string) => (urls.push(url), pngResponse())) as unknown as typeof fetch);
+    const response = await app.inject(`/api/guilds/g1/avatars/${ID}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toContain('image/png');
+    expect(response.headers['cache-control']).toBe('private, max-age=86400');
+    expect(urls).toEqual([`https://cdn.discordapp.com/avatars/${ID}/${HASH}.png?size=64`]);
+    await app.inject(`/api/guilds/g1/avatars/${ID}`);
+    expect(urls).toHaveLength(1); // served from memory the second time
+  });
+
+  it('exposes the hash in the member lists so the page can ask for the picture', async () => {
+    const app = withAvatar((async () => pngResponse()) as unknown as typeof fetch);
+    const body = (await app.inject('/api/guilds/g1/summary?period=7d')).json();
+    expect(body.members.find((m: { user: { id: string } }) => m.user.id === ID).user.avatar).toBe(HASH);
+  });
+
+  it('answers 404 without calling Discord for no avatar, an unsafe hash or an unknown member', async () => {
+    let calls = 0;
+    const spy = (async () => (calls++, pngResponse())) as unknown as typeof fetch;
+    expect((await withAvatar(spy, null).inject(`/api/guilds/g1/avatars/${ID}`)).statusCode).toBe(404);
+    expect((await withAvatar(spy, '../../x').inject(`/api/guilds/g1/avatars/${ID}`)).statusCode).toBe(404);
+    expect((await withAvatar(spy).inject('/api/guilds/g1/avatars/999999999999999999')).statusCode).toBe(404);
+    expect((await withAvatar(spy).inject(`/api/guilds/nope/avatars/${ID}`)).statusCode).toBe(404);
+    expect(calls).toBe(0);
+  });
+
+  it('answers 404 when Discord fails, sends something that is not a PNG, or redirects, and does not retry at once', async () => {
+    for (const bad of [
+      () => new Response('nope', { status: 500 }),
+      () => new Response('<html>', { status: 200, headers: { 'content-type': 'text/html' } }),
+      () => {
+        throw new TypeError('redirect mode is set to error');
+      },
+    ]) {
+      let calls = 0;
+      const app = withAvatar((async () => (calls++, bad())) as unknown as typeof fetch);
+      expect((await app.inject(`/api/guilds/g1/avatars/${ID}`)).statusCode).toBe(404);
+      expect((await app.inject(`/api/guilds/g1/avatars/${ID}`)).statusCode).toBe(404);
+      expect(calls).toBe(1);
+    }
+  });
+
+  it('still works on a database made before the avatar column existed', async () => {
+    const db = testDb();
+    addNames(db);
+    db.exec('ALTER TABLE users DROP COLUMN avatar');
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 2 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - HOUR });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    const body = (await app.inject('/api/guilds/g1/summary?period=7d')).json();
+    expect(body.members[0].user.avatar).toBeUndefined();
+    expect((await app.inject('/api/guilds/g1/avatars/u1')).statusCode).toBe(404);
+  });
+});

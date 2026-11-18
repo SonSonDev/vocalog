@@ -127,3 +127,58 @@ export function visibleHandle(name: string, handle: string | undefined): string 
   if (!handle) return null;
   return handle.trim().toLowerCase() === name.trim().toLowerCase() ? null : `@${handle}`;
 }
+
+/** "mardi 17 novembre" from a local `YYYY-MM-DD` key. */
+export function formatDayLong(key: string): string {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(Date.UTC(year!, month! - 1, day!));
+}
+
+/** "mar. 17 nov." from a local `YYYY-MM-DD` key. */
+export function formatDayShort(key: string): string {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(Date.UTC(year!, month! - 1, day!));
+}
+
+/** "20:30" for a bin of a timeline day that starts at 06:00. Plain arithmetic: it ignores a daylight saving change inside the day. */
+export function binClock(index: number, binMinutes: number): string {
+  const minute = (6 * 60 + index * binMinutes) % 1440;
+  return `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+}
+
+/** "3 personnes", "1 personne", "personne". */
+export function formatPeople(count: number): string {
+  if (count <= 0) return 'personne';
+  const rounded = Math.round(count * 10) / 10;
+  return `${String(rounded).replace('.', ',')} personne${rounded >= 2 ? 's' : ''}`;
+}
+
+/** One or two capital letters for a name, used when a person has no picture: "Alex Martin" gives "AM". */
+export function initialsOf(name: string): string {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => Array.from(word)[0]!);
+  return letters.length > 0 ? letters.join('').toLocaleUpperCase('fr-FR') : '?';
+}
+
+/** "21 h" for the whole hour that contains this instant, in the given time zone. */
+export function formatHourLabel(ms: number, timeZone: string): string {
+  return new Intl.DateTimeFormat('fr-FR', { timeZone, hour: 'numeric' }).format(ms);
+}
+
+/**
+ * The part of a timeline day worth showing: from the whole hour before the first arrival to the whole hour after the last
+ * departure (at least three hours), and the step between two time marks. Always inside the day.
+ */
+export function timelineView(day: { startMs: number; endMs: number }, firstMs: number, lastMs: number): { startMs: number; endMs: number; stepMs: number } {
+  const HOUR = 3_600_000;
+  const startMs = Math.max(day.startMs, day.startMs + Math.floor((firstMs - 30 * 60_000 - day.startMs) / HOUR) * HOUR);
+  let endMs = Math.min(day.endMs, day.startMs + Math.ceil((lastMs + 30 * 60_000 - day.startMs) / HOUR) * HOUR);
+  if (endMs - startMs < 3 * HOUR) endMs = Math.min(day.endMs, startMs + 3 * HOUR);
+  const hours = (endMs - startMs) / HOUR;
+  const stepMs = (hours <= 6 ? 1 : hours <= 12 ? 2 : 3) * HOUR;
+  return { startMs, endMs, stepMs };
+}

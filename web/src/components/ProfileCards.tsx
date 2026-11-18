@@ -1,3 +1,4 @@
+import { Avatar } from './Avatar.tsx';
 import type { MemberProfile } from '@vocalog/shared';
 import { Handle } from './Handle.tsx';
 import {
@@ -88,7 +89,7 @@ export function ActivityChart({ activity }: { activity: MemberProfile['activity'
   );
 }
 
-export function Together({ together, totalMs }: { together: MemberProfile['together']; totalMs: number }) {
+export function Together({ together, totalMs, guildId }: { together: MemberProfile['together']; totalMs: number; guildId: string }) {
   const withShare = shareOf(together.withOthersMs, totalMs);
   const max = maxOf(together.top.map((entry) => entry.ms));
   return (
@@ -111,9 +112,12 @@ export function Together({ together, totalMs }: { together: MemberProfile['toget
             <ul class="bars">
               {together.top.map((entry) => (
                 <li key={entry.user.id}>
-                  <span class="bar-name">
-                    {entry.user.name}
-                    <Handle user={entry.user} />
+                  <span class="bar-name with-avatar">
+                    <Avatar user={entry.user} guildId={guildId} size={24} />
+                    <span>
+                      {entry.user.name}
+                      <Handle user={entry.user} />
+                    </span>
                   </span>
                   <span class="bar-track" aria-hidden="true">
                     <span class="bar-fill" style={{ width: `${barPercent(entry.ms, max)}%` }} />

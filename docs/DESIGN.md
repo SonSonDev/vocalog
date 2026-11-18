@@ -44,6 +44,8 @@ Arcade, full-screen recap, audio studio, neo-brutalism, Japanese minimalism, ter
 - States: loading (skeleton rows), empty ("Pas encore de données pour cette période"), error (what happened and how to retry), content.
 - Accessibility: 44 px touch targets, visible focus, full keyboard use, colour never the only signal (values are also in text and tooltips), `prefers-reduced-motion` respected.
 
+- Day strips and day page (2026-11-18): same single accent hue as the heat map (cell darkness = people present), one line per day from 06:00 to 06:00, bars 22 px with the channel name inside (text on accent), a hairline at each time mark, a table version for screen readers and keyboards, a zoom on the active hours. Avatars are 24 to 44 px circles, neutral initials as fallback; they never replace the name.
+
 ## Aesthetic risk and guard-rail
 Risk: the sober table look may feel cold for a friends' recap. Guard-rail: keep the accent small and consistent, and reserve any expressive treatment for the optional yearly recap view.
 

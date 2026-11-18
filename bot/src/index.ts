@@ -52,7 +52,7 @@ function collectGuild(guild: Guild, nowMs: number): LiveVoiceState[] {
     if (state.channelId === null || state.member?.user.bot) continue;
     live.push({ guildId: guild.id, userId: state.id, channelId: state.channelId, flags: flagsOf(fromDiscord(state)) });
     if (state.member) {
-      upsertUser(db, state.id, state.member.user.username, nowMs);
+      upsertUser(db, state.id, state.member.user.username, nowMs, state.member.user.avatar);
       upsertMember(db, guild.id, state.id, state.member.displayName, false, nowMs);
     }
   }
@@ -108,7 +108,7 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
     insertEvent(db, event, { old: snapshot(before), new: snapshot(after) });
     upsertGuild(db, { id: newState.guild.id, name: newState.guild.name, afkChannelId: newState.guild.afkChannelId }, nowMs);
     if (newState.member) {
-      upsertUser(db, newState.id, newState.member.user.username, nowMs);
+      upsertUser(db, newState.id, newState.member.user.username, nowMs, newState.member.user.avatar);
       upsertMember(db, newState.guild.id, newState.id, newState.member.displayName, false, nowMs);
     }
     if (newState.channel) {

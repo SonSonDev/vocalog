@@ -156,7 +156,7 @@ export function clipSessions(sessions: readonly Session[], fromMs: number, limit
   return clipped;
 }
 
-function peakOf(sessions: readonly Session[]): { count: number; atMs: number } | null {
+export function peakOf(sessions: readonly Session[]): { count: number; atMs: number } | null {
   const points: { atMs: number; delta: number }[] = [];
   for (const session of sessions) {
     points.push({ atMs: session.startMs, delta: 1 }, { atMs: session.endMs!, delta: -1 });

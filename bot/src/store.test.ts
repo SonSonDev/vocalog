@@ -2,6 +2,8 @@ import { deriveSessions } from '@vocalog/shared';
 import type { VoiceEvent } from '@vocalog/shared';
 import { describe, expect, it } from 'vitest';
 import { migrate, openDb } from './db.ts';
+import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { insertEvent, lastHeartbeat, loadEvents, recordHeartbeat, upsertChannel, upsertGuild, upsertMember, upsertUser } from './store.ts';
 
@@ -24,7 +26,7 @@ function freshDb() {
 describe('migrations', () => {
   it('applies once and is idempotent', () => {
     const db = openDb(':memory:');
-    expect(migrate(db)).toEqual(['001_init.sql', '002_names_and_afk.sql']);
+    expect(migrate(db)).toEqual(['001_init.sql', '002_names_and_afk.sql', '003_user_avatar.sql']);
     expect(migrate(db)).toEqual([]);
   });
 });
@@ -113,9 +115,32 @@ describe('names and AFK', () => {
     expect(history(db, 'user', 'u1')).toEqual(['alex_42']);
   });
 
+  it('keeps the avatar hash of a person and follows its changes', () => {
+    const db = freshDb();
+    upsertUser(db, 'u1', 'alex_42', 100, 'abc123');
+    expect(db.prepare('SELECT avatar FROM users WHERE id = ?').get('u1')).toEqual({ avatar: 'abc123' });
+    upsertUser(db, 'u1', 'alex_42', 200, 'def456');
+    expect(db.prepare('SELECT avatar FROM users WHERE id = ?').get('u1')).toEqual({ avatar: 'def456' });
+    upsertUser(db, 'u2', 'sam', 100);
+    expect(db.prepare('SELECT avatar FROM users WHERE id = ?').get('u2')).toEqual({ avatar: null });
+  });
+
+  it('adds the avatar column to a database made by the previous schema, keeping its rows', () => {
+    const db = openDb(':memory:');
+    const dir = join(import.meta.dirname, '..', '..', 'db', 'migrations');
+    // Apply only the first two migrations, as the deployed database has them, with a person already stored.
+    const old = mkdtempSync(join(tmpdir(), 'vocalog-migrations-'));
+    for (const file of ['001_init.sql', '002_names_and_afk.sql']) copyFileSync(join(dir, file), join(old, file));
+    migrate(db, old);
+    rmSync(old, { recursive: true, force: true });
+    db.prepare("INSERT INTO users (id, name, updated_ms) VALUES ('u1', 'alex_42', 1)").run();
+    expect(migrate(db)).toEqual(['003_user_avatar.sql']);
+    expect(db.prepare('SELECT id, name, avatar FROM users').all()).toEqual([{ id: 'u1', name: 'alex_42', avatar: null }]);
+  });
+
   it('applies on top of an existing database without losing events', () => {
     const db = openDb(':memory:');
     migrate(db, join(import.meta.dirname, '..', '..', 'db', 'migrations'));
-    expect(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get()).toEqual({ n: 2 });
+    expect(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get()).toEqual({ n: 3 });
   });
 });

@@ -41,7 +41,15 @@ Status: `in progress` (built and covered by tests with a fake Discord; the real 
 ## F5 — Summary dashboard
 Status: `in progress` (API and page built and unit-tested; not yet checked in a browser; behind the Discord login of F4)
 - Key figures (average per day, total, longest session, current streak), member table with hourly profile (title shows the member count; the 6 most active are listed, a button shows or hides the rest, so a long list leaves no empty gap beside the heatmap), day × hour heatmap, records and channels (the pairs section was removed on 2026-11-18).
+- Title of the home page: "Qui était en vocal" (since 2026-11-18).
+- Avatars (since 2026-11-18): a round picture next to every name in the member list, the member page title, "Avec qui" and the day page; initials in a neutral circle when a person has none or it cannot load. The bot stores the Discord avatar hash (`users.avatar`, migration 003); the server fetches the image from Discord and serves it, so a visitor's browser never contacts Discord. Only avatars seen after the bot restarts with this version exist.
 - Names: the name a person shows on that server, followed by their Discord `@username` in small muted text when it differs (member list, member page title, "Avec qui" list). The handle is hidden when it equals the name, ignoring case.
+
+## F5b — Days and timelines
+Status: `in progress` (built and unit-tested; checked in a headless browser at 390, 768 and 1280 px on demo data, light and dark for the main views; not yet with the real login or real avatars)
+- A "day" runs from 06:00 to 06:00 local time, so an evening past midnight stays whole (23 or 25 hours on a daylight saving day).
+- Home page, section "Jour par jour": one line per day of the period, newest first, at most 31 (14 shown, a button shows all). Each line has 48 half-hour cells in the accent colour, darker for more people, plus the day's voice time; it opens the day page.
+- Day page `/jours/<YYYY-MM-DD>?serveur=&periode=`: previous and next day buttons, key figures (total time, people, most at once and when), a presence strip, and one row per member with a bar per stay (channel name in the bar and in the tooltip), first arrival first. It zooms on the hours where something happened (button for the whole day) and offers the same data as a table. An empty day says so; a date in the future or a bad date is refused.
 
 ## F6 — Time together
 Status: `in progress` (the per-member calculation is done and tested in `shared/` (the pair ranking and its code were removed on 2026-11-18); it appears per member as "best voice friends" in F7)

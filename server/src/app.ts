@@ -1,12 +1,15 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
+import { isDayKey } from '@vocalog/shared';
 import type { MeResponse, Period } from '@vocalog/shared';
+import { createAvatarProxy } from './avatar.ts';
 import { createCache } from './cache.ts';
+import { buildDayView } from './day.ts';
 import { createAuth } from './auth.ts';
 import type { AuthOptions } from './auth.ts';
 import { isPeriod } from './period.ts';
 import { buildMemberProfile } from './profile.ts';
-import { findGuild, listGuilds, userHasEvents } from './queries.ts';
+import { findGuild, listGuilds, userAvatars, userHasEvents } from './queries.ts';
 import type { Db } from './queries.ts';
 import { resolveStatic } from './static.ts';
 import { buildSummary } from './summary.ts';
@@ -19,6 +22,8 @@ export interface AppOptions {
   /** How people log in. `{ mode: 'none' }` is for local development only. */
   auth: AuthOptions;
   now?: () => number;
+  /** Used to fetch avatars from Discord. Defaults to the global `fetch`. */
+  fetch?: typeof fetch;
 }
 
 export function buildApp(options: AppOptions): FastifyInstance {
@@ -27,6 +32,7 @@ export function buildApp(options: AppOptions): FastifyInstance {
   const auth = createAuth(options.auth, now);
   const app = Fastify({ logger: false });
   const cached = createCache(db, now);
+  const getAvatar = createAvatarProxy(options.fetch ?? globalThis.fetch, now);
 
   // Nothing is logged by Fastify here, so a failure would leave no trace. Log the route only (the query of a login
   // callback carries a one-time code) and never send internals to the browser.
@@ -43,8 +49,8 @@ export function buildApp(options: AppOptions): FastifyInstance {
     reply.header('x-content-type-options', 'nosniff');
     reply.header('x-frame-options', 'DENY');
     reply.header('referrer-policy', 'same-origin');
-    // Answers about people must never be cached by a browser or a proxy.
-    if (request.url.startsWith('/api/') || request.url.startsWith('/auth/')) reply.header('cache-control', 'no-store');
+    // Answers about people must never be cached by a browser or a proxy (an avatar route sets its own, private, rule).
+    if (!reply.hasHeader('cache-control') && (request.url.startsWith('/api/') || request.url.startsWith('/auth/'))) reply.header('cache-control', 'no-store');
   });
 
   // Every statistic needs a login. The only open API route is /api/me, which says whether one is needed.
@@ -85,6 +91,25 @@ export function buildApp(options: AppOptions): FastifyInstance {
       );
     },
   );
+
+  app.get<{ Params: { guildId: string; dayKey: string } }>('/api/guilds/:guildId/days/:dayKey', async (request, reply) => {
+    if (!isDayKey(request.params.dayKey)) return reply.code(400).send({ error: 'day must be a date written YYYY-MM-DD' });
+    const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
+    if (!guild) return reply.code(404).send({ error: 'unknown server' });
+    const view = cached(`day|${guild.id}|${request.params.dayKey}`, () => buildDayView(db, guild, request.params.dayKey, now(), timeZone));
+    return view ?? reply.code(404).send({ error: 'unknown day' });
+  });
+
+  // The picture of a member, fetched from Discord by this server. The hash comes from the database, not from the request,
+  // and the answer is the same for everybody who may see the server, so the browser may keep it: the page asks with `?v=<hash>`.
+  app.get<{ Params: { guildId: string; userId: string } }>('/api/guilds/:guildId/avatars/:userId', async (request, reply) => {
+    const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
+    if (!guild || !userHasEvents(db, guild.id, request.params.userId)) return reply.code(404).send({ error: 'unknown member' });
+    const hash = userAvatars(db).get(request.params.userId);
+    const image = hash ? await getAvatar(request.params.userId, hash) : null;
+    if (!image) return reply.code(404).send({ error: 'no avatar' });
+    return reply.header('cache-control', 'private, max-age=86400').type(image.contentType).send(image.body);
+  });
 
   app.setNotFoundHandler((request, reply) => {
     if (request.url.startsWith('/api/') || request.url.startsWith('/auth/') || webDir === null) return reply.code(404).send({ error: 'not found' });

@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import type { Summary } from '@vocalog/shared';
 import { busiestHour, formatDuration, maxOf } from '../format.ts';
 import { memberPath } from '../router.ts';
+import { Avatar } from './Avatar.tsx';
 import { Handle } from './Handle.tsx';
 import { Link } from './Link.tsx';
 
@@ -13,7 +14,7 @@ import { Link } from './Link.tsx';
  */
 const COLLAPSED_COUNT = 6;
 
-export function MemberTable({ members, search, viewerId }: { members: Summary['members']; search: string; viewerId: string | null }) {
+export function MemberTable({ members, guildId, search, viewerId }: { members: Summary['members']; guildId: string; search: string; viewerId: string | null }) {
   const [expanded, setExpanded] = useState(false);
   const collapsible = members.length > COLLAPSED_COUNT + 1;
   const shown = collapsible && !expanded ? members.slice(0, COLLAPSED_COUNT) : members;
@@ -34,10 +35,13 @@ export function MemberTable({ members, search, viewerId }: { members: Summary['m
           const busiest = busiestHour(member.hourMs);
           return (
             <li class="member" key={member.user.id}>
-              <span class="member-name">
-                <Link to={memberPath(member.user.id, search)}>{member.user.name}</Link>
-                <Handle user={member.user} />
-                {member.user.id === viewerId && <span class="you"> · toi</span>}
+              <span class="member-name with-avatar">
+                <Avatar user={member.user} guildId={guildId} size={32} />
+                <span>
+                  <Link to={memberPath(member.user.id, search)}>{member.user.name}</Link>
+                  <Handle user={member.user} />
+                  {member.user.id === viewerId && <span class="you"> · toi</span>}
+                </span>
               </span>
               <span class="member-time mono">{formatDuration(member.totalMs)}</span>
               <span class="member-sessions mono">
