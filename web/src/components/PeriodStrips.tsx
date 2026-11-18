@@ -1,27 +1,28 @@
-import type { DayStrip, MonthStrip, Summary, WeekStrip } from '@vocalog/shared';
+import type { DayStrip, MonthStrip, Summary, WeekStrip, YearStrip } from '@vocalog/shared';
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { WEEKDAYS_SHORT, binClock, formatDayShort, formatDuration, formatMonthLong, formatMonthShort, formatPeople, formatWeekShort, isoWeekNumber, maxOf } from '../format.ts';
-import { dayQuery, monthQuery, prefetchQuery, weekQuery } from '../queries.ts';
-import { dayPath, monthPath, weekPath } from '../router.ts';
+import { WEEKDAYS_SHORT, binClock, formatDayShort, formatDuration, formatMonthLong, formatMonthName, formatMonthShort, formatPeople, formatWeekShort, isoWeekNumber, maxOf } from '../format.ts';
+import { dayQuery, monthQuery, prefetchQuery, weekQuery, yearQuery } from '../queries.ts';
+import { dayPath, monthPath, weekPath, yearPath } from '../router.ts';
 import { Link } from './Link.tsx';
 
-type Grain = 'days' | 'weeks' | 'months';
+type Grain = 'days' | 'weeks' | 'months' | 'years';
 
 const GRAINS: { id: Grain; label: string; title: string }[] = [
   { id: 'days', label: 'Jours', title: 'Jour par jour' },
   { id: 'weeks', label: 'Semaines', title: 'Semaine par semaine' },
   { id: 'months', label: 'Mois', title: 'Mois par mois' },
+  { id: 'years', label: 'Années', title: 'Année par année' },
 ];
 
 const GRAIN_KEY = 'vocalog-strips';
-const INITIAL_ROWS: Record<Grain, number> = { days: 14, weeks: 8, months: 12 };
+const INITIAL_ROWS: Record<Grain, number> = { days: 14, weeks: 8, months: 12, years: 6 };
 const DAY_AXIS = ['6 h', '12 h', '18 h', '0 h', '6 h'];
 
 function loadGrain(): Grain {
   try {
     const saved = window.localStorage.getItem(GRAIN_KEY);
-    if (saved === 'days' || saved === 'weeks' || saved === 'months') return saved;
+    if (saved === 'days' || saved === 'weeks' || saved === 'months' || saved === 'years') return saved;
   } catch {
     // ignore: the choice is just not remembered
   }
@@ -64,6 +65,7 @@ export function PeriodStrips({ summary, search }: { summary: Summary; search: st
       {grain === 'days' && <DayRows days={summary.days} guildId={guildId} search={search} />}
       {grain === 'weeks' && <WeekRows weeks={summary.weeks} guildId={guildId} search={search} />}
       {grain === 'months' && <MonthRows months={summary.months} guildId={guildId} search={search} />}
+      {grain === 'years' && <YearRows years={summary.years} guildId={guildId} search={search} />}
     </section>
   );
 }
@@ -232,6 +234,58 @@ function MonthRows({ months, guildId, search }: { months: MonthStrip[]; guildId:
                     </span>
                     <span class="day-total mono" aria-hidden="true">
                       {month.totalMs > 0 ? formatDuration(month.totalMs) : '—'}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </Expandable>
+  );
+}
+
+function YearRows({ years, guildId, search }: { years: YearStrip[]; guildId: string; search: string }) {
+  const max = maxOf(years.flatMap((year) => year.monthTotals));
+  return (
+    <Expandable count={years.length} grain="years">
+      {(limit) => (
+        <div class="day-strips year-strips">
+          <div class="day-row day-axis-row" aria-hidden="true">
+            <span class="day-label" />
+            <span class="year-cells year-axis">
+              {Array.from({ length: 12 }, (_, index) => (
+                <span key={index}>{formatMonthName(`2000-${String(index + 1).padStart(2, '0')}`).slice(0, 1).toUpperCase()}</span>
+              ))}
+            </span>
+            <span class="day-total" />
+          </div>
+          <ul class="day-list">
+            {years.slice(0, limit).map((year) => {
+              const summary = year.totalMs > 0 ? `${formatDuration(year.totalMs)}, ${formatPeople(year.people)}, jusqu’à ${year.peak} en même temps` : 'personne en vocal';
+              return (
+                <li key={year.yearKey}>
+                  <Link to={yearPath(year.yearKey, search)} class="day-row" onPrefetch={() => prefetchQuery(yearQuery(guildId, year.yearKey))}>
+                    <span class="sr-only">{`${year.yearKey} : ${summary}`}</span>
+                    <span class="day-label" aria-hidden="true">
+                      <span class="lbl-main">{year.yearKey}</span>
+                    </span>
+                    <span class="year-cells" aria-hidden="true">
+                      {year.monthTotals.map((total, index) => {
+                        const monthKey = `${year.yearKey}-${String(index + 1).padStart(2, '0')}`;
+                        return (
+                          <span
+                            key={monthKey}
+                            class="day-cell"
+                            style={{ '--v': max > 0 ? (total / max).toFixed(3) : '0' }}
+                            data-tip={`${formatMonthName(monthKey)} ${year.yearKey}\n${total > 0 ? formatDuration(total) : 'personne'}`}
+                          />
+                        );
+                      })}
+                    </span>
+                    <span class="day-total mono" aria-hidden="true">
+                      {year.totalMs > 0 ? formatDuration(year.totalMs) : '—'}
                     </span>
                   </Link>
                 </li>

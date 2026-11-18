@@ -241,3 +241,9 @@ export function formatDayWeekday(key: string): string {
   const [year, month, day] = key.split('-').map(Number);
   return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric' }).format(Date.UTC(year!, month! - 1, day!));
 }
+
+/** "novembre" from `YYYY-MM`. */
+export function formatMonthName(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'long' }).format(Date.UTC(year!, month! - 1, 1));
+}

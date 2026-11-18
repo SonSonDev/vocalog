@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { buildSearch, dayPath, memberPath, monthPath, parseRoute, readParams, weekPath } from './router.ts';
+import { buildSearch, dayPath, memberPath, monthPath, parseRoute, readParams, weekPath, yearPath } from './router.ts';
 
 describe('parseRoute', () => {
+  it('recognises a year page', () => {
+    expect(parseRoute('/annees/2026')).toEqual({ name: 'year', yearKey: '2026' });
+    expect(parseRoute('/annees/2026/')).toEqual({ name: 'year', yearKey: '2026' });
+    expect(parseRoute('/annees/26')).toEqual({ name: 'home' });
+    expect(yearPath('2026', '?serveur=1')).toBe('/annees/2026?serveur=1');
+  });
+
   it('recognises a week page and a month page', () => {
     expect(parseRoute('/semaines/2026-11-09')).toEqual({ name: 'week', mondayKey: '2026-11-09' });
     expect(parseRoute('/mois/2026-11/')).toEqual({ name: 'month', monthKey: '2026-11' });

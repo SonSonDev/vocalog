@@ -1,4 +1,4 @@
-import { aggregate, dayStrips, monthStrips, weekStrips } from '@vocalog/shared';
+import { aggregate, dayStrips, monthStrips, weekStrips, yearStrips } from '@vocalog/shared';
 import type { GuildInfo, Period, Summary } from '@vocalog/shared';
 import { periodWindow } from './period.ts';
 import { createNamer } from './names.ts';
@@ -7,6 +7,7 @@ import type { Db } from './queries.ts';
 
 const MAX_STRIP_DAYS = 31;
 const MAX_STRIP_PERIODS = 12;
+const MAX_STRIP_YEARS = 6;
 
 export function buildSummary(db: Db, guild: GuildInfo, period: Period, nowMs: number, timeZone: string): Summary {
   const { fromMs, toMs } = periodWindow(period, nowMs, firstEventMs(db, guild.id));
@@ -44,5 +45,6 @@ export function buildSummary(db: Db, guild: GuildInfo, period: Period, nowMs: nu
     days: dayStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, maxDays: MAX_STRIP_DAYS }),
     weeks: weekStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_PERIODS }),
     months: monthStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_PERIODS }),
+    years: yearStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_YEARS }),
   };
 }

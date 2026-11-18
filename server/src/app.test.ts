@@ -462,3 +462,37 @@ describe('summary weeks and months', () => {
     expect(body.weeks.length).toBeLessThanOrEqual(12);
   });
 });
+
+describe('GET /api/guilds/:guildId/years/:yearKey', () => {
+  it('gives the year as twelve months of days, with its records', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/years/2026')).json();
+    expect(body.guild.id).toBe('g1');
+    expect(body.months).toHaveLength(12);
+    expect(body.totalMs).toBe(4 * HOUR);
+    expect(body.activeDays).toBe(1);
+    expect(body.busiestDay).toEqual({ dayKey: '2026-11-17', totalMs: 4 * HOUR });
+    expect(body.busiestMonth).toEqual({ monthKey: '2026-11', totalMs: 4 * HOUR });
+    expect(body.longestStreak).toEqual({ days: 1, startKey: '2026-11-17', endKey: '2026-11-17' });
+    expect(body.months[10].days).toHaveLength(30);
+    expect(body.prevYearKey).toBeNull();
+    expect(body.nextYearKey).toBeNull();
+  });
+
+  it('answers an earlier empty year with its neighbour, and refuses bad or future years and unknown servers', async () => {
+    const app = seeded();
+    const earlier = (await app.inject('/api/guilds/g1/years/2025')).json();
+    expect(earlier.activeDays).toBe(0);
+    expect(earlier.nextYearKey).toBe('2026');
+    expect((await app.inject('/api/guilds/g1/years/26')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/years/2026-11')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/years/2027')).statusCode).toBe(404);
+    expect((await app.inject('/api/guilds/nope/years/2026')).statusCode).toBe(404);
+  });
+
+  it('is listed in the summary as one strip per year', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/summary?period=7d')).json();
+    expect(body.years[0]).toMatchObject({ yearKey: '2026', people: 2 });
+    expect(body.years[0].monthTotals).toHaveLength(12);
+    expect(body.years[0].monthTotals[10]).toBe(4 * HOUR);
+  });
+});

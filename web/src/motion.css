@@ -232,3 +232,16 @@
     transition: opacity 150ms ease-out;
   }
 }
+
+/* Five key figures wrap into two or three rows: each row is as tall as a real one. */
+@media (min-width: 700px) and (max-width: 1199px) {
+  .skeleton-figures.n5 .figure {
+    min-height: 125px;
+  }
+}
+
+@media (max-width: 699px) {
+  .skeleton-figures.n5 .figure {
+    min-height: 113px;
+  }
+}

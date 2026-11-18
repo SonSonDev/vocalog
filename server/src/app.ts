@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { isDayKey, isMondayKey, isMonthKey } from '@vocalog/shared';
+import { isDayKey, isMondayKey, isMonthKey, isYearKey } from '@vocalog/shared';
 import type { MeResponse, Period } from '@vocalog/shared';
 import { createImageProxy } from './image.ts';
 import { createCache } from './cache.ts';
@@ -15,6 +15,7 @@ import type { Db } from './queries.ts';
 import { resolveStatic } from './static.ts';
 import { buildSummary } from './summary.ts';
 import { buildWeekView } from './week.ts';
+import { buildYearView } from './year.ts';
 
 export interface AppOptions {
   db: Db;
@@ -118,6 +119,14 @@ export function buildApp(options: AppOptions): FastifyInstance {
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
     const view = cached(`month|${guild.id}|${request.params.monthKey}`, () => buildMonthView(db, guild, request.params.monthKey, now(), timeZone));
     return view ?? reply.code(404).send({ error: 'unknown month' });
+  });
+
+  app.get<{ Params: { guildId: string; yearKey: string } }>('/api/guilds/:guildId/years/:yearKey', async (request, reply) => {
+    if (!isYearKey(request.params.yearKey)) return reply.code(400).send({ error: 'year must be written YYYY' });
+    const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
+    if (!guild) return reply.code(404).send({ error: 'unknown server' });
+    const view = cached(`year|${guild.id}|${request.params.yearKey}`, () => buildYearView(db, guild, request.params.yearKey, now(), timeZone));
+    return view ?? reply.code(404).send({ error: 'unknown year' });
   });
 
   // The picture of a member, fetched from Discord by this server. The hash comes from the database, not from the request,

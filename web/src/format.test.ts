@@ -3,6 +3,7 @@ import {
   formatCompactDuration,
   formatDayWeekday,
   formatMonthLong,
+  formatMonthName,
   formatMonthShort,
   formatWeekRange,
   formatWeekShort,
@@ -245,6 +246,11 @@ describe('week and month labels', () => {
     expect(isoWeekNumber('2026-01-05')).toBe(2);
     expect(isoWeekNumber('2025-12-29')).toBe(1); // belongs to the first week of 2026
     expect(isoWeekNumber('2024-12-30')).toBe(1);
+  });
+
+  it('writes the name of a month', () => {
+    expect(formatMonthName('2026-11')).toBe('novembre');
+    expect(formatMonthName('2026-02')).toBe('février');
   });
 
   it('writes a month', () => {

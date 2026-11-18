@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — A page for the year: twelve small calendars
+- Decision: a year page (`/annees/<YYYY>`) with five key figures and twelve small month calendars; an Années button on the home switch with one line per year; a link from the month page. The per-day totals of a year are computed in one pass over the sessions, not one pass per day.
+- Why: the owner asked for the year after the week and the month, and chose the annual calendar. Twelve month calendars keep the "one cell per day" idea of a contribution graph, but fit a phone and lead to the months, where a GitHub-style grid of 53 columns would be about 6 px per cell.
+- Alternatives rejected: a 53-column grid (unreadable on a phone, or sideways scrolling); the yearly recap by member (kept for later as F7, it is editorial rather than a timeline); only a button on the home page with no page.
+- Consequences / risks accepted: day cells on the year page are not links (365 tab stops would be a burden; the month title is the way in); a year shows its whole span even when the data starts in the middle of it (earlier cells are empty).
+
 ## 2026-11-18 — Weeks and months: real hours for a week, a calendar for a month
 - Decision: a week page shows each stay as a bar at its real hour over seven days (Monday 06:00 to Monday 06:00); a month page is a calendar with one cell per day (the group's time); the home page's day strips get a Jours / Semaines / Mois switch whose rows open those pages; the day page links to its week and month. The summary carries up to 12 week strips and 12 month strips; two routes give a week or a month in detail.
 - Why: the owner asked for week and month timelines next to the day ones, and chose real hours for the week. A month cannot show hours (30 days would make bars of a pixel), so it shows the rhythm per day and leads to the week, then the day.

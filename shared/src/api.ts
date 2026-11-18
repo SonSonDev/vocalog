@@ -1,7 +1,7 @@
 /** Types of the JSON API, shared by the server and the web app. */
 import type { FlagTimes } from './flags.ts';
 import type { MemberStats } from './profile.ts';
-import type { MonthCalendar, MonthStrip, WeekStrip } from './calendar.ts';
+import type { MonthCalendar, MonthStrip, WeekStrip, YearCalendar, YearStrip } from './calendar.ts';
 import type { DayStrip } from './timeline.ts';
 
 export const PERIODS = ['7d', '30d', '1y', 'all'] as const;
@@ -50,6 +50,8 @@ export interface Summary {
   weeks: WeekStrip[];
   /** One strip per month of the period, newest first, at most 12. */
   months: MonthStrip[];
+  /** One strip per year of the period, newest first, at most 6. */
+  years: YearStrip[];
 }
 
 /** One week in detail (Monday 06:00 to the next Monday 06:00): who was in voice and when. */
@@ -121,4 +123,13 @@ export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' |
 export interface MeResponse {
   authMode: 'discord' | 'none';
   user: NamedRef | null;
+}
+
+/** One year as twelve small calendars. */
+export interface YearView extends YearCalendar {
+  guild: GuildInfo;
+  timeZone: string;
+  generatedAtMs: number;
+  prevYearKey: string | null;
+  nextYearKey: string | null;
 }

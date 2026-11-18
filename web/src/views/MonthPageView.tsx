@@ -1,3 +1,4 @@
+import { yearOf } from '@vocalog/shared';
 import type { MonthView, Period } from '@vocalog/shared';
 import { useEffect } from 'preact/hooks';
 import { Header } from '../components/Header.tsx';
@@ -6,8 +7,8 @@ import { Link } from '../components/Link.tsx';
 import { PeriodNav } from '../components/PeriodNav.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
 import { WEEKDAYS_SHORT, formatClock, formatCompactDuration, formatDateTime, formatDayLong, formatDayShort, formatDayWeekday, formatDuration, formatMonthLong, formatPeople, isoWeekNumber, maxOf } from '../format.ts';
-import { dayQuery, monthQuery, prefetchQuery, weekQuery } from '../queries.ts';
-import { dayPath, monthPath, weekPath } from '../router.ts';
+import { dayQuery, monthQuery, prefetchQuery, weekQuery, yearQuery } from '../queries.ts';
+import { dayPath, monthPath, weekPath, yearPath } from '../router.ts';
 import { useRemote } from '../useRemote.ts';
 
 interface Props {
@@ -74,7 +75,16 @@ export function MonthPageView({ guildId, monthKey, search, controls }: Props) {
 
 function MonthNav({ month, guildId, search }: { month: MonthView; guildId: string; search: string }) {
   const target = (key: string) => ({ to: monthPath(key, search), label: formatMonthLong(key), onPrefetch: () => prefetchQuery(monthQuery(guildId, key)) });
-  return <PeriodNav prev={month.prevMonthKey ? target(month.prevMonthKey) : null} next={month.nextMonthKey ? target(month.nextMonthKey) : null} prevEnd="Début des données" nextEnd="Ce mois-ci" />;
+  const year = yearOf(month.monthKey);
+  return (
+    <PeriodNav
+      prev={month.prevMonthKey ? target(month.prevMonthKey) : null}
+      next={month.nextMonthKey ? target(month.nextMonthKey) : null}
+      prevEnd="Début des données"
+      nextEnd="Ce mois-ci"
+      middle={[{ to: yearPath(year, search), label: 'Année', onPrefetch: () => prefetchQuery(yearQuery(guildId, year)) }]}
+    />
+  );
 }
 
 function MonthFigures({ month }: { month: MonthView }) {

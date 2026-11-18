@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, buildMonthCalendar, buildWeekTimeline, daysInMonth, isMondayKey, isMonthKey, mondayOf, monthOf, monthStrips, weekStrips, weekWindow } from './calendar.ts';
+import { addMonths, buildMonthCalendar, buildWeekTimeline, buildYearCalendar, daysInMonth, isMondayKey, isMonthKey, isYearKey, mondayOf, monthOf, monthStrips, weekStrips, weekWindow, yearOf, yearStrips } from './calendar.ts';
 import type { Session } from './types.ts';
 
 const HOUR = 3_600_000;
@@ -152,5 +152,71 @@ describe('buildMonthCalendar', () => {
     expect(empty.busiest).toBeNull();
     expect(empty.peak).toBeNull();
     expect(empty.activeDays).toBe(0);
+  });
+});
+
+describe('years', () => {
+  const now = Date.UTC(2026, 10, 18, 12);
+  const input = { fromMs: Date.UTC(2025, 0, 1, 6), limitMs: now, nowMs: now, timeZone: 'UTC', max: 6 };
+
+  it('accepts only plausible years', () => {
+    expect(isYearKey('2026')).toBe(true);
+    for (const bad of ['26', '1999', '2101', '2026-01', '', 'abcd']) expect(isYearKey(bad)).toBe(false);
+    expect(yearOf('2026-11-15')).toBe('2026');
+  });
+
+  it('gives one strip per year, newest first, with the total of each month', () => {
+    const sessions = [s('a', 'c', at(11, 3, 20), at(11, 3, 22)), s('a', 'c', Date.UTC(2025, 5, 10, 20), Date.UTC(2025, 5, 10, 21))];
+    const strips = yearStrips(sessions, input);
+    expect(strips.map((strip) => strip.yearKey)).toEqual(['2026', '2025']);
+    expect(strips[0]!.monthTotals).toHaveLength(12);
+    expect(strips[0]!.monthTotals[10]).toBe(2 * HOUR);
+    expect(strips[1]!.monthTotals[5]).toBe(HOUR);
+    expect(strips[1]!.totalMs).toBe(HOUR);
+  });
+
+  it('lays a year out as twelve months of days, with the records of the year', () => {
+    const sessions = [
+      s('a', 'c', at(11, 3, 20), at(11, 3, 22)),
+      s('b', 'c', at(11, 3, 21), at(11, 3, 23)),
+      s('a', 'c', at(11, 4, 20), at(11, 4, 21)),
+      s('a', 'c', at(11, 5, 20), at(11, 5, 21)),
+      s('a', 'c', at(11, 14, 20), at(11, 14, 21)),
+      s('a', 'c', at(3, 9, 20), at(3, 9, 21)),
+    ];
+    const year = buildYearCalendar(sessions, '2026', now, 'UTC');
+    expect(year.months).toHaveLength(12);
+    expect(year.months[0]!.days).toHaveLength(31);
+    expect(year.months[1]!.days).toHaveLength(28);
+    expect(year.months[0]!.firstWeekday).toBe(3); // 1 January 2026 is a Thursday
+    expect(year.totalMs).toBe(8 * HOUR);
+    expect(year.people).toBe(2);
+    expect(year.activeDays).toBe(5);
+    expect(year.busiestDay).toEqual({ dayKey: '2026-11-03', totalMs: 4 * HOUR });
+    expect(year.busiestMonth).toEqual({ monthKey: '2026-11', totalMs: 7 * HOUR });
+    expect(year.longestStreak).toEqual({ days: 3, startKey: '2026-11-03', endKey: '2026-11-05' });
+    expect(year.months[10]!.activeDays).toBe(4);
+    expect(year.months[11]!.days.every((day) => day.future)).toBe(true);
+    expect(year.months[10]!.days.find((day) => day.dayKey === '2026-11-17')!.future).toBe(false);
+  });
+
+  it('keeps an evening that crosses midnight on the day it started, and handles an empty year', () => {
+    const year = buildYearCalendar([s('a', 'c', at(11, 3, 22), at(11, 4, 2))], '2026', now, 'UTC');
+    expect(year.months[10]!.days[2]!.totalMs).toBe(4 * HOUR);
+    expect(year.months[10]!.days[3]!.totalMs).toBe(0);
+    const empty = buildYearCalendar([], '2026', now, 'UTC');
+    expect(empty.busiestDay).toBeNull();
+    expect(empty.busiestMonth).toBeNull();
+    expect(empty.longestStreak).toBeNull();
+    expect(empty.activeDays).toBe(0);
+  });
+
+  it('agrees with the month calendar on the total of every day', () => {
+    const sessions = [s('a', 'c', at(11, 3, 20), at(11, 4, 3)), s('b', 'c', at(11, 7, 8), at(11, 7, 12))];
+    const year = buildYearCalendar(sessions, '2026', now, 'UTC');
+    const month = buildMonthCalendar(sessions, '2026-11', now, 'UTC');
+    const fromMonth = month.weeks.flatMap((week) => week.days).filter((day) => day !== null).map((day) => [day!.dayKey, day!.totalMs]);
+    const fromYear = year.months[10]!.days.map((day) => [day.dayKey, day.totalMs]);
+    expect(fromYear).toEqual(fromMonth);
   });
 });

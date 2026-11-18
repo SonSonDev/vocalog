@@ -76,7 +76,7 @@ Everything below is computable from the existing journal; nothing needs a new Di
 | F-5 | ✅ done 2026-11-18 (months and weeks on the home page, plus week and month pages) | S | **Month view** on the home page: voice time per month with a moving average (SPEC's brief mentions monthly average, the page only shows daily). |
 | F-6 | P2 | M | **Followers**: when A joins, who joins within 10 minutes (and who leaves right after). "Who brings the others" and "who pulls the group". Uses join and leave times only. |
 | F-7 | P3 | M | **Compare two members**: overlap of habits (hours, channels), time together, who arrives first. |
-| F-8 | P3 | S | **Calendar heatmap** of the year (one cell per day) for the group and per member. |
+| F-8 | ✅ done 2026-11-18 (the year page, as twelve month calendars; per member still open) | S | **Calendar heatmap** of the year (one cell per day) for the group and per member. |
 | F-9 | P3 | S | **Name history** (`name_history` already stores every name): "anciennement …" on the member page, and a fun "most renamed". |
 | F-10 | P3 | S | **Badges** for friends: noctambule (sessions past 03:00 already counted), lève-tôt, marathonien, fidèle (streak), ouvreur de salon (room roles already counted). Cosmetic, keep optional. |
 | F-11 | P3 | S | **Channel habits**: favourite channel per member, channel moves per session (`move` events are recorded and unused), "nomades". |

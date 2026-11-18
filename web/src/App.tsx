@@ -14,6 +14,7 @@ import { DayPageView } from './views/DayPageView.tsx';
 import { MemberView } from './views/MemberView.tsx';
 import { MonthPageView } from './views/MonthPageView.tsx';
 import { WeekPageView } from './views/WeekPageView.tsx';
+import { YearPageView } from './views/YearPageView.tsx';
 
 const GUILD_KEY = 'vocalog-guild';
 
@@ -104,6 +105,8 @@ export function App() {
             <WeekPageView guildId={guildId} mondayKey={route.mondayKey} period={period} search={search} controls={controls} />
           ) : route.name === 'month' ? (
             <MonthPageView guildId={guildId} monthKey={route.monthKey} period={period} search={search} controls={controls} />
+          ) : route.name === 'year' ? (
+            <YearPageView guildId={guildId} yearKey={route.yearKey} period={period} search={search} controls={controls} />
           ) : (
             <HomeView guildId={guildId} period={period} search={search} controls={controls} />
           ))}

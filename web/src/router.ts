@@ -7,7 +7,8 @@ export type Route =
   | { name: 'member'; userId: string }
   | { name: 'day'; dayKey: string }
   | { name: 'week'; mondayKey: string }
-  | { name: 'month'; monthKey: string };
+  | { name: 'month'; monthKey: string }
+  | { name: 'year'; yearKey: string };
 
 export function parseRoute(pathname: string): Route {
   const match = /^\/membres\/([^/]+)\/?$/.exec(pathname);
@@ -24,6 +25,8 @@ export function parseRoute(pathname: string): Route {
   if (week) return { name: 'week', mondayKey: week[1]! };
   const month = /^\/mois\/(\d{4}-\d{2})\/?$/.exec(pathname);
   if (month) return { name: 'month', monthKey: month[1]! };
+  const year = /^\/annees\/(\d{4})\/?$/.exec(pathname);
+  if (year) return { name: 'year', yearKey: year[1]! };
   return { name: 'home' };
 }
 
@@ -58,6 +61,10 @@ export function weekPath(mondayKey: string, search: string): string {
 
 export function monthPath(monthKey: string, search: string): string {
   return `/mois/${monthKey}${search}`;
+}
+
+export function yearPath(yearKey: string, search: string): string {
+  return `/annees/${yearKey}${search}`;
 }
 
 const EVENT = 'vocalog:navigate';
