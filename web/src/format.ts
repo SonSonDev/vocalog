@@ -183,27 +183,5 @@ export function timelineView(day: { startMs: number; endMs: number }, firstMs: n
   return { startMs, endMs, stepMs };
 }
 
-/**
- * The hours to draw in the hourly profiles, in order: the day starts at 06:00 (so 23 h, 0 h and 1 h are neighbours, as in the
- * timelines) and the ends where nobody is ever there are cut, keeping one hour of margin and at least `minBars` bars.
- * `hourTotals` is the voice time of everybody per hour of day (24 values); one window serves every row so rows stay comparable.
- */
-export function activeHourWindow(hourTotals: number[], startHour = 6, minBars = 8, margin = 1): number[] {
-  const ordered = Array.from({ length: 24 }, (_, index) => (index + startHour) % 24);
-  const active = ordered.map((hour, index) => ((hourTotals[hour] ?? 0) > 0 ? index : -1)).filter((index) => index >= 0);
-  if (active.length === 0) return ordered;
-  let first = Math.max(0, active[0]! - margin);
-  let last = Math.min(23, active[active.length - 1]! + margin);
-  while (last - first + 1 < minBars) {
-    if (first > 0) first--;
-    if (last - first + 1 < minBars && last < 23) last++;
-    if (first === 0 && last === 23) break;
-  }
-  return ordered.slice(first, last + 1);
-}
-
-/** "de 18 h à 5 h" for the bars of an hourly profile (the last bar ends one hour after its own hour). */
-export function describeHourWindow(hours: number[]): string {
-  if (hours.length >= 24) return 'sur 24 h';
-  return `de ${hours[0]} h à ${((hours[hours.length - 1] ?? 0) + 1) % 24} h`;
-}
+/** The 24 hours of an hourly profile, the day starting at 06:00 so an evening that passes midnight stays in one piece. */
+export const HOURS_FROM_SIX: readonly number[] = Array.from({ length: 24 }, (_, index) => (index + 6) % 24);

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import type { Summary } from '@vocalog/shared';
-import { activeHourWindow, busiestHour, describeHourWindow, formatDuration, maxOf } from '../format.ts';
+import { HOURS_FROM_SIX, busiestHour, formatDuration, maxOf } from '../format.ts';
 import { memberPath } from '../router.ts';
 import { Avatar } from './Avatar.tsx';
 import { Handle } from './Handle.tsx';
@@ -18,8 +18,6 @@ export function MemberTable({ members, guildId, search, viewerId }: { members: S
   const [expanded, setExpanded] = useState(false);
   const collapsible = members.length > COLLAPSED_COUNT + 1;
   const shown = collapsible && !expanded ? members.slice(0, COLLAPSED_COUNT) : members;
-  // One window for every row, made from the whole group (not only the rows shown), so the bars line up and nothing is cut.
-  const hours = activeHourWindow(Array.from({ length: 24 }, (_, hour) => members.reduce((sum, member) => sum + (member.hourMs[hour] ?? 0), 0)));
   return (
     <section class="card" id="membres" aria-labelledby="membres-title">
       <h2 id="membres-title">
@@ -53,12 +51,12 @@ export function MemberTable({ members, guildId, search, viewerId }: { members: S
                 <span class="unit"> session{member.sessions > 1 ? 's' : ''}</span>
               </span>
               <span class="spark" aria-hidden="true">
-                {hours.map((hour) => {
+                {HOURS_FROM_SIX.map((hour) => {
                   const value = member.hourMs[hour] ?? 0;
                   return (
                     <span
                       key={hour}
-                      class={value === peak && peak > 0 ? 'peak' : undefined}
+                      class={value === peak && peak > 0 ? 'peak' : value === 0 ? 'none' : undefined}
                       style={{ height: `${peak > 0 ? Math.max(value > 0 ? 6 : 0, Math.round((value / peak) * 100)) : 0}%` }}
                       data-tip={`${hour} h : ${formatDuration(value)}`}
                     />
@@ -70,7 +68,7 @@ export function MemberTable({ members, guildId, search, viewerId }: { members: S
           );
         })}
       </ul>
-      <p class="muted">Profil horaire : une barre par heure, {describeHourWindow(hours)}, la plus haute en couleur.</p>
+      <p class="muted">Profil horaire : une barre par heure, de 6 h à 6 h.</p>
       {collapsible && (
         <button type="button" class="more" aria-expanded={expanded} aria-controls="membres" onClick={() => setExpanded(!expanded)}>
           {expanded ? 'Réduire la liste' : `Afficher les ${members.length} membres`}
