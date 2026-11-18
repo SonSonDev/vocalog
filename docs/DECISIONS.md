@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — The contribution-style grid for each member: the last 53 weeks
+- Decision: a member's page gets a "12 derniers mois" card with the contribution-style grid of their own voice time per day, over the last 53 weeks ending with the current week, independent of the selected period. The grid is the same component as the year page; the profile carries the data compactly (a start date, one total per day, how many days have elapsed). A month cut by the start of the window gets no label when it is shown on fewer than three columns.
+- Why: the owner asked for the year grid for each member. A rolling year needs no navigation and shows a member's rhythm at a glance; a calendar year per member would need year buttons and would be mostly empty at the start of a year.
+- Alternatives rejected: a calendar year with previous and next buttons on the member page (more controls, an extra request, empty in January); tying the grid to the period selector (7 or 30 days would give a nearly empty grid); sending a date and a flag per day (about 15 kB per profile instead of about 3 kB).
+- Consequences / risks accepted: the grid ignores the period, which a reader could expect it to follow (its title says twelve months); the profile is a little larger and computed on each request (cached by the server like the rest).
+
 ## 2026-11-18 — The year as a contribution-style grid, with the month calendars behind a switch
 - Decision: the year page opens on a grid of weeks (columns) and weekdays (rows), one cell per day, like the contributions of a code hosting site; the twelve month calendars stay one click away (Grille / Mois, remembered). On a phone the grid scrolls sideways and starts at the latest weeks. This supersedes the 2026-11-18 entry that chose the month calendars only.
 - Why: the owner asked for the contribution-style display after seeing the month calendars. The reason for rejecting it earlier (cells of 6 px on a phone) is answered by sideways scrolling with the weekday labels kept in view.

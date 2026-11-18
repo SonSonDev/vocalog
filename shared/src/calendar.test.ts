@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, buildMonthCalendar, buildWeekTimeline, buildYearCalendar, daysInMonth, isMondayKey, isMonthKey, isYearKey, mondayOf, monthOf, monthStrips, weekStrips, weekWindow, yearOf, yearStrips } from './calendar.ts';
+import { addMonths, buildMemberYear, buildMonthCalendar, buildWeekTimeline, buildYearCalendar, daysInMonth, isMondayKey, isMonthKey, isYearKey, mondayOf, monthOf, monthStrips, weekStrips, weekWindow, yearOf, yearStrips } from './calendar.ts';
+import { dayNumber } from './aggregate.ts';
 import type { Session } from './types.ts';
 
 const HOUR = 3_600_000;
@@ -218,5 +219,40 @@ describe('years', () => {
     const fromMonth = month.weeks.flatMap((week) => week.days).filter((day) => day !== null).map((day) => [day!.dayKey, day!.totalMs]);
     const fromYear = year.months[10]!.days.map((day) => [day.dayKey, day.totalMs]);
     expect(fromYear).toEqual(fromMonth);
+  });
+});
+
+describe('buildMemberYear', () => {
+  const now = Date.UTC(2026, 10, 18, 12); // Wednesday 18 November 2026
+  const ownSessions = [s('u1', 'c', at(11, 3, 20), at(11, 3, 22)), s('u1', 'c', at(11, 17, 20), at(11, 18, 2)), s('u1', 'c', at(5, 4, 20), at(5, 4, 21))];
+
+  it('covers 53 whole weeks starting on a Monday and ending with the current week', () => {
+    const year = buildMemberYear(ownSessions, now, 'UTC');
+    expect(year.totals).toHaveLength(371);
+    expect(mondayOf(year.startKey)).toBe(year.startKey);
+    expect(year.startKey).toBe('2025-11-17'); // 52 weeks before the Monday 16 November 2026
+    expect(year.elapsedDays).toBe(367); // from the first Monday to Wednesday 18 November 2026 included
+    expect(year.totals.slice(year.elapsedDays).every((value) => value === 0)).toBe(true); // Thursday to Sunday: nothing yet
+  });
+
+  it('puts the time of each day where it belongs, an evening past midnight on the day it started', () => {
+    const year = buildMemberYear(ownSessions, now, 'UTC');
+    const at_ = (dayKey: string): number => year.totals[dayNumber(dayKey) - dayNumber(year.startKey)]!;
+    expect(at_('2026-11-03')).toBe(2 * HOUR);
+    expect(at_('2026-11-17')).toBe(6 * HOUR); // 20:00 to 02:00 the next morning
+    expect(at_('2026-11-18')).toBe(0);
+    expect(at_('2026-05-04')).toBe(HOUR);
+  });
+
+  it('is empty for nobody, and ignores a stay older than the window', () => {
+    const empty = buildMemberYear([], now, 'UTC');
+    expect(empty.totals.every((value) => value === 0)).toBe(true);
+    const old = buildMemberYear([s('u1', 'c', Date.UTC(2024, 0, 1, 20), Date.UTC(2024, 0, 1, 22))], now, 'UTC');
+    expect(old.totals.every((value) => value === 0)).toBe(true);
+  });
+
+  it('counts an open stay up to now', () => {
+    const year = buildMemberYear([s('u1', 'c', at(11, 18, 8), null)], now, 'UTC');
+    expect(year.totals[year.elapsedDays - 1]).toBe(4 * HOUR);
   });
 });

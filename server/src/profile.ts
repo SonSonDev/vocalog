@@ -1,4 +1,4 @@
-import { buildMemberStats, deriveSessions } from '@vocalog/shared';
+import { buildMemberStats, buildMemberYear, deriveSessions } from '@vocalog/shared';
 import type { GuildInfo, MemberProfile, Period } from '@vocalog/shared';
 import { periodWindow } from './period.ts';
 import { createNamer } from './names.ts';
@@ -23,6 +23,11 @@ export function buildMemberProfile(
   const { userId: _userId, channels: statChannels, together, longestSession, ...rest } = stats;
   return {
     ...rest,
+    yearGrid: buildMemberYear(
+      sessions.filter((session) => session.userId === userId),
+      nowMs,
+      timeZone,
+    ),
     guild,
     user: user(userId),
     period,

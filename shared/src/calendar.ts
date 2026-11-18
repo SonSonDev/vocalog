@@ -389,3 +389,28 @@ export function buildYearCalendar(sessions: readonly Session[], yearKey: string,
     months,
   };
 }
+
+/* ---- One member over the last twelve months ---- */
+
+/**
+ * Voice time of one member on each of the last 53 weeks, ending with the current week (Monday first). `totals` has one
+ * value per day from `startKey` (a Monday), always a whole number of weeks; the days after today (the end of the current
+ * week) are the ones from index `elapsedDays` on, and hold nothing yet.
+ */
+export interface MemberYear {
+  startKey: string;
+  totals: number[];
+  elapsedDays: number;
+}
+
+/** The member's own sessions as a year of days, for a contribution-style grid. */
+export function buildMemberYear(ownSessions: readonly Session[], nowMs: number, timeZone: string): MemberYear {
+  const today = dayNumber(timelineDayKey(nowMs, timeZone));
+  const rawStart = today - 52 * 7 - weekdayOf(today); // the Monday of the week 52 weeks before this one
+  const dayCount = 53 * 7;
+  const startKey = dayKeyOf(rawStart);
+  const firstWindow = timelineDayWindow(startKey, timeZone);
+  const lastWindow = timelineDayWindow(dayKeyOf(rawStart + dayCount - 1), timeZone);
+  const clipped = clipSessions(ownSessions, firstWindow.startMs, Math.min(lastWindow.endMs, nowMs), nowMs);
+  return { startKey, totals: totalsPerDay(clipped, rawStart, dayCount, timeZone), elapsedDays: today - rawStart + 1 };
+}

@@ -1,7 +1,7 @@
 /** Types of the JSON API, shared by the server and the web app. */
 import type { FlagTimes } from './flags.ts';
 import type { MemberStats } from './profile.ts';
-import type { MonthCalendar, MonthStrip, WeekStrip, YearCalendar, YearStrip } from './calendar.ts';
+import type { MemberYear, MonthCalendar, MonthStrip, WeekStrip, YearCalendar, YearStrip } from './calendar.ts';
 import type { DayStrip } from './timeline.ts';
 
 export const PERIODS = ['7d', '30d', '1y', 'all'] as const;
@@ -103,6 +103,8 @@ export interface DayView {
 
 /** Personal statistics of one member, with names resolved. */
 export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' | 'together' | 'longestSession'> {
+  /** The member's voice time on each day of the last 53 weeks, whatever the period. */
+  yearGrid: MemberYear;
   guild: GuildInfo;
   user: NamedRef;
   period: Period;

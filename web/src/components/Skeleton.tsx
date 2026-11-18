@@ -19,6 +19,7 @@ const CARDS: Record<SkeletonVariant, { span: string; heights: Heights; rows: num
   member: [
     { span: 'col-7', heights: [300, 257, 219], rows: 3 },
     { span: 'col-5', heights: [300, 300, 250], rows: 3 },
+    { span: 'col-12', heights: [255, 203, 195], rows: 3 },
     { span: 'col-6', heights: [397, 520, 512], rows: 5 },
     { span: 'col-6', heights: [397, 520, 344], rows: 4 },
     { span: 'col-6', heights: [391, 518, 510], rows: 5 },

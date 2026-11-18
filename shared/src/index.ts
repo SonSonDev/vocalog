@@ -18,3 +18,5 @@ export { addMonths, buildMonthCalendar, buildWeekTimeline, daysInMonth, isMonday
 export type { CalendarDay, MonthCalendar, MonthStrip, WeekStrip, WeekTimeline } from './calendar.ts';
 export { buildYearCalendar, isYearKey, yearOf, yearStrips } from './calendar.ts';
 export type { YearCalendar, YearStrip } from './calendar.ts';
+export { buildMemberYear } from './calendar.ts';
+export type { MemberYear } from './calendar.ts';

@@ -77,6 +77,7 @@ Status: `in progress` (member page built and tested; not yet checked in a browse
 - Voice states as time and share of voice time: microphone off (muted or deafened by the user; a moderator's server mute is not counted), headphones off, screen sharing, camera.
 - Habits: average arrival and departure time (on a day that starts at 06:00), share of time by morning, afternoon, evening and night, compared with the group.
 - Comparison with the group: rank, total and session length versus the group average, muted share, arrival time.
+- Twelve months: a contribution-style grid of the member's voice time on each day of the last 53 weeks (ending with the current week), whatever the period selected; the total of those twelve months sits in the card title. Same grid as the year page (weekday labels kept at the left, sideways scrolling on a phone, starting at the latest weeks).
 - Rooms and nights: times the member opened a room (first in an empty channel) and closed it (last to leave), sessions that pass 03:00, best streak.
 - Definition of "together": same channel at the same time (regardless of mute).
 - Yearly recap: `planned`.

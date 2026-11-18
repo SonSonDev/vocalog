@@ -1,11 +1,12 @@
 import type { Period, YearView } from '@vocalog/shared';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
+import { ContributionGrid } from '../components/ContributionGrid.tsx';
 import { Header } from '../components/Header.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Link } from '../components/Link.tsx';
 import { PeriodNav } from '../components/PeriodNav.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
-import { WEEKDAYS_SHORT, formatClock, formatDayKey, formatDayShort, formatDuration, formatMonthAbbr, formatMonthName, maxOf } from '../format.ts';
+import { formatClock, formatDayKey, formatDayShort, formatDuration, formatMonthName, maxOf } from '../format.ts';
 import { monthQuery, prefetchQuery, yearQuery } from '../queries.ts';
 import { monthPath, yearPath } from '../router.ts';
 import { useRemote } from '../useRemote.ts';
@@ -146,48 +147,15 @@ function YearCard({ year, guildId, search }: { year: YearView; guildId: string; 
           </button>
         </div>
       </div>
-      {display === 'grid' ? <ContributionGrid year={year} /> : <MonthCalendars year={year} guildId={guildId} search={search} />}
+      {display === 'grid' ? (
+        <ContributionGrid
+          grid={buildYearGrid(year.months)}
+          label={`Calendrier de l’année : ${year.activeDays} jour${year.activeDays > 1 ? 's' : ''} avec du vocal, une case par jour.`}
+          scrollToEnd={year.nextYearKey === null}
+          resetKey={year.yearKey}
+        />
+      ) : <MonthCalendars year={year} guildId={guildId} search={search} />}
     </section>
-  );
-}
-
-/**
- * Weeks as columns (Monday first), weekdays as rows, one cell per day, darker for more voice time, like the contributions
- * of a code hosting site. On a phone it scrolls sideways (53 columns would be 6 px each) and starts at the latest weeks.
- */
-function ContributionGrid({ year }: { year: YearView }) {
-  const grid = buildYearGrid(year.months);
-  const max = maxOf(grid.cells.map((cell) => cell.totalMs));
-  const scroller = useRef<HTMLDivElement>(null);
-  const isCurrentYear = year.nextYearKey === null;
-  useEffect(() => {
-    const element = scroller.current;
-    if (element) element.scrollLeft = isCurrentYear ? element.scrollWidth : 0;
-  }, [year.yearKey]);
-
-  return (
-    <div class="gh-scroll" ref={scroller}>
-      <div class="gh" style={{ '--cols': String(grid.columns) }} role="img" aria-label={`Calendrier de l’année : ${year.activeDays} jour${year.activeDays > 1 ? 's' : ''} avec du vocal, une case par jour.`}>
-        {grid.months.map((month) => (
-          <span key={month.monthKey} class="gh-month" style={{ gridColumn: `${month.column + 2} / span ${Math.min(3, grid.columns - month.column)}`, gridRow: 1 }}>
-            {formatMonthAbbr(month.monthKey)}
-          </span>
-        ))}
-        {[0, 2, 4].map((row) => (
-          <span key={row} class="gh-dow" style={{ gridRow: row + 2 }}>
-            {WEEKDAYS_SHORT[row]}
-          </span>
-        ))}
-        {grid.cells.map((cell) => (
-          <span
-            key={cell.dayKey}
-            class={cell.future ? 'gh-cell future' : 'gh-cell'}
-            style={{ gridColumn: cell.column + 2, gridRow: cell.row + 2, '--v': max > 0 ? (cell.totalMs / max).toFixed(3) : '0' }}
-            data-tip={cell.future ? undefined : `${formatDayShort(cell.dayKey)}\n${cell.totalMs > 0 ? formatDuration(cell.totalMs) : 'personne'}`}
-          />
-        ))}
-      </div>
-    </div>
   );
 }
 

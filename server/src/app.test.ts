@@ -496,3 +496,23 @@ describe('GET /api/guilds/:guildId/years/:yearKey', () => {
     expect(body.years[0].monthTotals[10]).toBe(4 * HOUR);
   });
 });
+
+describe('member year grid', () => {
+  it('gives a member their voice time on each of the last 53 weeks, whatever the period', async () => {
+    const app = seeded();
+    for (const period of ['7d', '30d', 'all']) {
+      const body = (await app.inject(`/api/guilds/g1/members/u1?period=${period}`)).json();
+      expect(body.yearGrid.totals).toHaveLength(371);
+      expect(body.yearGrid.startKey).toBe('2025-11-17'); // 52 weeks before the Monday of the current week
+      expect(body.yearGrid.elapsedDays).toBe(366); // up to Tuesday 17 November 2026 included
+      const today = body.yearGrid.totals[body.yearGrid.elapsedDays - 1];
+      expect(today).toBe(3 * HOUR); // u1 was in voice from 07:00 to 10:00
+      expect(body.yearGrid.totals.reduce((sum: number, value: number) => sum + value, 0)).toBe(3 * HOUR);
+    }
+  });
+
+  it('counts only that member', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/members/u2?period=30d')).json();
+    expect(body.yearGrid.totals.reduce((sum: number, value: number) => sum + value, 0)).toBe(HOUR);
+  });
+});

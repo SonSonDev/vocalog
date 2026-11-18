@@ -1,14 +1,16 @@
 import type { Period } from '@vocalog/shared';
 import { memberQuery } from '../queries.ts';
 import { Avatar } from '../components/Avatar.tsx';
+import { ContributionGrid } from '../components/ContributionGrid.tsx';
 import { Header } from '../components/Header.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Heatmap } from '../components/Heatmap.tsx';
 import { Channels } from '../components/Lists.tsx';
 import { ActivityChart, GroupCompare, Habits, MemberFigures, RoomRoles, Together, VoiceStates } from '../components/ProfileCards.tsx';
-import { formatClock, visibleHandle } from '../format.ts';
+import { formatClock, formatDuration, visibleHandle } from '../format.ts';
 import { useRemote } from '../useRemote.ts';
+import { buildMemberGrid } from '../yearGrid.ts';
 
 interface Props {
   guildId: string | null;
@@ -60,6 +62,14 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
             </div>
             <div class="col-5">
               <Heatmap heat={profile.heat} />
+            </div>
+            <div class="col-12">
+              <section class="card" aria-labelledby="year-title">
+                <h2 id="year-title">
+                  12 derniers mois <span class="count mono">{formatDuration(profile.yearGrid.totals.reduce((sum, value) => sum + value, 0))}</span>
+                </h2>
+                <ContributionGrid grid={buildMemberGrid(profile.yearGrid)} label="Voix du membre sur les 12 derniers mois, une case par jour." scrollToEnd resetKey={`${guildId}|${userId}`} />
+              </section>
             </div>
             <div class="col-6">
               <Together together={profile.together} totalMs={profile.totalMs} guildId={guildId!} />
