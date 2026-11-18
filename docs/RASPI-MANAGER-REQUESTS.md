@@ -10,7 +10,7 @@ Gaps found while making this app deployable. Paste a section into a raspi-manage
 - **Acceptance**: tests with fakes (form to plan to confirm to apply to message, plus a failing apply); try read-only on a real Pi: generate the preview, list timers, change nothing.
 - **Out of scope**: off-site backup upload, retention policy beyond a day count. **Open questions**: should jobs share the app's env file; where backup files go (a folder listed in `requires`).
 
-## 2026-11-17 — Two processes for one app (collector and web server) — needed later
+## 2026-11-17 — Two processes for one app (collector and web server) — DONE 2026-11-18 (`processes:` list)
 - **App / commit**: Vocalog, same working tree. Not blocking today (only the bot is deployed).
 - **Need**: the planned web server and the bot share one repository and one database but are separate long-running processes. Running them as one command (a shell wrapper) would restart both on any failure and hide which one crashed.
 - **Observed behaviour today**: one build command and one run command per app (inferred from the contract).
@@ -19,7 +19,7 @@ Gaps found while making this app deployable. Paste a section into a raspi-manage
 - **Acceptance**: tests with fakes for creating, starting, stopping and updating two units; try read-only on a real Pi.
 - **Out of scope**: a process manager inside the app. **Open question**: how the owner wants updates to be ordered (database migrations run by the bot at start).
 
-## 2026-11-17 — Move an app, with its data, to another device
+## 2026-11-17 — Move an app, with its data, to another device — DONE 2026-11-18 (`host move-app`; app check command and route follow-up not done)
 - **App / commit**: Vocalog, written from commit `b0869b3`.
 - **Need**: move an app from one device to another without losing its data. For Vocalog the data is an append-only SQLite journal of voice events that cannot be rebuilt (Discord provides no voice history), so a lost or inconsistent copy is permanent loss. Without a guided move, the owner copies files by hand and risks copying a SQLite file in WAL mode while the app runs (inconsistent copy), or running two instances at once (duplicate events).
 - **Observed behaviour today** in raspi-manager: an app is installed on one Pi (clone, build, unit, route). No operation to relocate an app with its data (inferred from the contract, not from its repository; check its SPEC for a planned item).

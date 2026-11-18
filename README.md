@@ -2,7 +2,7 @@
 
 A Discord bot that records voice-channel activity into a permanent event journal (SQLite), and a web dashboard (planned) that turns it into statistics. See `docs/BRIEF.md` and `docs/SPEC.md`.
 
-Status: the collector (`bot/`) works and is deployed. The dashboard (`server/`, `web/`) has a Discord login and is covered by tests, but has not been checked against the real Discord login or in a browser, and raspi-manager cannot yet run it next to the bot (see `docs/RASPI-MANAGER-REQUESTS.md`). Do not expose it before that check.
+Status: the collector (`bot/`) works and is deployed. The dashboard (`server/`, `web/`) has a Discord login and is covered by tests, but has not been checked against the real Discord login or in a browser, and has not been deployed yet (raspi-manager now runs several processes per app). Do not expose it before that check.
 
 ### Dashboard login (Discord developer portal)
 1. In your application, OAuth2 page: copy the **Client ID** and the **Client Secret**.
@@ -17,7 +17,7 @@ Status: the collector (`bot/`) works and is deployed. The dashboard (`server/`, 
 
 ## Deployment (raspi-manager)
 
-Currently deployable: the bot only.
+Deployable: the bot and the dashboard server, as two processes of one app (raspi-manager `processes:`).
 
 - **Build:** `npm ci`. If it fails while compiling `better-sqlite3` (no C++ toolchain on the machine), use `npm ci --ignore-scripts` instead: the package ships prebuilt binaries (linux-arm64, linux-x64, win32-x64 and others) and never needs to compile.
 - **Run:** `node bot/src/index.ts`
@@ -36,10 +36,11 @@ The bot exits with a non-zero status and a message naming the missing key when a
 - **Data:** the SQLite file lives at `DB_PATH` (WAL mode: `-wal` and `-shm` files sit next to it). Updates and rollbacks replace the application folder, so keep the data elsewhere, for example `~/data/vocalog/`.
 - **`requires` line for raspi-manager:** `folder|/home/<user>/data/vocalog` (use the real absolute path).
 - **Database migrations** run at start (`db/migrations`, numbered, applied once). A migration must stay compatible with the previous commit, or a rollback needs a restore of the database file. Migration 002 only adds tables and columns, so rolling back to the previous commit keeps working.
-- **Backups:** the nightly `VACUUM INTO` backup is not available through raspi-manager yet; see `docs/RASPI-MANAGER-REQUESTS.md`. Until then, copy the database file while the bot is stopped, or use `sqlite3 <db> "VACUUM INTO '<backup>'"`.
+- **Backups:** raspi-manager has no scheduled jobs yet, so the nightly `VACUUM INTO` backup is not available; see `docs/RASPI-MANAGER-REQUESTS.md`. Until then, copy the database file while the bot is stopped, or use `sqlite3 <db> "VACUUM INTO '<backup>'"`.
 
 ### Steps for the owner
 1. Create the GitHub repository and push this project (nothing from `.env` or `data/` is tracked).
-2. In raspi-manager: App, New app: name, repository `OWNER/NAME`, build `npm ci`, run `node bot/src/index.ts`, folder `~/apps/vocalog`, env file path, the `requires` line above.
+2. In raspi-manager: App, New app: name, repository `OWNER/NAME`, build `npm ci`, processes below, folder `~/apps/vocalog`, env file path, the `requires` line above.
+   Processes (one per line in the form): `bot:node bot/src/index.ts:keep` (the collector is not restarted by an update, so voice sessions are not cut) and `web:node server/src/index.ts:restart`. Build: `npm ci && npm run build`. The web process needs `DB_PATH`, `WEB_DIR` (absolute path of `web/dist`), `PORT`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `SESSION_SECRET` and `PUBLIC_URL` (never `INSECURE_NO_AUTH`). Then add a route to `PORT` and the redirect `<PUBLIC_URL>/auth/callback` in the Discord portal.
 3. Put the real values in the env file on the Pi, then start the app and check the logs for `Ready as ...`.
 4. The development bot on the PC and the Pi bot must not run at the same time with the same token and the same database (duplicate events).

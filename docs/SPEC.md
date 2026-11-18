@@ -66,7 +66,7 @@ Status: `planned`
 ## F9 — Backup and operation
 Status: `planned`
 - Nightly `VACUUM INTO` backup; systemd restart on failure; deployment via raspi-manager.
-- Needs a scheduled job that raspi-manager does not offer yet (see docs/RASPI-MANAGER-REQUESTS.md); the bot is deployable without it.
+- Needs a scheduled job that raspi-manager does not offer yet (see docs/RASPI-MANAGER-REQUESTS.md); the bot and the dashboard are deployable without it (two processes, `processes:`), and moving the app with its data is covered by raspi-manager's move operation.
 
 ## Open questions
 See docs/QUESTIONS.md.
