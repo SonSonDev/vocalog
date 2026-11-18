@@ -121,3 +121,9 @@ export function describeTimeDifference(ownMinute: number, groupMinute: number): 
   const text = abs >= 60 ? `${Math.floor(abs / 60)} h ${String(abs % 60).padStart(2, '0')}` : `${abs} min`;
   return `${text} ${diff > 0 ? 'plus tard' : 'plus tôt'} que le groupe`;
 }
+
+/** The @handle to show next to a name, or null when it adds nothing (missing, or the same as the name). */
+export function visibleHandle(name: string, handle: string | undefined): string | null {
+  if (!handle) return null;
+  return handle.trim().toLowerCase() === name.trim().toLowerCase() ? null : `@${handle}`;
+}

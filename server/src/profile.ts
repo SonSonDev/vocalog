@@ -1,7 +1,7 @@
 import { buildMemberStats, deriveSessions } from '@vocalog/shared';
 import type { GuildInfo, MemberProfile, NamedRef, Period } from '@vocalog/shared';
 import { periodWindow } from './period.ts';
-import { channelNames, firstEventMs, loadGuildEvents, userNames } from './queries.ts';
+import { channelNames, firstEventMs, loadGuildEvents, userHandles, userNames } from './queries.ts';
 import type { Db } from './queries.ts';
 
 /**
@@ -23,8 +23,9 @@ export function buildMemberProfile(
   const stats = buildMemberStats({ sessions, events, userId, options: { fromMs, toMs, nowMs, timeZone } });
 
   const users = userNames(db, guild.id);
+  const handles = userHandles(db);
   const channels = channelNames(db, guild.id);
-  const user = (id: string): NamedRef => ({ id, name: users.get(id) ?? `Membre ${id.slice(-4)}` });
+  const user = (id: string): NamedRef => ({ id, name: users.get(id) ?? `Membre ${id.slice(-4)}`, handle: handles.get(id) });
   const channel = (id: string): NamedRef => ({ id, name: channels.get(id) ?? `Salon ${id.slice(-4)}` });
 
   const { userId: _userId, channels: statChannels, together, longestSession, voiceStates, group, ...rest } = stats;

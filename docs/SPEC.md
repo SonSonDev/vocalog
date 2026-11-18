@@ -40,7 +40,8 @@ Status: `in progress` (built and covered by tests with a fake Discord; the real 
 
 ## F5 — Summary dashboard
 Status: `in progress` (API and page built and unit-tested; not yet checked in a browser; behind the Discord login of F4)
-- Key figures (average per day, total, longest session, current streak), member table with hourly profile, day × hour heatmap, records, pairs and channels.
+- Key figures (average per day, total, longest session, current streak), member table with hourly profile, day × hour heatmap, records and channels (the pairs section was removed on 2026-11-18).
+- Names: the name a person shows on that server, followed by their Discord `@username` in small muted text when it differs (member list, member page title, "Avec qui" list). The handle is hidden when it equals the name, ignoring case.
 
 ## F6 — Time together
 Status: `in progress` (the pair calculation is done and tested in `shared/`; its ranking was removed from the summary page on 2026-11-18; it returns per member as "best voice friends" in F7)

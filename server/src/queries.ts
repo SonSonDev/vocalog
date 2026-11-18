@@ -65,6 +65,12 @@ export function userNames(db: Db, guildId: string): Map<string, string> {
   return names;
 }
 
+/** Discord usernames (the @handles) of everyone the bot has seen. */
+export function userHandles(db: Db): Map<string, string> {
+  const rows = db.prepare('SELECT id, name FROM users').all() as { id: string; name: string }[];
+  return new Map(rows.map((row) => [row.id, row.name]));
+}
+
 export function channelNames(db: Db, guildId: string): Map<string, string> {
   const rows = db.prepare('SELECT id, name FROM channels WHERE guild_id = ?').all(guildId) as { id: string; name: string }[];
   return new Map(rows.map((row) => [row.id, row.name]));

@@ -13,6 +13,8 @@ export interface GuildInfo {
 export interface NamedRef {
   id: string;
   name: string;
+  /** The Discord username (the @handle), when known. `name` is what the person shows on that server. */
+  handle?: string;
 }
 
 export interface Summary {

@@ -104,12 +104,12 @@ describe('GET /api/guilds/:guildId/members/:userId', () => {
     const response = await seeded().inject('/api/guilds/g1/members/u1?period=7d');
     expect(response.statusCode).toBe(200);
     const body = response.json();
-    expect(body.user).toEqual({ id: 'u1', name: 'Alex' });
+    expect(body.user).toEqual({ id: 'u1', name: 'Alex', handle: 'Alex' });
     expect(body.guild).toEqual({ id: 'g1', name: 'Test server' });
     expect(body.totalMs).toBe(3 * HOUR);
     expect(body.together.withOthersMs).toBe(HOUR);
     expect(body.together.aloneMs).toBe(2 * HOUR);
-    expect(body.together.top).toEqual([{ user: { id: 'u2', name: 'Sam' }, ms: HOUR }]);
+    expect(body.together.top).toEqual([{ user: { id: 'u2', name: 'Sam', handle: 'Sam' }, ms: HOUR }]);
     expect(body.channels[0].channel.name).toBe('General');
     expect(body.longestSession.channel.name).toBe('General');
     expect(body.group).toMatchObject({ rank: 1, of: 2 });
@@ -151,5 +151,38 @@ describe('names shown on a server', () => {
 
     const onG2 = (await app.inject('/api/guilds/g2/summary')).json();
     expect(onG2.members[0].user.name).toBe('Alex'); // username: no display name stored for g2
+  });
+});
+
+describe('the @handle next to a name', () => {
+  it('returns the Discord username as a handle, separate from the name shown on the server', async () => {
+    const db = testDb();
+    addNames(db);
+    db.prepare("INSERT INTO members (guild_id, user_id, display_name, is_bot, updated_ms) VALUES ('g1', 'u1', 'Alexandre', 0, 0)").run();
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 5 * HOUR });
+    addEvent(db, { userId: 'u2', channelId: 'c1', kind: 'join', atMs: NOW - 4 * HOUR });
+    addEvent(db, { userId: 'u2', channelId: null, kind: 'leave', atMs: NOW - 3 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - 2 * HOUR });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+
+    const summary = (await app.inject('/api/guilds/g1/summary')).json();
+    const alex = summary.members.find((m: { user: { id: string } }) => m.user.id === 'u1').user;
+    expect(alex).toEqual({ id: 'u1', name: 'Alexandre', handle: 'Alex' });
+
+    const profile = (await app.inject('/api/guilds/g1/members/u1')).json();
+    expect(profile.user).toEqual({ id: 'u1', name: 'Alexandre', handle: 'Alex' });
+    // The friends list carries handles too.
+    expect(profile.together.top[0].user).toMatchObject({ id: 'u2', name: 'Sam', handle: 'Sam' });
+  });
+
+  it('has no handle for someone with no stored username', async () => {
+    const db = testDb();
+    addNames(db);
+    addEvent(db, { userId: 'u-unknown-1234', channelId: 'c1', kind: 'join', atMs: NOW - 2 * HOUR });
+    addEvent(db, { userId: 'u-unknown-1234', channelId: null, kind: 'leave', atMs: NOW - HOUR });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    const member = (await app.inject('/api/guilds/g1/summary')).json().members[0].user;
+    expect(member.name).toBe('Membre 1234');
+    expect(member.handle).toBeUndefined();
   });
 });

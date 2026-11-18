@@ -14,6 +14,7 @@ import {
   formatSignedPercent,
   maxOf,
   shareOf,
+  visibleHandle,
 } from './format.ts';
 
 const HOUR = 3_600_000;
@@ -126,5 +127,18 @@ describe('describeTimeDifference', () => {
   it('compares across midnight sensibly', () => {
     // 00:30 is later than 23:00 for a night owl, not 22 hours earlier.
     expect(describeTimeDifference(30, 23 * 60)).toBe('1 h 30 plus tard que le groupe');
+  });
+});
+
+describe('visibleHandle', () => {
+  it('shows the handle with an @ when it differs from the name', () => {
+    expect(visibleHandle('Alexandre', 'alex_42')).toBe('@alex_42');
+  });
+
+  it('hides it when it is missing or the same as the name, ignoring case and spaces', () => {
+    expect(visibleHandle('Alex', undefined)).toBeNull();
+    expect(visibleHandle('Alex', '')).toBeNull();
+    expect(visibleHandle('Alex', 'alex')).toBeNull();
+    expect(visibleHandle(' Alex ', 'ALEX')).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import type { Summary } from '@vocalog/shared';
 import { busiestHour, formatDuration, maxOf } from '../format.ts';
 import { memberPath } from '../router.ts';
+import { Handle } from './Handle.tsx';
 import { Link } from './Link.tsx';
 
 /**
@@ -25,6 +26,7 @@ export function MemberTable({ members, search, viewerId }: { members: Summary['m
             <li class="member" key={member.user.id}>
               <span class="member-name">
                 <Link to={memberPath(member.user.id, search)}>{member.user.name}</Link>
+                <Handle user={member.user} />
                 {member.user.id === viewerId && <span class="you"> · toi</span>}
               </span>
               <span class="member-time mono">{formatDuration(member.totalMs)}</span>

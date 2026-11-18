@@ -5,7 +5,7 @@ import type { Controls } from '../components/Header.tsx';
 import { Heatmap } from '../components/Heatmap.tsx';
 import { Channels } from '../components/Lists.tsx';
 import { ActivityChart, GroupCompare, Habits, MemberFigures, RoomRoles, Together, VoiceStates } from '../components/ProfileCards.tsx';
-import { formatClock } from '../format.ts';
+import { formatClock, visibleHandle } from '../format.ts';
 import { useRemote } from '../useRemote.ts';
 
 interface Props {
@@ -28,6 +28,7 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
         controls={controls}
         title={profile?.user.name ?? 'Membre'}
         eyebrow={profile?.guild.name ?? 'Vocalog'}
+        handle={profile ? visibleHandle(profile.user.name, profile.user.handle) : null}
         back={{ to: `/${search}`, label: 'Tous les membres' }}
       />
 

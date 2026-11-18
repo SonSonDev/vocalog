@@ -746,3 +746,16 @@ select {
     justify-content: space-between;
   }
 }
+
+/* The small @username next to a name. */
+.handle {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+h1 .handle {
+  font-size: 15px;
+}

@@ -1,4 +1,5 @@
 import type { MemberProfile } from '@vocalog/shared';
+import { Handle } from './Handle.tsx';
 import {
   barPercent,
   describeTimeDifference,
@@ -110,7 +111,10 @@ export function Together({ together, totalMs }: { together: MemberProfile['toget
             <ul class="bars">
               {together.top.map((entry) => (
                 <li key={entry.user.id}>
-                  <span class="bar-name">{entry.user.name}</span>
+                  <span class="bar-name">
+                    {entry.user.name}
+                    <Handle user={entry.user} />
+                  </span>
                   <span class="bar-track" aria-hidden="true">
                     <span class="bar-fill" style={{ width: `${barPercent(entry.ms, max)}%` }} />
                   </span>

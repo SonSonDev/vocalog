@@ -23,10 +23,12 @@ interface Props {
   controls: Controls;
   title: string;
   eyebrow: string;
+  /** A small @username shown after the title (member pages). */
+  handle?: string | null;
   back?: { to: string; label: string };
 }
 
-export function Header({ controls, title, eyebrow, back }: Props) {
+export function Header({ controls, title, eyebrow, handle, back }: Props) {
   const { guilds, guildId, period, theme, onGuild, onPeriod, onTheme, viewer, onLogout } = controls;
   return (
     <header class="header">
@@ -37,7 +39,10 @@ export function Header({ controls, title, eyebrow, back }: Props) {
           </Link>
         )}
         <p class="eyebrow">{eyebrow}</p>
-        <h1>{title}</h1>
+        <h1>
+          {title}
+          {handle && <span class="handle">{handle}</span>}
+        </h1>
       </div>
       <div class="header-controls">
         <label class="select">
