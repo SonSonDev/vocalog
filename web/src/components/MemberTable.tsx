@@ -68,7 +68,6 @@ export function MemberTable({ members, guildId, search, viewerId }: { members: S
           );
         })}
       </ul>
-      <p class="muted">Profil horaire : une barre par heure, de 6 h à 6 h.</p>
       {collapsible && (
         <button type="button" class="more" aria-expanded={expanded} aria-controls="membres" onClick={() => setExpanded(!expanded)}>
           {expanded ? 'Réduire la liste' : `Afficher les ${members.length} membres`}

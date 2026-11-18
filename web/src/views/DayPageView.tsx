@@ -64,7 +64,7 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
             </>
           )}
           <p class="footnote">
-            Jour de 6 h à 6 h · fuseau horaire : {day.timeZone} · mis à jour à {formatClock(day.generatedAtMs, day.timeZone)}
+            Fuseau horaire : {day.timeZone} · mis à jour à {formatClock(day.generatedAtMs, day.timeZone)}
           </p>
         </div>
       )}
@@ -99,8 +99,8 @@ function DayNav({ day, search }: { day: DayView; search: string }) {
 
 function DayFigures({ day }: { day: DayView }) {
   const figures = [
-    { label: 'Temps total', value: formatDuration(day.totalMs), note: 'tout le monde confondu' },
-    { label: 'Présents', value: String(day.members.length), note: day.members.length > 1 ? 'personnes différentes' : 'personne' },
+    { label: 'Temps total', value: formatDuration(day.totalMs) },
+    { label: 'Présents', value: String(day.members.length) },
     {
       label: 'Plus de monde en même temps',
       value: day.peak ? String(day.peak.count) : '—',
@@ -113,7 +113,7 @@ function DayFigures({ day }: { day: DayView }) {
         <div class="figure" key={figure.label}>
           <dt>{figure.label}</dt>
           <dd class="figure-value">{figure.value}</dd>
-          <dd class="figure-note">{figure.note}</dd>
+          {figure.note && <dd class="figure-note">{figure.note}</dd>}
         </div>
       ))}
     </dl>
@@ -140,7 +140,9 @@ function Timeline({ day, guildId, search }: { day: DayView; guildId: string; sea
   return (
     <section class="card" aria-labelledby="timeline-title">
       <div class="tl-head">
-        <h2 id="timeline-title">Qui était là, et quand</h2>
+        <h2 id="timeline-title" class="sr-only">
+          Chronologie du jour
+        </h2>
         <button type="button" class="tl-zoom" aria-pressed={!zoomed} onClick={() => setZoomed(!zoomed)}>
           {zoomed ? 'Voir la journée entière' : 'Zoomer sur l’activité'}
         </button>
@@ -161,7 +163,6 @@ function Timeline({ day, guildId, search }: { day: DayView; guildId: string; sea
             <span class="avatar-spacer" />
             <span class="tl-text">
               <span class="tl-who muted">Présence</span>
-              <span class="tl-sub muted">à plusieurs</span>
             </span>
           </span>
           <span class="tl-track tl-cells" aria-hidden="true">

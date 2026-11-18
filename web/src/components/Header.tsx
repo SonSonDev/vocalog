@@ -23,7 +23,7 @@ export interface Controls {
 interface Props {
   controls: Controls;
   title: string;
-  eyebrow: string;
+  eyebrow?: string;
   /** A small @username shown after the title (member pages). */
   handle?: string | null;
   /** A picture shown before the title (member pages). */
@@ -41,7 +41,7 @@ export function Header({ controls, title, eyebrow, handle, avatar, back }: Props
             ← {back.label}
           </Link>
         )}
-        <p class="eyebrow">{eyebrow}</p>
+        {eyebrow && <p class="eyebrow">{eyebrow}</p>}
         <h1 class={avatar ? 'with-avatar' : undefined}>
           {avatar}
           <span>

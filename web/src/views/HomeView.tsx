@@ -22,7 +22,7 @@ export function HomeView({ guildId, period, search, controls }: Props) {
 
   return (
     <>
-      <Header controls={controls} title="Qui était en vocal" eyebrow="Vocalog" />
+      <Header controls={controls} title="Vocalog" />
 
       {guildId === null && (
         <p class="notice" role="status">

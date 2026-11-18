@@ -11,7 +11,7 @@ export function KeyFigures({ summary }: { summary: Summary }) {
       value: longestSession ? formatDuration(longestSession.durationMs) : '—',
       note: longestSession ? `${longestSession.user.name}, ${formatDateTime(longestSession.startMs, summary.timeZone)}` : 'aucune',
     },
-    { label: 'Série en cours', value: `${totals.streakDays} j`, note: 'jours de suite avec du vocal' },
+    { label: 'Série en cours', value: `${totals.streakDays} j` },
   ];
   return (
     <dl class="figures" aria-label="Chiffres clés">
@@ -19,7 +19,7 @@ export function KeyFigures({ summary }: { summary: Summary }) {
         <div class="figure" key={figure.label}>
           <dt>{figure.label}</dt>
           <dd class="figure-value">{figure.value}</dd>
-          <dd class="figure-note">{figure.note}</dd>
+          {figure.note && <dd class="figure-note">{figure.note}</dd>}
         </div>
       ))}
     </dl>

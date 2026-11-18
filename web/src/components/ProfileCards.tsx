@@ -81,9 +81,6 @@ ${formatDuration(bucket.ms)}`}
             <span>{first ? formatDayKey(first.startKey) : ''}</span>
             <span>{last ? formatDayKey(last.startKey) : ''}</span>
           </div>
-          <p class="muted">
-            Pic : {label(best.startKey)}, {formatDuration(best.ms)}.
-          </p>
         </>
       )}
     </section>
@@ -138,7 +135,7 @@ export function Together({ together, totalMs, guildId }: { together: MemberProfi
 
 export function VoiceStates({ states }: { states: MemberProfile['voiceStates'] }) {
   const rows = [
-    { label: 'Micro coupé', ms: states.mutedMs },
+    { label: 'Micro coupé', ms: states.mutedMs, tip: 'Inclut le casque coupé, pas un micro coupé par un modérateur' },
     { label: 'Casque coupé', ms: states.deafMs },
     { label: 'Partage d’écran', ms: states.streamingMs },
     { label: 'Caméra', ms: states.videoMs },
@@ -153,7 +150,9 @@ export function VoiceStates({ states }: { states: MemberProfile['voiceStates'] }
           <ul class="bars">
             {rows.map((row) => (
               <li key={row.label}>
-                <span class="bar-name">{row.label}</span>
+                <span class="bar-name" data-tip={'tip' in row ? row.tip : undefined}>
+                  {row.label}
+                </span>
                 <span class="bar-track" aria-hidden="true">
                   <span class="bar-fill" style={{ width: `${Math.round(shareOf(row.ms, states.voiceMs) * 100)}%` }} />
                 </span>
@@ -163,7 +162,6 @@ export function VoiceStates({ states }: { states: MemberProfile['voiceStates'] }
               </li>
             ))}
           </ul>
-          <p class="muted">Pourcentages du temps passé en vocal. « Micro coupé » inclut le casque coupé, pas un micro coupé par un modérateur.</p>
         </>
       )}
     </section>
@@ -203,7 +201,13 @@ export function Habits({ profile }: { profile: MemberProfile }) {
               return (
                 <li key={part.key}>
                   <span class="compare-label">{part.label}</span>
-                  <span class="compare-bars" aria-hidden="true">
+                  <span
+                    class="compare-bars"
+                    aria-hidden="true"
+                    data-tip={`${part.label}
+Ce membre : ${formatPercent(own)} · ${formatDuration(habits.partsOfDay[part.key])}
+Groupe : ${formatPercent(others)}`}
+                  >
                     <span class="bar-track">
                       <span class="bar-fill" style={{ width: `${Math.round(own * 100)}%` }} />
                     </span>
@@ -211,14 +215,15 @@ export function Habits({ profile }: { profile: MemberProfile }) {
                       <span class="bar-fill neutral" style={{ width: `${Math.round(others * 100)}%` }} />
                     </span>
                   </span>
-                  <span class="mono bar-value">
-                    {formatPercent(own)} <span class="muted">/ {formatPercent(others)}</span>
+                  <span class="mono bar-value pair" data-tip="Ce membre / moyenne du groupe">
+                    <span>{formatPercent(own)}</span>
+                    <span class="muted">/</span>
+                    <span class="muted">{formatPercent(others)}</span>
                   </span>
                 </li>
               );
             })}
           </ul>
-          <p class="muted">Part du temps par moment de la journée : ce membre, puis (en gris) la moyenne du groupe.</p>
         </>
       )}
     </section>
@@ -280,21 +285,15 @@ export function RoomRoles({ profile }: { profile: MemberProfile }) {
       <h2 id="roles-title">Salons et nuits</h2>
       <ul class="rows">
         <li>
-          <span>
-            Ouvre le salon <span class="muted">· première personne dans un salon vide</span>
-          </span>
+          <span data-tip="Première personne dans un salon vide">Ouvre le salon</span>
           <span class="mono">{profile.roomRoles.opened} fois</span>
         </li>
         <li>
-          <span>
-            Ferme le salon <span class="muted">· dernière personne à partir</span>
-          </span>
+          <span data-tip="Dernière personne à partir">Ferme le salon</span>
           <span class="mono">{profile.roomRoles.closed} fois</span>
         </li>
         <li>
-          <span>
-            Nuits tardives <span class="muted">· sessions qui passent 3 h du matin</span>
-          </span>
+          <span data-tip="Sessions qui passent 3 h du matin">Nuits tardives</span>
           <span class="mono">{profile.lateSessions}</span>
         </li>
         <li>

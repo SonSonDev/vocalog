@@ -38,7 +38,6 @@ ${formatDuration(value)}`}
           </div>
         </div>
       </div>
-      <p class="muted">{summary}</p>
     </section>
   );
 }

@@ -48,6 +48,7 @@ Arcade, full-screen recap, audio studio, neo-brutalism, Japanese minimalism, ter
 
 - Member list (2026-11-18): the name on the first line and the `@username` (and the "toi" marker) on the second, small and muted. On wide screens the sessions cell shows only the number (the column header says what it is); on phones the word stays, with the time on the right and the 24-bar hourly profile across the full row (2 px gaps, rounded tops).
 - Hourly profiles show all 24 hours from 06:00 (so a regular evening schedule is one block, not split at midnight), and an empty hour keeps a thin mark in the line colour: a baseline instead of a blank. Cropping to the group's active hours was tried on 2026-11-18 and dropped at the owner's request (empty hours must stay visible). The heat map and the member page also show the whole day.
+- No explanatory captions under or over charts (owner's call, 2026-11-18): headings, axes and tooltips explain; definitions of terms live in tooltips; every chart keeps an accessible text label. Lists of gauges use a fixed value column (and fixed sub-columns for "own % / group %") so gauges and figures line up from row to row; below 1024 px the gauge goes under its label.
 - Tooltips: one shared `TooltipLayer` shows any `data-tip` text at once (the browser's `title` waits about half a second), follows the pointer, flips near the edges and also appears on keyboard focus and touch. It is a hint only: the same facts exist as text or in the table view.
 
 ## Aesthetic risk and guard-rail

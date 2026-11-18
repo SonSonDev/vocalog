@@ -675,7 +675,8 @@ select {
 
 .compare li {
   display: grid;
-  grid-template-columns: minmax(120px, 1.4fr) 2fr auto;
+  /* Fixed value column, so the gauges of every row start and end at the same place. */
+  grid-template-columns: minmax(120px, 1.4fr) 2fr 6.5rem;
   align-items: center;
   gap: 12px;
   padding: 8px 0;

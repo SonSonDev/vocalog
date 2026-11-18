@@ -255,7 +255,7 @@ a.tl-who:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -395,4 +395,39 @@ p > strong.mono {
 
 .tooltip[hidden] {
   display: none;
+}
+
+/* The two thin gauges of a habit are small to aim at: the pointer area is taller than the bars, without moving them. */
+.compare-bars {
+  padding: 8px 0;
+  margin: -8px 0;
+}
+
+/* "own % / group %": three fixed columns, so the figures and the slash line up from one row to the next. */
+.bar-value.pair {
+  display: grid;
+  grid-template-columns: 5ch 1ch 5ch;
+  justify-content: end;
+  column-gap: 0.5ch;
+}
+
+.bar-value.pair > span {
+  text-align: right;
+}
+
+.bar-value.pair > span:nth-child(2) {
+  text-align: center;
+}
+
+/* Cards are half width from 700 px: below 1024 px the gauges sit under their label, as on a phone, instead of shrinking to a stub. */
+@media (max-width: 1023px) {
+  .compare li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+  }
+
+  .compare-bars {
+    grid-column: 1 / -1;
+    order: 3;
+  }
 }

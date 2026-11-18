@@ -21,7 +21,6 @@ export function DayStrips({ days, search }: { days: DayStrip[]; search: string }
   return (
     <section class="card" id="jours" aria-labelledby="days-title">
       <h2 id="days-title">Jour par jour</h2>
-      <p class="muted">De 6 h à 6 h. Plus la case est foncée, plus il y avait de monde. Un clic ouvre le détail du jour.</p>
       <div class="day-strips">
         <div class="day-row day-axis-row" aria-hidden="true">
           <span class="day-label" />
