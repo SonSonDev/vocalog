@@ -36,7 +36,7 @@ The bot exits with a non-zero status and a message naming the missing key when a
 - **Data:** the SQLite file lives at `DB_PATH` (WAL mode: `-wal` and `-shm` files sit next to it). Updates and rollbacks replace the application folder, so keep the data elsewhere, for example `~/data/vocalog/`.
 - **`requires` line for raspi-manager:** `folder|/home/<user>/data/vocalog` (use the real absolute path).
 - **Database migrations** run at start (`db/migrations`, numbered, applied once). A migration must stay compatible with the previous commit, or a rollback needs a restore of the database file. Migration 002 only adds tables and columns, so rolling back to the previous commit keeps working.
-- **Backups:** raspi-manager has no scheduled jobs yet, so the nightly `VACUUM INTO` backup is not available; see `docs/RASPI-MANAGER-REQUESTS.md`. Until then, copy the database file while the bot is stopped, or use `sqlite3 <db> "VACUUM INTO '<backup>'"`.
+- **Backups:** raspi-manager has no scheduled jobs yet, so run `node scripts/backup.ts <absolute DB_PATH> <absolute backup folder> [copies to keep, default 14]` by hand, or from a systemd timer you write on the Pi (the next run keeps the newest copies and deletes older ones named `vocalog-<time>.sqlite` only). It is safe while the bot runs (`VACUUM INTO`, read-only on the live file). The backup folder must be outside the application folder and outside git.
 
 ### Steps for the owner
 1. Create the GitHub repository and push this project (nothing from `.env` or `data/` is tracked).

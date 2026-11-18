@@ -1,7 +1,6 @@
 export type { EventKind, EventSource, LiveVoiceState, Session, VoiceEvent } from './types.ts';
 export { VoiceFlag } from './types.ts';
 export { deriveSessions, durationMs, totalByUser } from './sessions.ts';
-export { overlapMs, pairKey, togetherByPair } from './together.ts';
 export { planReconcile } from './reconcile.ts';
 export { PERIODS } from './api.ts';
 export type { GuildInfo, MemberProfile, MeResponse, NamedRef, Period, Summary } from './api.ts';
@@ -11,4 +10,4 @@ export type { FlagTimes } from './flags.ts';
 export { activityBuckets, averageMinute, buildMemberStats, partsOfDay, roomRoles } from './profile.ts';
 export type { ActivityBucket, MemberStats, PartsOfDay } from './profile.ts';
 export { togetherWithUser } from './together.ts';
-export type { Aggregate, AggregateOptions, ChannelStat, MemberStat, PairStat } from './aggregate.ts';
+export type { Aggregate, AggregateOptions, ChannelStat, MemberStat } from './aggregate.ts';

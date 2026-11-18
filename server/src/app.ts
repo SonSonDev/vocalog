@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import type { MeResponse, Period } from '@vocalog/shared';
+import { createCache } from './cache.ts';
 import { createAuth } from './auth.ts';
 import type { AuthOptions } from './auth.ts';
 import { isPeriod } from './period.ts';
@@ -25,6 +26,18 @@ export function buildApp(options: AppOptions): FastifyInstance {
   const now = options.now ?? (() => Date.now());
   const auth = createAuth(options.auth, now);
   const app = Fastify({ logger: false });
+  const cached = createCache(db, now);
+
+  // Nothing is logged by Fastify here, so a failure would leave no trace. Log the route only (the query of a login
+  // callback carries a one-time code) and never send internals to the browser.
+  app.setErrorHandler((error: { statusCode?: number; message: string }, request, reply) => {
+    const status = error.statusCode ?? 500;
+    if (status >= 500) {
+      console.error(`Request failed: ${request.method} ${request.url.split('?')[0]}:`, error.message);
+      return reply.code(500).send({ error: 'internal error' });
+    }
+    return reply.code(status).send({ error: error.message });
+  });
 
   app.addHook('onSend', async (request, reply) => {
     reply.header('x-content-type-options', 'nosniff');
@@ -56,7 +69,7 @@ export function buildApp(options: AppOptions): FastifyInstance {
     // A server the person cannot see answers exactly like one that does not exist.
     const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
-    return buildSummary(db, guild, period as Period, now(), timeZone);
+    return cached(`summary|${guild.id}|${period}`, () => buildSummary(db, guild, period as Period, now(), timeZone));
   });
 
   app.get<{ Params: { guildId: string; userId: string }; Querystring: { period?: string } }>(
@@ -67,7 +80,9 @@ export function buildApp(options: AppOptions): FastifyInstance {
       const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
       if (!guild) return reply.code(404).send({ error: 'unknown server' });
       if (!userHasEvents(db, guild.id, request.params.userId)) return reply.code(404).send({ error: 'unknown member' });
-      return buildMemberProfile(db, guild, request.params.userId, period as Period, now(), timeZone);
+      return cached(`member|${guild.id}|${request.params.userId}|${period}`, () =>
+        buildMemberProfile(db, guild, request.params.userId, period as Period, now(), timeZone),
+      );
     },
   );
 

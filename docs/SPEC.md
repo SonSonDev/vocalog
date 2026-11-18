@@ -44,7 +44,7 @@ Status: `in progress` (API and page built and unit-tested; not yet checked in a 
 - Names: the name a person shows on that server, followed by their Discord `@username` in small muted text when it differs (member list, member page title, "Avec qui" list). The handle is hidden when it equals the name, ignoring case.
 
 ## F6 — Time together
-Status: `in progress` (the pair calculation is done and tested in `shared/`; its ranking was removed from the summary page on 2026-11-18; it returns per member as "best voice friends" in F7)
+Status: `in progress` (the per-member calculation is done and tested in `shared/` (the pair ranking and its code were removed on 2026-11-18); it appears per member as "best voice friends" in F7)
 - Time two members spend in the same channel at the same time, computed from interval overlaps; pair ranking.
 
 ## F7 — Member profile and yearly recap
@@ -64,9 +64,9 @@ Status: `dropped` (2026-11-18, the owner does not need it; friends are told what
 - Was: a member can stop being recorded and ask for deletion of their data. Not built; the journal has no exception to append-only.
 
 ## F9 — Backup and operation
-Status: `planned`
+Status: `in progress` (backup script done; no schedule yet)
 - Nightly `VACUUM INTO` backup; systemd restart on failure; deployment via raspi-manager.
-- Needs a scheduled job that raspi-manager does not offer yet (see docs/RASPI-MANAGER-REQUESTS.md); the bot and the dashboard are deployable without it (two processes, `processes:`), and moving the app with its data is covered by raspi-manager's move operation.
+- `scripts/backup.ts` makes the copy and prunes old ones (done, tested); it must still be run by hand or by a timer written on the Pi, because raspi-manager has no scheduled jobs yet (see docs/RASPI-MANAGER-REQUESTS.md). The bot and the dashboard are deployable without it (two processes, `processes:`); moving the app with its data is covered by raspi-manager's move operation.
 
 ## Open questions
 See docs/QUESTIONS.md.

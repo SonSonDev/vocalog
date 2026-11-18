@@ -1,5 +1,4 @@
 import { durationMs } from './sessions.ts';
-import { pairKey, togetherByPair } from './together.ts';
 import type { Session } from './types.ts';
 
 export interface AggregateOptions {
@@ -26,12 +25,6 @@ export interface ChannelStat {
   totalMs: number;
 }
 
-export interface PairStat {
-  userA: string;
-  userB: string;
-  ms: number;
-}
-
 export interface Aggregate {
   totalMs: number;
   sessionCount: number;
@@ -41,8 +34,6 @@ export interface Aggregate {
   avgPerDayMs: number;
   members: MemberStat[];
   channels: ChannelStat[];
-  /** Top pairs by time spent together. */
-  pairs: PairStat[];
   /** Voice time in ms, indexed [weekday 0=Monday..6=Sunday][local hour 0..23]. */
   heat: number[][];
   longestSession: { userId: string; channelId: string; startMs: number; durationMs: number } | null;
@@ -55,7 +46,6 @@ export interface Aggregate {
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const MAX_PAIRS = 10;
 
 export interface LocalParts {
   weekday: number;
@@ -132,7 +122,9 @@ export function streaks(sessions: readonly Session[], nowMs: number, timeZone: s
   for (const session of sessions) {
     const end = session.endMs ?? nowMs;
     if (end <= session.startMs) continue;
-    for (const slice of hourSlices(session.startMs, end, timeZone)) days.add(dayNumber(slice.dayKey));
+    // Every local day between the first and the last instant of the session: no need to cut it by hour.
+    const last = dayNumber(localParts(end - 1, timeZone).dayKey);
+    for (let day = dayNumber(localParts(session.startMs, timeZone).dayKey); day <= last; day++) days.add(day);
   }
 
   let best = 0;
@@ -217,14 +209,6 @@ export function aggregate(sessions: readonly Session[], options: AggregateOption
     }
   }
 
-  const pairs: PairStat[] = [...togetherByPair(clipped, nowMs).entries()]
-    .map(([key, ms]) => {
-      const [userA, userB] = key.split('|') as [string, string];
-      return { userA, userB, ms };
-    })
-    .sort((a, b) => b.ms - a.ms)
-    .slice(0, MAX_PAIRS);
-
   const days = Math.max(1, Math.ceil((limit - fromMs) / DAY_MS));
 
   return {
@@ -235,12 +219,9 @@ export function aggregate(sessions: readonly Session[], options: AggregateOption
     avgPerDayMs: totalMs / days,
     members: [...members.values()].sort((a, b) => b.totalMs - a.totalMs),
     channels: [...channels.entries()].map(([channelId, ms]) => ({ channelId, totalMs: ms })).sort((a, b) => b.totalMs - a.totalMs),
-    pairs,
     heat,
     longestSession: longest,
     peak: peakOf(clipped),
     streakDays: streaks(sessions, nowMs, timeZone).current,
   };
 }
-
-export { pairKey };

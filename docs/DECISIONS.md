@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — Speed up the statistics, log server errors, add a backup script
+- Decision: removed the pair ranking and its code (`togetherByPair`, `pairKey`, `overlapMs`), unused since the pairs section went away; streaks count local days of a session by range instead of cutting it by hour; the server caches answers (in memory, bounded) keyed by route, server, member and period and valid while the last journal id and the minute are unchanged; server errors are logged by route and answered with a generic 500; `scripts/backup.ts` makes consistent copies and prunes old ones; the login error code from the URL is looked up with `Object.hasOwn`.
+- Why: on a synthetic journal of 120 000 events, the "all" summary took 3.4 s and the member page 4.4 s on one blocking thread (now 0.5 s and 1.4 s). The journal is append-only, so the last id is an exact signal that cached answers are stale. The backup cannot wait for raspi-manager scheduled jobs, since the journal cannot be rebuilt.
+- Alternatives rejected: a `sessions` table written by the bot (more moving parts; revisit past about 200 000 events, see BACKLOG P-7); a cache library (not needed for 200 entries); keeping the pair code for later (git has it).
+- Consequences / risks accepted: a name changed by the bot can show up to one minute late; the 30-day views are still about 0.3 to 0.7 s on 120 000 events because every request loads and derives the whole journal (BACKLOG P-3, P-5); the backup is not scheduled yet.
+
 ## 2026-11-18 — Drop the per-member visibility rule and the opt-out feature (F8)
 - Decision: any person who can see a server sees every member's full page, including microphone, headphones, screen-sharing and camera time and the group's muted share. The server no longer removes these fields (`restricted` and the nullable `voiceStates` are gone from the API). F8 (opt-out and deletion) is dropped: no `/optout`, no deletion path.
 - Why: the owner's call; the dashboard is for a few friends who know what is collected, and the rule added code and a special page state for little gain.

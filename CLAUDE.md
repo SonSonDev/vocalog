@@ -25,6 +25,7 @@
 - `docs/ARCHITECTURE.md` — code map and data flows (read when touching structure)
 - `docs/DECISIONS.md` — decision log, newest first
 - `docs/QUESTIONS.md` — doubtful behaviours awaiting an answer
+- `docs/BACKLOG.md` — diagnosis and prioritised improvements (performance, security, figures, UX)
 - `docs/DESIGN.md` — visual direction, tokens, UX evidence (read when touching UI; use the `design-ui` skill in apply mode)
 - **Docs are always in sync with the code, without being asked, in the same change:**
   behaviour → SPEC · structure → ARCHITECTURE · any technical/product choice (even in discussion) → DECISIONS.

@@ -58,7 +58,6 @@ describe('aggregate totals', () => {
     expect(result.totalMs).toBe(0);
     expect(result.longestSession).toBeNull();
     expect(result.peak).toBeNull();
-    expect(result.pairs).toEqual([]);
     expect(result.streakDays).toBe(0);
   });
 });
@@ -84,7 +83,7 @@ describe('aggregate hours and weekdays', () => {
   });
 });
 
-describe('aggregate records, pairs and streak', () => {
+describe('aggregate records and streak', () => {
   it('finds the longest session', () => {
     const result = aggregate([s('a', 'c1', MON, MON + HOUR), s('b', 'c2', MON + 2 * HOUR, MON + 5 * HOUR)], opts());
     expect(result.longestSession).toEqual({ userId: 'b', channelId: 'c2', startMs: MON + 2 * HOUR, durationMs: 3 * HOUR });
@@ -101,15 +100,6 @@ describe('aggregate records, pairs and streak', () => {
   it('does not count a hand-over at the same instant as an overlap', () => {
     const result = aggregate([s('a', 'c1', MON, MON + HOUR), s('b', 'c1', MON + HOUR, MON + 2 * HOUR)], opts());
     expect(result.peak!.count).toBe(1);
-  });
-
-  it('ranks pairs by time together', () => {
-    const result = aggregate(
-      [s('a', 'c1', MON, MON + 3 * HOUR), s('b', 'c1', MON + HOUR, MON + 3 * HOUR), s('c', 'c1', MON + 2 * HOUR, MON + 3 * HOUR)],
-      opts(),
-    );
-    expect(result.pairs[0]).toEqual({ userA: 'a', userB: 'b', ms: 2 * HOUR });
-    expect(result.pairs).toHaveLength(3);
   });
 
   it('counts the streak of consecutive days ending today', () => {

@@ -31,7 +31,7 @@ describe('GET /api/guilds', () => {
 });
 
 describe('GET /api/guilds/:guildId/summary', () => {
-  it('returns totals, members, pairs and channels with names', async () => {
+  it('returns totals, members and channels with names', async () => {
     const response = await seeded().inject('/api/guilds/g1/summary?period=7d');
     expect(response.statusCode).toBe(200);
     const body = response.json();
@@ -42,7 +42,6 @@ describe('GET /api/guilds/:guildId/summary', () => {
       ['Alex', 3 * HOUR],
       ['Sam', HOUR],
     ]);
-    expect(body.pairs).toBeUndefined();
     expect(body.channels[0].channel.name).toBe('General');
     expect(body.longestSession.user.name).toBe('Alex');
     expect(body.peak.count).toBe(2);
@@ -184,5 +183,46 @@ describe('the @handle next to a name', () => {
     const member = (await app.inject('/api/guilds/g1/summary')).json().members[0].user;
     expect(member.name).toBe('Membre 1234');
     expect(member.handle).toBeUndefined();
+  });
+});
+
+describe('answer cache', () => {
+  it('shows a new event at once, because the journal grew', async () => {
+    const db = testDb();
+    addNames(db);
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 5 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - 4 * HOUR });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    expect((await app.inject('/api/guilds/g1/summary?period=7d')).json().totals.totalMs).toBe(HOUR);
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 3 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - 2 * HOUR });
+    expect((await app.inject('/api/guilds/g1/summary?period=7d')).json().totals.totalMs).toBe(2 * HOUR);
+  });
+});
+
+describe('failures', () => {
+  it('answers 500 with a generic body and logs the route without its query', async () => {
+    const db = testDb();
+    addNames(db);
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    db.close(); // every query now throws
+    const logged: unknown[][] = [];
+    const original = console.error;
+    console.error = (...args: unknown[]) => void logged.push(args);
+    try {
+      const response = await app.inject('/api/guilds/g1/summary?period=7d&code=secret-code');
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({ error: 'internal error' });
+    } finally {
+      console.error = original;
+    }
+    expect(logged).toHaveLength(1);
+    expect(JSON.stringify(logged)).not.toContain('secret-code');
+    expect(String(logged[0]?.[0])).toContain('/api/guilds/g1/summary');
+  });
+
+  it('keeps the message of a client error', async () => {
+    const response = await seeded().inject({ method: 'POST', url: '/api/guilds', payload: 'x' });
+    expect(response.statusCode).toBe(404);
   });
 });
