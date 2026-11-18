@@ -389,7 +389,8 @@ select {
 
 .bars li {
   display: grid;
-  grid-template-columns: minmax(90px, 1.2fr) 2fr auto;
+  /* Fixed value column: every row of a list must start and end its bar at the same place. */
+  grid-template-columns: minmax(90px, 1.2fr) 2fr 9rem;
   align-items: center;
   gap: 12px;
   padding: 8px 0;
@@ -418,9 +419,9 @@ select {
 }
 
 .bar-value {
-  min-width: 56px;
   text-align: right;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .notice {
@@ -738,6 +739,27 @@ select {
 .you {
   color: var(--muted);
   font-size: 12px;
+}
+
+.count {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.more {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+}
+
+.more:hover {
+  border-color: var(--accent);
 }
 
 @media (max-width: 699px) {

@@ -40,7 +40,7 @@ Status: `in progress` (built and covered by tests with a fake Discord; the real 
 
 ## F5 — Summary dashboard
 Status: `in progress` (API and page built and unit-tested; not yet checked in a browser; behind the Discord login of F4)
-- Key figures (average per day, total, longest session, current streak), member table with hourly profile, day × hour heatmap, records and channels (the pairs section was removed on 2026-11-18).
+- Key figures (average per day, total, longest session, current streak), member table with hourly profile (title shows the member count; the 6 most active are listed, a button shows or hides the rest, so a long list leaves no empty gap beside the heatmap), day × hour heatmap, records and channels (the pairs section was removed on 2026-11-18).
 - Names: the name a person shows on that server, followed by their Discord `@username` in small muted text when it differs (member list, member page title, "Avec qui" list). The handle is hidden when it equals the name, ignoring case.
 
 ## F6 — Time together

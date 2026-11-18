@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import type { Summary } from '@vocalog/shared';
 import { busiestHour, formatDuration, maxOf } from '../format.ts';
 import { memberPath } from '../router.ts';
@@ -6,20 +7,29 @@ import { Link } from './Link.tsx';
 
 /**
  * One row per member: time, sessions and a 24-hour profile. A list rather than a table so it reflows on phones.
+ * Only the most active members show at first (the list is sorted by time), so a long list does not leave an empty gap
+ * under the shorter card beside it; a button reveals everyone.
  * `search` is the current `?serveur=...&periode=...` so a member page opens on the same server and period.
  */
+const COLLAPSED_COUNT = 6;
+
 export function MemberTable({ members, search, viewerId }: { members: Summary['members']; search: string; viewerId: string | null }) {
+  const [expanded, setExpanded] = useState(false);
+  const collapsible = members.length > COLLAPSED_COUNT + 1;
+  const shown = collapsible && !expanded ? members.slice(0, COLLAPSED_COUNT) : members;
   return (
     <section class="card" id="membres" aria-labelledby="membres-title">
-      <h2 id="membres-title">Membres</h2>
+      <h2 id="membres-title">
+        Membres <span class="count mono">{members.length}</span>
+      </h2>
       <ul class="members">
         <li class="members-head" aria-hidden="true">
-          <span>Membre</span>
+          <span />
           <span class="num">Temps</span>
           <span class="num">Sessions</span>
           <span>Profil horaire</span>
         </li>
-        {members.map((member) => {
+        {shown.map((member) => {
           const peak = maxOf(member.hourMs);
           const busiest = busiestHour(member.hourMs);
           return (
@@ -49,6 +59,11 @@ export function MemberTable({ members, search, viewerId }: { members: Summary['m
           );
         })}
       </ul>
+      {collapsible && (
+        <button type="button" class="more" aria-expanded={expanded} aria-controls="membres" onClick={() => setExpanded(!expanded)}>
+          {expanded ? 'Réduire la liste' : `Afficher les ${members.length} membres`}
+        </button>
+      )}
     </section>
   );
 }
