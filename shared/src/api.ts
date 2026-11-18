@@ -52,6 +52,8 @@ export interface Summary {
   months: MonthStrip[];
   /** One strip per year of the period, newest first, at most 6. */
   years: YearStrip[];
+  /** The group's voice time on each day of the last 53 weeks, whatever the period. */
+  yearGrid: MemberYear;
 }
 
 /** One week in detail (Monday 06:00 to the next Monday 06:00): who was in voice and when. */

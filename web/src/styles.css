@@ -395,7 +395,7 @@ select {
   opacity: 1;
 }
 
-/* Heat map: one hue, opacity carries the scale. Cells shrink on narrow screens, no sideways scroll. */
+/* Heat map: one hue, opacity carries the scale. Cells are square and shrink on narrow screens, no sideways scroll. */
 .heat {
   display: flex;
   flex-direction: column;
@@ -419,13 +419,15 @@ select {
 .heat-axis {
   flex: 1;
   min-width: 0;
+  /* The cells are square, so a very wide card must not make them huge: the grid stops at about 30 px a cell. */
+  max-width: 740px;
   display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));
   gap: 1px;
 }
 
 .heat-cell {
-  height: 26px;
+  aspect-ratio: 1;
   border-radius: 2px;
   background: color-mix(in srgb, var(--accent) calc(var(--v, 0) * 93% + 7%), var(--card));
 }
@@ -632,10 +634,6 @@ select {
 
   .heat-day {
     flex-basis: 28px;
-  }
-
-  .heat-cell {
-    height: 20px;
   }
 
   .bars li {

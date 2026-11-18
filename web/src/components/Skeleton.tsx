@@ -9,12 +9,14 @@ const FIGURES: Record<SkeletonVariant, number> = { home: 4, member: 5, day: 3, w
 type Heights = readonly [wide: number, medium: number, small: number];
 
 const CARDS: Record<SkeletonVariant, { span: string; heights: Heights; rows: number }[]> = {
+  // The members list spans the two cards stacked at its right on wide screens (the heat map and the records).
   home: [
-    { span: 'col-7', heights: [483, 483, 815], rows: 6 },
-    { span: 'col-5', heights: [483, 300, 250], rows: 7 },
-    { span: 'col-12', heights: [644, 644, 636], rows: 12 },
-    { span: 'col-6', heights: [225, 285, 277], rows: 3 },
-    { span: 'col-6', heights: [225, 285, 192], rows: 2 },
+    { span: 'col-7 tall', heights: [483, 483, 815], rows: 6 },
+    { span: 'col-5', heights: [255, 305, 221], rows: 5 },
+    { span: 'col-5', heights: [204, 179, 192], rows: 2 },
+    { span: 'col-12', heights: [255, 213, 195], rows: 3 },
+    { span: 'col-12', heights: [667, 667, 694], rows: 12 },
+    { span: 'col-12', heights: [225, 255, 277], rows: 3 },
   ],
   member: [
     { span: 'col-7', heights: [300, 257, 219], rows: 3 },

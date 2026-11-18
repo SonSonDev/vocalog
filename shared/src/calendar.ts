@@ -403,7 +403,7 @@ export interface MemberYear {
   elapsedDays: number;
 }
 
-/** The member's own sessions as a year of days, for a contribution-style grid. */
+/** A set of sessions (a member's, or the whole group's) as a year of days, for a contribution-style grid. */
 export function buildMemberYear(ownSessions: readonly Session[], nowMs: number, timeZone: string): MemberYear {
   const today = dayNumber(timelineDayKey(nowMs, timeZone));
   const rawStart = today - 52 * 7 - weekdayOf(today); // the Monday of the week 52 weeks before this one

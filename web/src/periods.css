@@ -446,3 +446,10 @@ a.cal-cell:focus-visible {
   box-shadow: inset 0 0 0 1px var(--line);
   opacity: 0.6;
 }
+
+/* The members list is as tall as the heat map and the records stacked beside it (the heat map's cells are square, so it is not stretched). */
+@media (min-width: 1200px) {
+  .dashboard > .tall {
+    grid-row: span 2;
+  }
+}

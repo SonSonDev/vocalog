@@ -516,3 +516,16 @@ describe('member year grid', () => {
     expect(body.yearGrid.totals.reduce((sum: number, value: number) => sum + value, 0)).toBe(HOUR);
   });
 });
+
+describe('summary year grid', () => {
+  it('gives the group its voice time on each of the last 53 weeks, whatever the period', async () => {
+    const app = seeded();
+    for (const period of ['7d', '30d', 'all']) {
+      const body = (await app.inject(`/api/guilds/g1/summary?period=${period}`)).json();
+      expect(body.yearGrid.totals).toHaveLength(371);
+      expect(body.yearGrid.startKey).toBe('2025-11-17');
+      expect(body.yearGrid.totals[body.yearGrid.elapsedDays - 1]).toBe(4 * HOUR); // u1 3 h and u2 1 h, today
+      expect(body.yearGrid.totals.reduce((sum: number, value: number) => sum + value, 0)).toBe(4 * HOUR);
+    }
+  });
+});

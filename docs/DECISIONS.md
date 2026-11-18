@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-19 — Square heat map cells; the home page gets the 12-month grid and a new layout
+- Decision: the heat map's cells are square again (aspect ratio 1, at most about 30 px); the home page stacks the heat map over the records at the right of the member list (which spans two rows on wide screens) instead of stretching the heat map; the home page gets the "12 derniers mois" contribution-style grid of the group; the channels move to a full-width card at the bottom. The summary carries `yearGrid` for the group. This supersedes the earlier choice of making the heat map's rows grow to fill the card.
+- Why: stretching the rows to remove a void made rectangles (a cell 16 px wide could be 52 px tall, the owner's screen showed 34 x 78); the owner wants squares. The void came from the member list being much taller than the heat map, so the fix is in the layout, not in the cells.
+- Alternatives rejected: capping the stretch lower (still rectangles); centring a small heat map in a tall card (a large void); a heat map with wider squares (cells of 60 px would need a card three times as wide).
+- Consequences / risks accepted: a few tens of pixels of blank space remain inside the heat map card and the records card on wide screens; the channels list is full width, so its bars are long; on a phone the heat map's cells are about 11 px.
+
 ## 2026-11-18 — The contribution-style grid for each member: the last 53 weeks
 - Decision: a member's page gets a "12 derniers mois" card with the contribution-style grid of their own voice time per day, over the last 53 weeks ending with the current week, independent of the selected period. The grid is the same component as the year page; the profile carries the data compactly (a start date, one total per day, how many days have elapsed). A month cut by the start of the window gets no label when it is shown on fewer than three columns.
 - Why: the owner asked for the year grid for each member. A rolling year needs no navigation and shows a member's rhythm at a glance; a calendar year per member would need year buttons and would be mostly empty at the start of a year.

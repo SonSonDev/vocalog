@@ -512,37 +512,6 @@ p > strong.mono {
   display: inline;
 }
 
-/* The heat map fills its card: the card is as tall as the one beside it, and rows grow (up to a limit) instead of leaving a void. */
-.heat {
-  flex: 1;
-}
-
-.heat-row:not(:last-child) {
-  flex: 1 1 0;
-  min-height: 26px;
-  max-height: 52px;
-}
-
-.heat-cells {
-  align-self: stretch;
-}
-
-.heat-cell {
-  height: auto;
-}
-
-@media (max-width: 699px) {
-  .heat-row:not(:last-child) {
-    flex: none;
-    min-height: 20px;
-  }
-}
-
-.card > .table-scroll {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-}
 
 /* The back link sits above the title, never beside it. The small label that used to separate them is gone, and both are
    inline boxes, so without this they ran together on one line. */
