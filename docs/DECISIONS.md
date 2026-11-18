@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — The year as a contribution-style grid, with the month calendars behind a switch
+- Decision: the year page opens on a grid of weeks (columns) and weekdays (rows), one cell per day, like the contributions of a code hosting site; the twelve month calendars stay one click away (Grille / Mois, remembered). On a phone the grid scrolls sideways and starts at the latest weeks. This supersedes the 2026-11-18 entry that chose the month calendars only.
+- Why: the owner asked for the contribution-style display after seeing the month calendars. The reason for rejecting it earlier (cells of 6 px on a phone) is answered by sideways scrolling with the weekday labels kept in view.
+- Alternatives rejected: shrinking 53 columns to fit a phone (6 px cells); making each day a link (365 tab stops; the month calendars lead to the months); quantising the colour into four levels (the app's other heat maps use a continuous scale).
+- Consequences / risks accepted: on a phone only about 29 of the 53 weeks are visible at once; a year that started in the middle (data from October) shows empty cells before it; the grid carries a text label for screen readers but not the per-day figures (the month view and the month pages do).
+
 ## 2026-11-18 — A page for the year: twelve small calendars
 - Decision: a year page (`/annees/<YYYY>`) with five key figures and twelve small month calendars; an Années button on the home switch with one line per year; a link from the month page. The per-day totals of a year are computed in one pass over the sessions, not one pass per day.
 - Why: the owner asked for the year after the week and the month, and chose the annual calendar. Twelve month calendars keep the "one cell per day" idea of a contribution graph, but fit a phone and lead to the months, where a GitHub-style grid of 53 columns would be about 6 px per cell.

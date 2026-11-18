@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatCompactDuration,
   formatDayWeekday,
+  formatMonthAbbr,
   formatMonthLong,
   formatMonthName,
   formatMonthShort,
@@ -246,6 +247,12 @@ describe('week and month labels', () => {
     expect(isoWeekNumber('2026-01-05')).toBe(2);
     expect(isoWeekNumber('2025-12-29')).toBe(1); // belongs to the first week of 2026
     expect(isoWeekNumber('2024-12-30')).toBe(1);
+  });
+
+  it('writes the short name of a month', () => {
+    expect(formatMonthAbbr('2026-11')).toBe('nov.');
+    expect(formatMonthAbbr('2026-05')).toBe('mai');
+    expect(formatMonthAbbr('2026-01')).toBe('janv.');
   });
 
   it('writes the name of a month', () => {

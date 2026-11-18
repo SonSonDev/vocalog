@@ -247,3 +247,9 @@ export function formatMonthName(monthKey: string): string {
   const [year, month] = monthKey.split('-').map(Number);
   return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'long' }).format(Date.UTC(year!, month! - 1, 1));
 }
+
+/** "janv.", "mars", "nov." from `YYYY-MM`: a label small enough to sit above a few cells. */
+export function formatMonthAbbr(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'short' }).format(Date.UTC(year!, month! - 1, 1));
+}

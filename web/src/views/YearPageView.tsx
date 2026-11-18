@@ -1,14 +1,15 @@
 import type { Period, YearView } from '@vocalog/shared';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Header } from '../components/Header.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Link } from '../components/Link.tsx';
 import { PeriodNav } from '../components/PeriodNav.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
-import { formatClock, formatDayKey, formatDayShort, formatDuration, formatMonthName, maxOf } from '../format.ts';
+import { WEEKDAYS_SHORT, formatClock, formatDayKey, formatDayShort, formatDuration, formatMonthAbbr, formatMonthName, maxOf } from '../format.ts';
 import { monthQuery, prefetchQuery, yearQuery } from '../queries.ts';
 import { monthPath, yearPath } from '../router.ts';
 import { useRemote } from '../useRemote.ts';
+import { buildYearGrid } from '../yearGrid.ts';
 
 const WEEKDAY_INITIALS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -64,7 +65,7 @@ export function YearPageView({ guildId, yearKey, search, controls }: Props) {
           ) : (
             <YearFigures year={year} />
           )}
-          <YearCalendar year={year} guildId={guildId} search={search} />
+          <YearCard year={year} guildId={guildId} search={search} />
           <p class="footnote">
             Fuseau horaire : {year.timeZone} · mis à jour à {formatClock(year.generatedAtMs, year.timeZone)}
           </p>
@@ -104,43 +105,124 @@ function YearFigures({ year }: { year: YearView }) {
   );
 }
 
-/** Twelve small calendars, one per month: a cell per day, darker for more voice time. A month's title opens that month. */
-function YearCalendar({ year, guildId, search }: { year: YearView; guildId: string; search: string }) {
-  const max = maxOf(year.months.flatMap((month) => month.days.map((day) => day.totalMs)));
+const VIEW_KEY = 'vocalog-year-view';
+type YearDisplay = 'grid' | 'months';
+
+function loadDisplay(): YearDisplay {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === 'months' ? 'months' : 'grid';
+  } catch {
+    return 'grid';
+  }
+}
+
+function saveDisplay(display: YearDisplay): void {
+  try {
+    window.localStorage.setItem(VIEW_KEY, display);
+  } catch {
+    // ignore: the choice is just not remembered
+  }
+}
+
+/** The year as a contribution-style grid, or as twelve month calendars. The choice is remembered. */
+function YearCard({ year, guildId, search }: { year: YearView; guildId: string; search: string }) {
+  const [display, setDisplay] = useState<YearDisplay>(loadDisplay);
+  const choose = (next: YearDisplay): void => {
+    setDisplay(next);
+    saveDisplay(next);
+  };
   return (
     <section class="card" aria-labelledby="year-calendar-title">
-      <h2 id="year-calendar-title" class="sr-only">
-        Calendrier de l’année
-      </h2>
-      <div class="year-grid">
-        {year.months.map((month) => (
-          <div class="mini-cal" key={month.monthKey}>
-            <Link to={monthPath(month.monthKey, search)} class="mini-title" onPrefetch={() => prefetchQuery(monthQuery(guildId, month.monthKey))}>
-              <span>{formatMonthName(month.monthKey)}</span>
-              <span class="mini-total mono">{month.totalMs > 0 ? formatDuration(month.totalMs) : ''}</span>
-              <span class="sr-only">{month.totalMs > 0 ? ` : ${formatDuration(month.totalMs)}, ${month.activeDays} jour${month.activeDays > 1 ? 's' : ''} actif${month.activeDays > 1 ? 's' : ''}` : ' : personne en vocal'}</span>
-            </Link>
-            <div class="mini-days" aria-hidden="true">
-              {WEEKDAY_INITIALS.map((initial, index) => (
-                <span key={index} class="mini-dow">
-                  {initial}
-                </span>
-              ))}
-              {Array.from({ length: month.firstWeekday }, (_, index) => (
-                <span key={`blank-${index}`} />
-              ))}
-              {month.days.map((day) => (
-                <span
-                  key={day.dayKey}
-                  class={day.future ? 'mini-cell future' : 'mini-cell'}
-                  style={{ '--v': max > 0 ? (day.totalMs / max).toFixed(3) : '0' }}
-                  data-tip={day.future ? undefined : `${formatDayShort(day.dayKey)}\n${day.totalMs > 0 ? formatDuration(day.totalMs) : 'personne'}`}
-                />
-              ))}
-            </div>
-          </div>
+      <div class="strips-head year-head">
+        <h2 id="year-calendar-title" class="sr-only">
+          Calendrier de l’année
+        </h2>
+        <div class="segmented" role="group" aria-label="Affichage">
+          <button type="button" aria-pressed={display === 'grid'} onClick={() => choose('grid')}>
+            Grille
+          </button>
+          <button type="button" aria-pressed={display === 'months'} onClick={() => choose('months')}>
+            Mois
+          </button>
+        </div>
+      </div>
+      {display === 'grid' ? <ContributionGrid year={year} /> : <MonthCalendars year={year} guildId={guildId} search={search} />}
+    </section>
+  );
+}
+
+/**
+ * Weeks as columns (Monday first), weekdays as rows, one cell per day, darker for more voice time, like the contributions
+ * of a code hosting site. On a phone it scrolls sideways (53 columns would be 6 px each) and starts at the latest weeks.
+ */
+function ContributionGrid({ year }: { year: YearView }) {
+  const grid = buildYearGrid(year.months);
+  const max = maxOf(grid.cells.map((cell) => cell.totalMs));
+  const scroller = useRef<HTMLDivElement>(null);
+  const isCurrentYear = year.nextYearKey === null;
+  useEffect(() => {
+    const element = scroller.current;
+    if (element) element.scrollLeft = isCurrentYear ? element.scrollWidth : 0;
+  }, [year.yearKey]);
+
+  return (
+    <div class="gh-scroll" ref={scroller}>
+      <div class="gh" style={{ '--cols': String(grid.columns) }} role="img" aria-label={`Calendrier de l’année : ${year.activeDays} jour${year.activeDays > 1 ? 's' : ''} avec du vocal, une case par jour.`}>
+        {grid.months.map((month) => (
+          <span key={month.monthKey} class="gh-month" style={{ gridColumn: `${month.column + 2} / span ${Math.min(3, grid.columns - month.column)}`, gridRow: 1 }}>
+            {formatMonthAbbr(month.monthKey)}
+          </span>
+        ))}
+        {[0, 2, 4].map((row) => (
+          <span key={row} class="gh-dow" style={{ gridRow: row + 2 }}>
+            {WEEKDAYS_SHORT[row]}
+          </span>
+        ))}
+        {grid.cells.map((cell) => (
+          <span
+            key={cell.dayKey}
+            class={cell.future ? 'gh-cell future' : 'gh-cell'}
+            style={{ gridColumn: cell.column + 2, gridRow: cell.row + 2, '--v': max > 0 ? (cell.totalMs / max).toFixed(3) : '0' }}
+            data-tip={cell.future ? undefined : `${formatDayShort(cell.dayKey)}\n${cell.totalMs > 0 ? formatDuration(cell.totalMs) : 'personne'}`}
+          />
         ))}
       </div>
-    </section>
+    </div>
+  );
+}
+
+/** Twelve small calendars, one per month: a cell per day, darker for more voice time. A month's title opens that month. */
+function MonthCalendars({ year, guildId, search }: { year: YearView; guildId: string; search: string }) {
+  const max = maxOf(year.months.flatMap((month) => month.days.map((day) => day.totalMs)));
+  return (
+    <div class="year-grid">
+      {year.months.map((month) => (
+        <div class="mini-cal" key={month.monthKey}>
+          <Link to={monthPath(month.monthKey, search)} class="mini-title" onPrefetch={() => prefetchQuery(monthQuery(guildId, month.monthKey))}>
+            <span>{formatMonthName(month.monthKey)}</span>
+            <span class="mini-total mono">{month.totalMs > 0 ? formatDuration(month.totalMs) : ''}</span>
+            <span class="sr-only">{month.totalMs > 0 ? ` : ${formatDuration(month.totalMs)}, ${month.activeDays} jour${month.activeDays > 1 ? 's' : ''} actif${month.activeDays > 1 ? 's' : ''}` : ' : personne en vocal'}</span>
+          </Link>
+          <div class="mini-days" aria-hidden="true">
+            {WEEKDAY_INITIALS.map((initial, index) => (
+              <span key={index} class="mini-dow">
+                {initial}
+              </span>
+            ))}
+            {Array.from({ length: month.firstWeekday }, (_, index) => (
+              <span key={`blank-${index}`} />
+            ))}
+            {month.days.map((day) => (
+              <span
+                key={day.dayKey}
+                class={day.future ? 'mini-cell future' : 'mini-cell'}
+                style={{ '--v': max > 0 ? (day.totalMs / max).toFixed(3) : '0' }}
+                data-tip={day.future ? undefined : `${formatDayShort(day.dayKey)}\n${day.totalMs > 0 ? formatDuration(day.totalMs) : 'personne'}`}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

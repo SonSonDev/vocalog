@@ -29,7 +29,8 @@ const CARDS: Record<SkeletonVariant, { span: string; heights: Heights; rows: num
   day: [{ span: 'col-12', heights: [455, 455, 690], rows: 6 }],
   week: [{ span: 'col-12', heights: [421, 421, 666], rows: 6 }],
   month: [{ span: 'col-12', heights: [567, 567, 451], rows: 6 }],
-  year: [{ span: 'col-12', heights: [1020, 1075, 1288], rows: 8 }],
+  // The year opens on the contribution-style grid (the twelve month calendars are taller, about 1 000 to 1 300 px).
+  year: [{ span: 'col-12', heights: [278, 226, 218], rows: 4 }],
 };
 
 /** Placeholder blocks shaped like a page: grey, calm, and read as "loading" by a screen reader. */

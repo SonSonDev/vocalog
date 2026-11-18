@@ -389,3 +389,60 @@ a.cal-cell:focus-visible {
   box-shadow: inset 0 0 0 1px var(--line);
   opacity: 0.6;
 }
+
+/* The year as a contribution-style grid. The labels are part of the same grid, so they always line up with the cells. */
+.year-head {
+  justify-content: flex-end;
+}
+
+.gh-scroll {
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+
+.gh {
+  display: grid;
+  /* Wide enough to hold every column (so the sticky weekday labels have a box to stick inside), and at least as wide as the card. */
+  width: max-content;
+  min-width: 100%;
+  grid-template-columns: 30px repeat(var(--cols), minmax(11px, 1fr));
+  gap: 3px;
+}
+
+.gh-month {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.gh-dow {
+  /* Across the whole row, so that it can stay at the left edge while the grid scrolls (a sticky item in a grid cannot leave
+     its own cell). It is as wide as the label column and no taller than a cell, so it never changes the height of a row. */
+  grid-column: 1 / -1;
+  justify-self: start;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  width: 30px;
+  background: var(--card);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 10px;
+}
+
+.gh-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) calc(var(--v, 0) * 93% + 7%), var(--card));
+}
+
+.gh-cell.future {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+  opacity: 0.6;
+}
