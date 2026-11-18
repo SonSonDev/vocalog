@@ -1,5 +1,5 @@
 import type { Period } from '@vocalog/shared';
-import { fetchDay, fetchMemberProfile, fetchSummary } from './api.ts';
+import { fetchDay, fetchMemberProfile, fetchMonth, fetchSummary, fetchWeek } from './api.ts';
 import { prefetch } from './remoteCache.ts';
 
 /**
@@ -24,6 +24,16 @@ export const memberQuery = (guildId: string, userId: string, period: Period): Qu
 export const dayQuery = (guildId: string, dayKey: string): Query<Awaited<ReturnType<typeof fetchDay>>> => ({
   key: `day|${guildId}|${dayKey}`,
   load: () => fetchDay(guildId, dayKey),
+});
+
+export const weekQuery = (guildId: string, mondayKey: string): Query<Awaited<ReturnType<typeof fetchWeek>>> => ({
+  key: `week|${guildId}|${mondayKey}`,
+  load: () => fetchWeek(guildId, mondayKey),
+});
+
+export const monthQuery = (guildId: string, monthKey: string): Query<Awaited<ReturnType<typeof fetchMonth>>> => ({
+  key: `month|${guildId}|${monthKey}`,
+  load: () => fetchMonth(guildId, monthKey),
 });
 
 export function prefetchQuery<T>(query: Query<T>): void {

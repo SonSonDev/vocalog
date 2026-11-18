@@ -193,7 +193,7 @@ describe('who is looking: GET /api/me', () => {
 
 describe('the statistics need a login', () => {
   const instance = () => app(discordAuth(fakeDiscord().fetchFn));
-  const guarded = ['/api/guilds', '/api/guilds/g1/summary', '/api/guilds/g1/members/u1', '/api/guilds/nope/summary', '/api/guilds/g1/members/nobody', '/api/guilds/g1/days/2026-11-17', '/api/guilds/g1/avatars/u1'];
+  const guarded = ['/api/guilds', '/api/guilds/g1/summary', '/api/guilds/g1/members/u1', '/api/guilds/nope/summary', '/api/guilds/g1/members/nobody', '/api/guilds/g1/days/2026-11-17', '/api/guilds/g1/weeks/2026-11-16', '/api/guilds/g1/months/2026-11', '/api/guilds/g1/avatars/u1'];
 
   it('answers 401 to every statistics route without a session', async () => {
     const app1 = instance();

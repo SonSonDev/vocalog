@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { App } from './App.tsx';
 import './styles.css';
 import './timeline.css';
+import './periods.css';
 import './motion.css';
 
 const root = document.getElementById('app')!;

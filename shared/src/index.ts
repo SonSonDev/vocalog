@@ -3,7 +3,7 @@ export { VoiceFlag } from './types.ts';
 export { deriveSessions, durationMs, totalByUser } from './sessions.ts';
 export { planReconcile } from './reconcile.ts';
 export { PERIODS } from './api.ts';
-export type { DayView, GuildInfo, MemberProfile, MeResponse, NamedRef, Period, Summary } from './api.ts';
+export type { DayView, GuildInfo, MemberProfile, MeResponse, MonthView, NamedRef, Period, Summary, WeekView } from './api.ts';
 export { aggregate, clipSessions, streaks } from './aggregate.ts';
 export { flagTimesByUser } from './flags.ts';
 export type { FlagTimes } from './flags.ts';
@@ -14,3 +14,5 @@ export type { Aggregate, AggregateOptions, ChannelStat, MemberStat } from './agg
 export { buildDayTimeline, dayStrips, isDayKey, presenceBins, timelineDayKey, timelineDayWindow, TIMELINE_DAY_START_HOUR } from './timeline.ts';
 export type { DayStrip, DayTimeline } from './timeline.ts';
 export { dayKeyOf, dayNumber } from './aggregate.ts';
+export { addMonths, buildMonthCalendar, buildWeekTimeline, daysInMonth, isMondayKey, isMonthKey, mondayOf, monthOf, monthStrips, weekStrips, weekWindow } from './calendar.ts';
+export type { CalendarDay, MonthCalendar, MonthStrip, WeekStrip, WeekTimeline } from './calendar.ts';

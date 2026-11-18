@@ -72,6 +72,19 @@
   min-height: 121px;
 }
 
+.skeleton-foot {
+  height: 14px;
+  width: 18rem;
+  max-width: 70%;
+}
+
+/* On a phone the navigation of a day or a week takes a second row (the link to the larger period, centred). */
+@media (max-width: 699px) {
+  .sk-nav-split {
+    height: 100px;
+  }
+}
+
 .sk-nav {
   height: 44px;
   width: 11rem;
@@ -84,6 +97,12 @@
 
 .skeleton-figures.n5 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (min-width: 700px) and (max-width: 1199px) {
+  .skeleton-figures .figure {
+    min-height: 139px;
+  }
 }
 
 @media (max-width: 1199px) {
@@ -111,7 +130,7 @@
   }
 
   .skeleton-figures .figure {
-    min-height: 108px;
+    min-height: 117px;
   }
 
   .skeleton-card {

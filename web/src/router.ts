@@ -2,7 +2,12 @@ import { PERIODS } from '@vocalog/shared';
 import type { Period } from '@vocalog/shared';
 import { useEffect, useState } from 'preact/hooks';
 
-export type Route = { name: 'home' } | { name: 'member'; userId: string } | { name: 'day'; dayKey: string };
+export type Route =
+  | { name: 'home' }
+  | { name: 'member'; userId: string }
+  | { name: 'day'; dayKey: string }
+  | { name: 'week'; mondayKey: string }
+  | { name: 'month'; monthKey: string };
 
 export function parseRoute(pathname: string): Route {
   const match = /^\/membres\/([^/]+)\/?$/.exec(pathname);
@@ -15,6 +20,10 @@ export function parseRoute(pathname: string): Route {
   }
   const day = /^\/jours\/(\d{4}-\d{2}-\d{2})\/?$/.exec(pathname);
   if (day) return { name: 'day', dayKey: day[1]! };
+  const week = /^\/semaines\/(\d{4}-\d{2}-\d{2})\/?$/.exec(pathname);
+  if (week) return { name: 'week', mondayKey: week[1]! };
+  const month = /^\/mois\/(\d{4}-\d{2})\/?$/.exec(pathname);
+  if (month) return { name: 'month', monthKey: month[1]! };
   return { name: 'home' };
 }
 
@@ -41,6 +50,14 @@ export function memberPath(userId: string, search: string): string {
 
 export function dayPath(dayKey: string, search: string): string {
   return `/jours/${dayKey}${search}`;
+}
+
+export function weekPath(mondayKey: string, search: string): string {
+  return `/semaines/${mondayKey}${search}`;
+}
+
+export function monthPath(monthKey: string, search: string): string {
+  return `/mois/${monthKey}${search}`;
 }
 
 const EVENT = 'vocalog:navigate';

@@ -12,6 +12,8 @@ import { PageSkeleton } from './components/Skeleton.tsx';
 import { TooltipLayer } from './components/Tooltip.tsx';
 import { DayPageView } from './views/DayPageView.tsx';
 import { MemberView } from './views/MemberView.tsx';
+import { MonthPageView } from './views/MonthPageView.tsx';
+import { WeekPageView } from './views/WeekPageView.tsx';
 
 const GUILD_KEY = 'vocalog-guild';
 
@@ -98,6 +100,10 @@ export function App() {
             <MemberView guildId={guildId} userId={route.userId} period={period} search={search} controls={controls} />
           ) : route.name === 'day' ? (
             <DayPageView guildId={guildId} dayKey={route.dayKey} period={period} search={search} controls={controls} />
+          ) : route.name === 'week' ? (
+            <WeekPageView guildId={guildId} mondayKey={route.mondayKey} period={period} search={search} controls={controls} />
+          ) : route.name === 'month' ? (
+            <MonthPageView guildId={guildId} monthKey={route.monthKey} period={period} search={search} controls={controls} />
           ) : (
             <HomeView guildId={guildId} period={period} search={search} controls={controls} />
           ))}

@@ -387,3 +387,78 @@ describe('server icon', () => {
     expect((await app.inject('/api/guilds/g1/icon')).statusCode).toBe(404);
   });
 });
+
+describe('GET /api/guilds/:guildId/weeks/:mondayKey', () => {
+  it('gives who was in voice that week, most time first, with the days, hours and names', async () => {
+    const response = await seeded().inject('/api/guilds/g1/weeks/2026-11-16');
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.guild.id).toBe('g1');
+    expect(body.members.map((m: { user: { name: string }; totalMs: number }) => [m.user.name, m.totalMs])).toEqual([
+      ['Alex', 3 * HOUR],
+      ['Sam', HOUR],
+    ]);
+    expect(body.members[0].spans).toEqual([{ channel: { id: 'c1', name: 'General' }, startMs: NOW - 5 * HOUR, endMs: NOW - 2 * HOUR }]);
+    expect(body.days).toHaveLength(7);
+    expect(body.days[1]).toMatchObject({ dayKey: '2026-11-17', totalMs: 4 * HOUR });
+    expect(body.totalMs).toBe(4 * HOUR);
+    expect(body.bins).toHaveLength(168);
+    expect(body.prevMondayKey).toBeNull(); // the first event is in this week
+    expect(body.nextMondayKey).toBeNull(); // and it is the current week
+  });
+
+  it('answers an earlier empty week, with its neighbour', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/weeks/2026-11-09')).json();
+    expect(body.members).toEqual([]);
+    expect(body.nextMondayKey).toBe('2026-11-16');
+  });
+
+  it('refuses a date that is not a Monday, a bad date, a week in the future and an unknown server', async () => {
+    const app = seeded();
+    expect((await app.inject('/api/guilds/g1/weeks/2026-11-17')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/weeks/..%2Fsecret')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/weeks/2026-11-23')).statusCode).toBe(404);
+    expect((await app.inject('/api/guilds/nope/weeks/2026-11-16')).statusCode).toBe(404);
+  });
+});
+
+describe('GET /api/guilds/:guildId/months/:monthKey', () => {
+  it('gives the month as a calendar with its totals and busiest day', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/months/2026-11')).json();
+    expect(body.totalMs).toBe(4 * HOUR);
+    expect(body.people).toBe(2);
+    expect(body.activeDays).toBe(1);
+    expect(body.busiest).toEqual({ dayKey: '2026-11-17', totalMs: 4 * HOUR });
+    expect(body.weeks[0].mondayKey).toBe('2026-10-26'); // 1 November 2026 is a Sunday
+    expect(body.weeks.every((week: { days: unknown[] }) => week.days.length === 7)).toBe(true);
+    expect(body.prevMonthKey).toBeNull();
+    expect(body.nextMonthKey).toBeNull();
+  });
+
+  it('answers an earlier empty month, with its neighbour', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/months/2026-10')).json();
+    expect(body.activeDays).toBe(0);
+    expect(body.busiest).toBeNull();
+    expect(body.nextMonthKey).toBe('2026-11');
+  });
+
+  it('refuses a bad month, a month in the future and an unknown server', async () => {
+    const app = seeded();
+    expect((await app.inject('/api/guilds/g1/months/2026-13')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/months/2026-11-01')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/months/2026-12')).statusCode).toBe(404);
+    expect((await app.inject('/api/guilds/nope/months/2026-11')).statusCode).toBe(404);
+  });
+});
+
+describe('summary weeks and months', () => {
+  it('lists the weeks and months of the period, newest first', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/summary?period=7d')).json();
+    expect(body.weeks[0]).toMatchObject({ mondayKey: '2026-11-16', people: 2, peak: 2 });
+    expect(body.weeks[0].bins).toHaveLength(168);
+    expect(body.weeks[0].dayTotals).toHaveLength(7);
+    expect(body.months[0]).toMatchObject({ monthKey: '2026-11', people: 2 });
+    expect(body.months[0].dayTotals).toHaveLength(30);
+    expect(body.weeks.length).toBeLessThanOrEqual(12);
+  });
+});

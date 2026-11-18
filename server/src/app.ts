@@ -1,10 +1,11 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { isDayKey } from '@vocalog/shared';
+import { isDayKey, isMondayKey, isMonthKey } from '@vocalog/shared';
 import type { MeResponse, Period } from '@vocalog/shared';
 import { createImageProxy } from './image.ts';
 import { createCache } from './cache.ts';
 import { buildDayView } from './day.ts';
+import { buildMonthView } from './month.ts';
 import { createAuth } from './auth.ts';
 import type { AuthOptions } from './auth.ts';
 import { isPeriod } from './period.ts';
@@ -13,6 +14,7 @@ import { findGuild, listGuilds, userAvatars, userHasEvents } from './queries.ts'
 import type { Db } from './queries.ts';
 import { resolveStatic } from './static.ts';
 import { buildSummary } from './summary.ts';
+import { buildWeekView } from './week.ts';
 
 export interface AppOptions {
   db: Db;
@@ -100,6 +102,22 @@ export function buildApp(options: AppOptions): FastifyInstance {
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
     const view = cached(`day|${guild.id}|${request.params.dayKey}`, () => buildDayView(db, guild, request.params.dayKey, now(), timeZone));
     return view ?? reply.code(404).send({ error: 'unknown day' });
+  });
+
+  app.get<{ Params: { guildId: string; mondayKey: string } }>('/api/guilds/:guildId/weeks/:mondayKey', async (request, reply) => {
+    if (!isMondayKey(request.params.mondayKey)) return reply.code(400).send({ error: 'week must be the date of its Monday, written YYYY-MM-DD' });
+    const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
+    if (!guild) return reply.code(404).send({ error: 'unknown server' });
+    const view = cached(`week|${guild.id}|${request.params.mondayKey}`, () => buildWeekView(db, guild, request.params.mondayKey, now(), timeZone));
+    return view ?? reply.code(404).send({ error: 'unknown week' });
+  });
+
+  app.get<{ Params: { guildId: string; monthKey: string } }>('/api/guilds/:guildId/months/:monthKey', async (request, reply) => {
+    if (!isMonthKey(request.params.monthKey)) return reply.code(400).send({ error: 'month must be written YYYY-MM' });
+    const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
+    if (!guild) return reply.code(404).send({ error: 'unknown server' });
+    const view = cached(`month|${guild.id}|${request.params.monthKey}`, () => buildMonthView(db, guild, request.params.monthKey, now(), timeZone));
+    return view ?? reply.code(404).send({ error: 'unknown month' });
   });
 
   // The picture of a member, fetched from Discord by this server. The hash comes from the database, not from the request,

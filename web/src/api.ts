@@ -1,4 +1,4 @@
-import type { DayView, GuildInfo, MemberProfile, MeResponse, Period, Summary } from '@vocalog/shared';
+import type { DayView, GuildInfo, MonthView, WeekView, MemberProfile, MeResponse, Period, Summary } from '@vocalog/shared';
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { headers: { accept: 'application/json' } });
@@ -22,6 +22,14 @@ export function fetchMemberProfile(guildId: string, userId: string, period: Peri
 
 export function fetchDay(guildId: string, dayKey: string): Promise<DayView> {
   return getJson<DayView>(`/api/guilds/${encodeURIComponent(guildId)}/days/${encodeURIComponent(dayKey)}`);
+}
+
+export function fetchWeek(guildId: string, mondayKey: string): Promise<WeekView> {
+  return getJson<WeekView>(`/api/guilds/${encodeURIComponent(guildId)}/weeks/${encodeURIComponent(mondayKey)}`);
+}
+
+export function fetchMonth(guildId: string, monthKey: string): Promise<MonthView> {
+  return getJson<MonthView>(`/api/guilds/${encodeURIComponent(guildId)}/months/${encodeURIComponent(monthKey)}`);
 }
 
 export function fetchMe(): Promise<MeResponse> {

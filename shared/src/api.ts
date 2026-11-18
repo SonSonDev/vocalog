@@ -1,6 +1,7 @@
 /** Types of the JSON API, shared by the server and the web app. */
 import type { FlagTimes } from './flags.ts';
 import type { MemberStats } from './profile.ts';
+import type { MonthCalendar, MonthStrip, WeekStrip } from './calendar.ts';
 import type { DayStrip } from './timeline.ts';
 
 export const PERIODS = ['7d', '30d', '1y', 'all'] as const;
@@ -45,6 +46,39 @@ export interface Summary {
   heat: number[][];
   /** One presence strip per day (06:00 to 06:00) of the period, newest first, at most 31. */
   days: DayStrip[];
+  /** One strip per week of the period, newest first, at most 12. */
+  weeks: WeekStrip[];
+  /** One strip per month of the period, newest first, at most 12. */
+  months: MonthStrip[];
+}
+
+/** One week in detail (Monday 06:00 to the next Monday 06:00): who was in voice and when. */
+export interface WeekView {
+  guild: GuildInfo;
+  mondayKey: string;
+  startMs: number;
+  endMs: number;
+  timeZone: string;
+  generatedAtMs: number;
+  /** The neighbouring weeks that can be opened, or null at either end. */
+  prevMondayKey: string | null;
+  nextMondayKey: string | null;
+  days: { dayKey: string; startMs: number; endMs: number; totalMs: number }[];
+  totalMs: number;
+  peak: { count: number; atMs: number } | null;
+  /** Average number of people in each hour from `startMs`. */
+  bins: number[];
+  members: { user: NamedRef; totalMs: number; spans: { channel: NamedRef; startMs: number; endMs: number }[] }[];
+}
+
+/** One month as a calendar. */
+export interface MonthView extends Omit<MonthCalendar, 'weeks'> {
+  guild: GuildInfo;
+  timeZone: string;
+  generatedAtMs: number;
+  prevMonthKey: string | null;
+  nextMonthKey: string | null;
+  weeks: MonthCalendar['weeks'];
 }
 
 /** One day in detail: who was in voice and when. */

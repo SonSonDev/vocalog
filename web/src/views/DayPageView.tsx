@@ -1,13 +1,15 @@
+import { mondayOf, monthOf } from '@vocalog/shared';
 import type { DayView, Period } from '@vocalog/shared';
 import { useEffect, useState } from 'preact/hooks';
-import { dayQuery, prefetchQuery } from '../queries.ts';
+import { PeriodNav } from '../components/PeriodNav.tsx';
+import { dayQuery, monthQuery, prefetchQuery, weekQuery } from '../queries.ts';
 import { Avatar } from '../components/Avatar.tsx';
 import { Header } from '../components/Header.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Link } from '../components/Link.tsx';
 import { binClock, formatClock, formatDayLong, formatDayShort, formatDuration, formatHourLabel, formatPeople, maxOf, timelineView } from '../format.ts';
-import { dayPath, memberPath } from '../router.ts';
+import { dayPath, memberPath, monthPath, weekPath } from '../router.ts';
 import { useRemote } from '../useRemote.ts';
 
 const DAY_BIN_MINUTES = 15;
@@ -104,27 +106,20 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
 }
 
 function DayNav({ day, guildId, search }: { day: DayView; guildId: string; search: string }) {
+  const dayTarget = (key: string) => ({ to: dayPath(key, search), label: formatDayShort(key), onPrefetch: () => prefetchQuery(dayQuery(guildId, key)) });
+  const monday = mondayOf(day.dayKey);
+  const month = monthOf(day.dayKey);
   return (
-    <nav class="day-nav" aria-label="Changer de jour">
-      {day.prevDayKey ? (
-        <Link to={dayPath(day.prevDayKey, search)} class="day-nav-link" onPrefetch={() => prefetchQuery(dayQuery(guildId, day.prevDayKey!))}>
-          ← {formatDayShort(day.prevDayKey)}
-        </Link>
-      ) : (
-        <span class="day-nav-link disabled" aria-disabled="true">
-          ← Début des données
-        </span>
-      )}
-      {day.nextDayKey ? (
-        <Link to={dayPath(day.nextDayKey, search)} class="day-nav-link" onPrefetch={() => prefetchQuery(dayQuery(guildId, day.nextDayKey!))}>
-          {formatDayShort(day.nextDayKey)} →
-        </Link>
-      ) : (
-        <span class="day-nav-link disabled" aria-disabled="true">
-          Aujourd’hui →
-        </span>
-      )}
-    </nav>
+    <PeriodNav
+      prev={day.prevDayKey ? dayTarget(day.prevDayKey) : null}
+      next={day.nextDayKey ? dayTarget(day.nextDayKey) : null}
+      prevEnd="Début des données"
+      nextEnd="Aujourd’hui"
+      middle={[
+        { to: weekPath(monday, search), label: 'Semaine', onPrefetch: () => prefetchQuery(weekQuery(guildId, monday)) },
+        { to: monthPath(month, search), label: 'Mois', onPrefetch: () => prefetchQuery(monthQuery(guildId, month)) },
+      ]}
+    />
   );
 }
 

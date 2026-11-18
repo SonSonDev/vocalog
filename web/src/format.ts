@@ -185,3 +185,59 @@ export function timelineView(day: { startMs: number; endMs: number }, firstMs: n
 
 /** The 24 hours of an hourly profile, the day starting at 06:00 so an evening that passes midnight stays in one piece. */
 export const HOURS_FROM_SIX: readonly number[] = Array.from({ length: 24 }, (_, index) => (index + 6) % 24);
+
+const longDay = (ms: number): string => new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', month: 'long' }).format(ms);
+
+function mondayMs(mondayKey: string): number {
+  const [year, month, day] = mondayKey.split('-').map(Number);
+  return Date.UTC(year!, month! - 1, day!);
+}
+
+/** "9 au 15 novembre" or "26 octobre au 1 novembre" from the Monday of a week. */
+export function formatWeekRange(mondayKey: string): string {
+  const start = mondayMs(mondayKey);
+  const end = start + 6 * 86_400_000;
+  const sameMonth = new Date(start).getUTCMonth() === new Date(end).getUTCMonth();
+  return `${sameMonth ? String(new Date(start).getUTCDate()) : longDay(start)} au ${longDay(end)}`;
+}
+
+/** "9 – 15 nov." from the Monday of a week, for a small label. */
+export function formatWeekShort(mondayKey: string): string {
+  const start = mondayMs(mondayKey);
+  const end = start + 6 * 86_400_000;
+  const short = (ms: number): string => new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', month: 'short' }).format(ms);
+  const sameMonth = new Date(start).getUTCMonth() === new Date(end).getUTCMonth();
+  return `${sameMonth ? String(new Date(start).getUTCDate()) : short(start)} – ${short(end)}`;
+}
+
+/** The ISO week number (the week of the year's first Thursday is week 1). */
+export function isoWeekNumber(mondayKey: string): number {
+  const thursday = mondayMs(mondayKey) + 3 * 86_400_000;
+  const januaryFirst = Date.UTC(new Date(thursday).getUTCFullYear(), 0, 1);
+  return Math.floor((thursday - januaryFirst) / (7 * 86_400_000)) + 1;
+}
+
+/** "novembre 2026" from `YYYY-MM`. */
+export function formatMonthLong(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(Date.UTC(year!, month! - 1, 1));
+}
+
+/** "nov. 2026" from `YYYY-MM`. */
+export function formatMonthShort(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'short', year: 'numeric' }).format(Date.UTC(year!, month! - 1, 1));
+}
+
+/** "10 h", "45 min", or an empty text for nothing: for a small calendar cell. */
+export function formatCompactDuration(ms: number): string {
+  const minutes = Math.round(ms / MINUTE_MS);
+  if (minutes <= 0) return '';
+  return minutes < 60 ? `${minutes} min` : `${Math.round(minutes / 60)} h`;
+}
+
+/** "sam. 14" from a local `YYYY-MM-DD` key: short enough for a key figure on a phone. */
+export function formatDayWeekday(key: string): string {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric' }).format(Date.UTC(year!, month! - 1, day!));
+}

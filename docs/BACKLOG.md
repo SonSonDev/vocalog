@@ -73,7 +73,7 @@ Everything below is computable from the existing journal; nothing needs a new Di
 | F-2 | P2 | M | **Evenings** ("soirées"): a continuous stretch where at least two people are together. Count, length, average and maximum number of people, record evening, who starts and who ends them. Gives the group a unit people recognise, better than raw hours. |
 | F-3 | P2 | M | **Affinity instead of raw hours**: time together divided by the smaller of the two totals (or Jaccard), so a heavy user is not everyone's "best friend" by volume alone. Show it next to the hours in "Avec qui". |
 | F-4 | P2 | S | **Group records**: busiest day, most people at once (`peak` is already in the summary response but is not displayed), longest group streak, longest evening, record month. |
-| F-5 | P2 | S | **Month view** on the home page: voice time per month with a moving average (SPEC's brief mentions monthly average, the page only shows daily). |
+| F-5 | ✅ done 2026-11-18 (months and weeks on the home page, plus week and month pages) | S | **Month view** on the home page: voice time per month with a moving average (SPEC's brief mentions monthly average, the page only shows daily). |
 | F-6 | P2 | M | **Followers**: when A joins, who joins within 10 minutes (and who leaves right after). "Who brings the others" and "who pulls the group". Uses join and leave times only. |
 | F-7 | P3 | M | **Compare two members**: overlap of habits (hours, channels), time together, who arrives first. |
 | F-8 | P3 | S | **Calendar heatmap** of the year (one cell per day) for the group and per member. |

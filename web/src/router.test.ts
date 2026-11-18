@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { buildSearch, dayPath, memberPath, parseRoute, readParams } from './router.ts';
+import { buildSearch, dayPath, memberPath, monthPath, parseRoute, readParams, weekPath } from './router.ts';
 
 describe('parseRoute', () => {
+  it('recognises a week page and a month page', () => {
+    expect(parseRoute('/semaines/2026-11-09')).toEqual({ name: 'week', mondayKey: '2026-11-09' });
+    expect(parseRoute('/mois/2026-11/')).toEqual({ name: 'month', monthKey: '2026-11' });
+    expect(parseRoute('/semaines/lundi')).toEqual({ name: 'home' });
+    expect(parseRoute('/mois/2026-1')).toEqual({ name: 'home' });
+    expect(weekPath('2026-11-09', '?serveur=1')).toBe('/semaines/2026-11-09?serveur=1');
+    expect(monthPath('2026-11', '?serveur=1')).toBe('/mois/2026-11?serveur=1');
+  });
+
   it('recognises a day page and only a real-looking date', () => {
     expect(parseRoute('/jours/2026-11-17')).toEqual({ name: 'day', dayKey: '2026-11-17' });
     expect(parseRoute('/jours/2026-11-17/')).toEqual({ name: 'day', dayKey: '2026-11-17' });

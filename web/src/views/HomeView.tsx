@@ -5,7 +5,7 @@ import type { Controls } from '../components/Header.tsx';
 import { Heatmap } from '../components/Heatmap.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
 import { KeyFigures } from '../components/KeyFigures.tsx';
-import { DayStrips } from '../components/DayStrips.tsx';
+import { PeriodStrips } from '../components/PeriodStrips.tsx';
 import { Channels, Records } from '../components/Lists.tsx';
 import { MemberTable } from '../components/MemberTable.tsx';
 import { formatClock } from '../format.ts';
@@ -57,7 +57,7 @@ export function HomeView({ guildId, period, search, controls }: Props) {
               </div>
               {summary.days.length > 0 && (
                 <div class="col-12">
-                  <DayStrips days={summary.days} guildId={summary.guild.id} search={search} />
+                  <PeriodStrips summary={summary} search={search} />
                 </div>
               )}
               <div class="col-6">

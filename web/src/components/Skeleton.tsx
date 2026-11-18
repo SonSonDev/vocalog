@@ -1,6 +1,6 @@
-export type SkeletonVariant = 'home' | 'member' | 'day';
+export type SkeletonVariant = 'home' | 'member' | 'day' | 'week' | 'month';
 
-const FIGURES: Record<SkeletonVariant, number> = { home: 4, member: 5, day: 3 };
+const FIGURES: Record<SkeletonVariant, number> = { home: 4, member: 5, day: 3, week: 4, month: 4 };
 
 /**
  * The height of the real cards at three widths (wide screens, tablets, phones), measured on the demo data, so the page
@@ -27,6 +27,8 @@ const CARDS: Record<SkeletonVariant, { span: string; heights: Heights; rows: num
     { span: 'col-6', heights: [272, 285, 264], rows: 4 },
   ],
   day: [{ span: 'col-12', heights: [455, 455, 690], rows: 6 }],
+  week: [{ span: 'col-12', heights: [421, 421, 666], rows: 6 }],
+  month: [{ span: 'col-12', heights: [567, 567, 451], rows: 6 }],
 };
 
 /** Placeholder blocks shaped like a page: grey, calm, and read as "loading" by a screen reader. */
@@ -44,7 +46,7 @@ export function PageSkeleton({ variant, withHeader = false }: { variant: Skeleto
       )}
       <div class="content skeleton-page" role="status" aria-busy="true">
         <span class="sr-only">Chargement…</span>
-        {variant === 'day' && <span class="sk sk-nav" aria-hidden="true" />}
+        {variant !== 'home' && variant !== 'member' && <span class={variant === 'month' ? 'sk sk-nav' : 'sk sk-nav sk-nav-split'} aria-hidden="true" />}
         <div class={`figures skeleton-figures n${FIGURES[variant]}`} aria-hidden="true">
           {Array.from({ length: FIGURES[variant] }, (_, index) => (
             <div class="figure" key={index}>
@@ -66,6 +68,7 @@ export function PageSkeleton({ variant, withHeader = false }: { variant: Skeleto
             </div>
           ))}
         </div>
+        <span class="sk sk-line sk-medium skeleton-foot" aria-hidden="true" />
       </div>
     </>
   );

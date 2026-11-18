@@ -1,0 +1,248 @@
+import { clipSessions, dayKeyOf, dayNumber, peakOf, weekdayOf } from './aggregate.ts';
+import { isDayKey, presenceBins, timelineDayKey, timelineDayWindow } from './timeline.ts';
+import type { Session } from './types.ts';
+
+/*
+ * Weeks and months of the timelines. A week starts on Monday and, like every day of the timelines, runs from 06:00 to
+ * 06:00 (so it is 167 or 169 hours around a daylight saving change). A month is the set of timeline days whose date is in
+ * that month, which is what a calendar shows.
+ */
+
+const HOUR_MS = 3_600_000;
+
+/** The Monday (`YYYY-MM-DD`) of the week that contains this day. */
+export function mondayOf(dayKey: string): string {
+  const day = dayNumber(dayKey);
+  return dayKeyOf(day - weekdayOf(day));
+}
+
+export function isMondayKey(value: string): boolean {
+  return isDayKey(value) && weekdayOf(dayNumber(value)) === 0;
+}
+
+/** `YYYY-MM`, with a real month. */
+export function isMonthKey(value: string): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+}
+
+export function monthOf(dayKey: string): string {
+  return dayKey.slice(0, 7);
+}
+
+export function addMonths(monthKey: string, delta: number): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  const index = year! * 12 + (month! - 1) + delta;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`;
+}
+
+export function daysInMonth(monthKey: string): number {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(Date.UTC(year!, month!, 0)).getUTCDate();
+}
+
+export function weekWindow(mondayKey: string, timeZone: string): { startMs: number; endMs: number } {
+  return {
+    startMs: timelineDayWindow(mondayKey, timeZone).startMs,
+    endMs: timelineDayWindow(dayKeyOf(dayNumber(mondayKey) + 6), timeZone).endMs,
+  };
+}
+
+function monthWindow(monthKey: string, timeZone: string): { startMs: number; endMs: number } {
+  return {
+    startMs: timelineDayWindow(`${monthKey}-01`, timeZone).startMs,
+    endMs: timelineDayWindow(`${monthKey}-${String(daysInMonth(monthKey)).padStart(2, '0')}`, timeZone).endMs,
+  };
+}
+
+const sumMs = (clipped: readonly Session[]): number => clipped.reduce((sum, session) => sum + (session.endMs! - session.startMs), 0);
+
+/** Voice time of everybody in one timeline day. */
+function dayTotal(sessions: readonly Session[], dayKey: string, limitMs: number, nowMs: number, timeZone: string): number {
+  const { startMs, endMs } = timelineDayWindow(dayKey, timeZone);
+  return sumMs(clipSessions(sessions, startMs, Math.min(endMs, limitMs), nowMs));
+}
+
+export interface WeekStrip {
+  mondayKey: string;
+  startMs: number;
+  endMs: number;
+  totalMs: number;
+  people: number;
+  /** Most people at once. */
+  peak: number;
+  /** Voice time of everybody on each of the seven days, Monday first. */
+  dayTotals: number[];
+  /** Average number of people in each hour from the start of the week. */
+  bins: number[];
+}
+
+export interface PeriodInput {
+  fromMs: number;
+  /** End of the window; never later than `nowMs`. */
+  limitMs: number;
+  nowMs: number;
+  timeZone: string;
+  /** At most this many weeks or months, newest first. */
+  max: number;
+}
+
+/** One strip per week of the window, newest first. */
+export function weekStrips(sessions: readonly Session[], input: PeriodInput): WeekStrip[] {
+  const { fromMs, limitMs, nowMs, timeZone, max } = input;
+  if (limitMs <= fromMs) return [];
+  const first = dayNumber(mondayOf(timelineDayKey(fromMs, timeZone)));
+  const last = dayNumber(mondayOf(timelineDayKey(limitMs - 1, timeZone)));
+  const strips: WeekStrip[] = [];
+  for (let monday = last; monday >= first && strips.length < max; monday -= 7) {
+    const mondayKey = dayKeyOf(monday);
+    const { startMs, endMs } = weekWindow(mondayKey, timeZone);
+    const clipped = clipSessions(sessions, startMs, Math.min(endMs, limitMs), nowMs);
+    strips.push({
+      mondayKey,
+      startMs,
+      endMs,
+      totalMs: sumMs(clipped),
+      people: new Set(clipped.map((session) => session.userId)).size,
+      peak: peakOf(clipped)?.count ?? 0,
+      dayTotals: Array.from({ length: 7 }, (_, offset) => dayTotal(sessions, dayKeyOf(monday + offset), limitMs, nowMs, timeZone)),
+      bins: presenceBins(clipped, startMs, endMs, HOUR_MS),
+    });
+  }
+  return strips;
+}
+
+export interface MonthStrip {
+  monthKey: string;
+  totalMs: number;
+  people: number;
+  peak: number;
+  /** Voice time of everybody on each day of the month, the 1st first. */
+  dayTotals: number[];
+}
+
+/** One strip per month of the window, newest first. */
+export function monthStrips(sessions: readonly Session[], input: PeriodInput): MonthStrip[] {
+  const { fromMs, limitMs, nowMs, timeZone, max } = input;
+  if (limitMs <= fromMs) return [];
+  const first = monthOf(timelineDayKey(fromMs, timeZone));
+  const last = monthOf(timelineDayKey(limitMs - 1, timeZone));
+  const strips: MonthStrip[] = [];
+  for (let month = last; month >= first && strips.length < max; month = addMonths(month, -1)) {
+    const { startMs, endMs } = monthWindow(month, timeZone);
+    const clipped = clipSessions(sessions, startMs, Math.min(endMs, limitMs), nowMs);
+    strips.push({
+      monthKey: month,
+      totalMs: sumMs(clipped),
+      people: new Set(clipped.map((session) => session.userId)).size,
+      peak: peakOf(clipped)?.count ?? 0,
+      dayTotals: Array.from({ length: daysInMonth(month) }, (_, index) => dayTotal(sessions, `${month}-${String(index + 1).padStart(2, '0')}`, limitMs, nowMs, timeZone)),
+    });
+  }
+  return strips;
+}
+
+export interface WeekTimeline {
+  mondayKey: string;
+  startMs: number;
+  endMs: number;
+  /** The seven days with their own window and voice time. */
+  days: { dayKey: string; startMs: number; endMs: number; totalMs: number }[];
+  totalMs: number;
+  peak: { count: number; atMs: number } | null;
+  /** Average number of people in each hour from the start of the week. */
+  bins: number[];
+  /** Who was in voice that week, most time first. A stay is not cut at the change of day. */
+  members: { userId: string; totalMs: number; spans: { channelId: string; startMs: number; endMs: number }[] }[];
+}
+
+/** Everything that happened in one week, sessions clipped to it (an open session ends at `nowMs`). */
+export function buildWeekTimeline(sessions: readonly Session[], mondayKey: string, nowMs: number, timeZone: string): WeekTimeline {
+  const { startMs, endMs } = weekWindow(mondayKey, timeZone);
+  const limit = Math.min(endMs, nowMs);
+  const clipped = clipSessions(sessions, startMs, limit, nowMs);
+  const byUser = new Map<string, WeekTimeline['members'][number]>();
+  for (const session of clipped) {
+    let member = byUser.get(session.userId);
+    if (!member) {
+      member = { userId: session.userId, totalMs: 0, spans: [] };
+      byUser.set(session.userId, member);
+    }
+    member.totalMs += session.endMs! - session.startMs;
+    member.spans.push({ channelId: session.channelId, startMs: session.startMs, endMs: session.endMs! });
+  }
+  const members = [...byUser.values()].map((member) => ({ ...member, spans: member.spans.sort((a, b) => a.startMs - b.startMs) }));
+  members.sort((a, b) => b.totalMs - a.totalMs || a.userId.localeCompare(b.userId));
+  return {
+    mondayKey,
+    startMs,
+    endMs,
+    days: Array.from({ length: 7 }, (_, offset) => {
+      const dayKey = dayKeyOf(dayNumber(mondayKey) + offset);
+      return { dayKey, ...timelineDayWindow(dayKey, timeZone), totalMs: dayTotal(sessions, dayKey, limit, nowMs, timeZone) };
+    }),
+    totalMs: sumMs(clipped),
+    peak: peakOf(clipped),
+    bins: presenceBins(clipped, startMs, endMs, HOUR_MS),
+    members,
+  };
+}
+
+export interface CalendarDay {
+  dayKey: string;
+  totalMs: number;
+  people: number;
+  peak: number;
+  /** After now: nothing can have happened yet. */
+  future: boolean;
+}
+
+export interface MonthCalendar {
+  monthKey: string;
+  totalMs: number;
+  people: number;
+  /** Days with somebody in voice. */
+  activeDays: number;
+  busiest: { dayKey: string; totalMs: number } | null;
+  peak: { count: number; atMs: number } | null;
+  /** Weeks as rows, Monday first; a day outside the month is null. */
+  weeks: { mondayKey: string; days: (CalendarDay | null)[] }[];
+}
+
+/** A month as a calendar: one cell per day with the voice time of the group. */
+export function buildMonthCalendar(sessions: readonly Session[], monthKey: string, nowMs: number, timeZone: string): MonthCalendar {
+  const { startMs, endMs } = monthWindow(monthKey, timeZone);
+  const clipped = clipSessions(sessions, startMs, Math.min(endMs, nowMs), nowMs);
+
+  const days: CalendarDay[] = Array.from({ length: daysInMonth(monthKey) }, (_, index) => {
+    const dayKey = `${monthKey}-${String(index + 1).padStart(2, '0')}`;
+    const window = timelineDayWindow(dayKey, timeZone);
+    const inDay = clipSessions(sessions, window.startMs, Math.min(window.endMs, nowMs), nowMs);
+    return {
+      dayKey,
+      totalMs: sumMs(inDay),
+      people: new Set(inDay.map((session) => session.userId)).size,
+      peak: peakOf(inDay)?.count ?? 0,
+      future: window.startMs > nowMs,
+    };
+  });
+
+  const active = days.filter((day) => day.totalMs > 0);
+  const busiest = active.reduce<CalendarDay | null>((best, day) => (best === null || day.totalMs > best.totalMs ? day : best), null);
+
+  const weeks: MonthCalendar['weeks'] = [];
+  const firstMonday = dayNumber(mondayOf(days[0]!.dayKey));
+  const byKey = new Map(days.map((day) => [day.dayKey, day]));
+  for (let monday = firstMonday; monday <= dayNumber(days[days.length - 1]!.dayKey); monday += 7) {
+    weeks.push({ mondayKey: dayKeyOf(monday), days: Array.from({ length: 7 }, (_, offset) => byKey.get(dayKeyOf(monday + offset)) ?? null) });
+  }
+
+  return {
+    monthKey,
+    totalMs: sumMs(clipped),
+    people: new Set(clipped.map((session) => session.userId)).size,
+    activeDays: active.length,
+    busiest: busiest ? { dayKey: busiest.dayKey, totalMs: busiest.totalMs } : null,
+    peak: peakOf(clipped),
+    weeks,
+  };
+}

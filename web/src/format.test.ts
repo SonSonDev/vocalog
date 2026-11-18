@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatCompactDuration,
+  formatDayWeekday,
+  formatMonthLong,
+  formatMonthShort,
+  formatWeekRange,
+  formatWeekShort,
+  isoWeekNumber,
   HOURS_FROM_SIX,
   binClock,
   formatDayLong,
@@ -218,5 +225,37 @@ describe('HOURS_FROM_SIX', () => {
     expect(HOURS_FROM_SIX[17]).toBe(23);
     expect(HOURS_FROM_SIX[18]).toBe(0);
     expect(HOURS_FROM_SIX[23]).toBe(5);
+  });
+});
+
+describe('week and month labels', () => {
+  it('writes a day for a key figure', () => {
+    expect(formatDayWeekday('2026-11-14')).toBe('sam. 14');
+  });
+
+  it('writes a week from its Monday, inside one month and across two', () => {
+    expect(formatWeekRange('2026-11-09')).toBe('9 au 15 novembre');
+    expect(formatWeekRange('2026-10-26')).toBe('26 octobre au 1 novembre');
+    expect(formatWeekShort('2026-11-09')).toBe('9 – 15 nov.');
+    expect(formatWeekShort('2026-10-26')).toBe('26 oct. – 1 nov.');
+  });
+
+  it('numbers the weeks of the year (ISO)', () => {
+    expect(isoWeekNumber('2026-11-09')).toBe(46);
+    expect(isoWeekNumber('2026-01-05')).toBe(2);
+    expect(isoWeekNumber('2025-12-29')).toBe(1); // belongs to the first week of 2026
+    expect(isoWeekNumber('2024-12-30')).toBe(1);
+  });
+
+  it('writes a month', () => {
+    expect(formatMonthLong('2026-11')).toBe('novembre 2026');
+    expect(formatMonthShort('2026-11')).toBe('nov. 2026');
+  });
+
+  it('writes a short duration for a calendar cell', () => {
+    expect(formatCompactDuration(0)).toBe('');
+    expect(formatCompactDuration(20 * 60_000)).toBe('20 min');
+    expect(formatCompactDuration(95 * 60_000)).toBe('2 h');
+    expect(formatCompactDuration(9.6 * 3_600_000)).toBe('10 h');
   });
 });
