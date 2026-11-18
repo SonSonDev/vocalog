@@ -27,6 +27,22 @@
   min-width: 0;
 }
 
+/* A page title with a large picture: the gap follows the picture (about a third of it), and the small label above no
+   longer touches it (the title's line height used to provide that air, a 44 px circle does not). */
+h1.with-avatar {
+  gap: 16px;
+}
+
+.eyebrow + h1.with-avatar {
+  margin-top: 8px;
+}
+
+@media (max-width: 699px) {
+  h1.with-avatar {
+    gap: 12px;
+  }
+}
+
 /* Day strips on the home page. */
 .day-list {
   list-style: none;
@@ -313,4 +329,11 @@ a.tl-who:hover {
 
 .col-12 {
   grid-column: 1 / -1;
+}
+
+/* A figure never breaks across two lines ("+92 %", "19 fois", "28 h 08"): the label before it wraps instead. */
+.rows li > .mono,
+p > strong.mono {
+  flex: none;
+  white-space: nowrap;
 }
