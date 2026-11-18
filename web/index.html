@@ -8,7 +8,34 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%230E7C66'/%3E%3C/svg%3E" />
   </head>
   <body>
-    <div id="app"></div>
+    <!-- Shown until the script has loaded (main.tsx clears it): the same grey placeholders as a loading page, so the first
+         visit is not a white screen. It uses the page's own stylesheet, which loads before the script. -->
+    <div id="app">
+      <div class="app">
+        <main class="main" aria-busy="true">
+          <div class="skeleton-header" aria-hidden="true">
+            <div class="skeleton-bar">
+              <span class="sk sk-picker"></span>
+              <span class="sk sk-picker sk-narrow"></span>
+            </div>
+            <span class="sk sk-h1"></span>
+          </div>
+          <div class="content skeleton-page" role="status">
+            <span class="sr-only">Chargement…</span>
+            <div class="figures skeleton-figures n4" aria-hidden="true">
+              <div class="figure"><span class="sk sk-line sk-short"></span><span class="sk sk-value"></span><span class="sk sk-line sk-medium"></span></div>
+              <div class="figure"><span class="sk sk-line sk-short"></span><span class="sk sk-value"></span><span class="sk sk-line sk-medium"></span></div>
+              <div class="figure"><span class="sk sk-line sk-short"></span><span class="sk sk-value"></span><span class="sk sk-line sk-medium"></span></div>
+              <div class="figure"><span class="sk sk-line sk-short"></span><span class="sk sk-value"></span><span class="sk sk-line sk-medium"></span></div>
+            </div>
+            <div class="dashboard" aria-hidden="true">
+              <div class="col-7"><section class="card skeleton-card" style="--h: 483px; --hm: 483px; --hs: 815px"><span class="sk sk-title"></span><span class="sk sk-line" style="width: 80%"></span><span class="sk sk-line" style="width: 90%"></span><span class="sk sk-line" style="width: 75%"></span></section></div>
+              <div class="col-5"><section class="card skeleton-card" style="--h: 483px; --hm: 300px; --hs: 250px"><span class="sk sk-title"></span><span class="sk sk-line" style="width: 85%"></span><span class="sk sk-line" style="width: 70%"></span></section></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

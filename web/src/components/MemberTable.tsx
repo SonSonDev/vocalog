@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
-import type { Summary } from '@vocalog/shared';
+import type { Period, Summary } from '@vocalog/shared';
 import { HOURS_FROM_SIX, busiestHour, formatDuration, maxOf } from '../format.ts';
+import { memberQuery, prefetchQuery } from '../queries.ts';
 import { memberPath } from '../router.ts';
 import { Avatar } from './Avatar.tsx';
 import { Handle } from './Handle.tsx';
@@ -14,7 +15,7 @@ import { Link } from './Link.tsx';
  */
 const COLLAPSED_COUNT = 6;
 
-export function MemberTable({ members, guildId, search, viewerId }: { members: Summary['members']; guildId: string; search: string; viewerId: string | null }) {
+export function MemberTable({ members, guildId, period, search, viewerId }: { members: Summary['members']; guildId: string; period: Period; search: string; viewerId: string | null }) {
   const [expanded, setExpanded] = useState(false);
   const collapsible = members.length > COLLAPSED_COUNT + 1;
   const shown = collapsible && !expanded ? members.slice(0, COLLAPSED_COUNT) : members;
@@ -38,7 +39,9 @@ export function MemberTable({ members, guildId, search, viewerId }: { members: S
               <span class="member-name with-avatar">
                 <Avatar user={member.user} guildId={guildId} size={32} />
                 <span class="name-lines">
-                  <Link to={memberPath(member.user.id, search)}>{member.user.name}</Link>
+                  <Link to={memberPath(member.user.id, search)} onPrefetch={() => prefetchQuery(memberQuery(guildId, member.user.id, period))}>
+                    {member.user.name}
+                  </Link>
                   <span class="name-sub">
                     <Handle user={member.user} />
                     {member.user.id === viewerId && <span class="you">toi</span>}

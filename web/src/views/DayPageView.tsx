@@ -1,8 +1,9 @@
 import type { DayView, Period } from '@vocalog/shared';
-import { useState } from 'preact/hooks';
-import { fetchDay } from '../api.ts';
+import { useEffect, useState } from 'preact/hooks';
+import { dayQuery, prefetchQuery } from '../queries.ts';
 import { Avatar } from '../components/Avatar.tsx';
 import { Header } from '../components/Header.tsx';
+import { PageSkeleton } from '../components/Skeleton.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Link } from '../components/Link.tsx';
 import { binClock, formatClock, formatDayLong, formatDayShort, formatDuration, formatHourLabel, formatPeople, maxOf, timelineView } from '../format.ts';
@@ -47,7 +48,17 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
     setZoomed(!zoomed);
     saveZoomed(!zoomed);
   };
-  const { data: day, status, retry } = useRemote(guildId === null ? null : `${guildId}|${dayKey}`, () => fetchDay(guildId!, dayKey));
+  const query = guildId === null ? null : dayQuery(guildId, dayKey);
+  const { data: day, status, retry } = useRemote(query?.key ?? null, () => query!.load());
+
+  // Once a day is on screen, its neighbours load quietly: the next click on "previous" or "next" is instant.
+  useEffect(() => {
+    if (!day || guildId === null) return;
+    const timer = window.setTimeout(() => {
+      for (const neighbour of [day.prevDayKey, day.nextDayKey]) if (neighbour) prefetchQuery(dayQuery(guildId, neighbour));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [day?.dayKey, guildId]);
 
   return (
     <>
@@ -68,15 +79,11 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
         </div>
       )}
 
-      {status === 'loading' && (
-        <p class="notice" role="status">
-          Chargement…
-        </p>
-      )}
+      {status === 'loading' && <PageSkeleton variant="day" />}
 
       {day !== null && guildId !== null && (
         <div class="content">
-          <DayNav day={day} search={search} />
+          <DayNav day={day} guildId={guildId} search={search} />
           {day.members.length === 0 ? (
             <p class="notice" role="status">
               Personne n’était en vocal ce jour-là.
@@ -96,11 +103,11 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
   );
 }
 
-function DayNav({ day, search }: { day: DayView; search: string }) {
+function DayNav({ day, guildId, search }: { day: DayView; guildId: string; search: string }) {
   return (
     <nav class="day-nav" aria-label="Changer de jour">
       {day.prevDayKey ? (
-        <Link to={dayPath(day.prevDayKey, search)} class="day-nav-link">
+        <Link to={dayPath(day.prevDayKey, search)} class="day-nav-link" onPrefetch={() => prefetchQuery(dayQuery(guildId, day.prevDayKey!))}>
           ← {formatDayShort(day.prevDayKey)}
         </Link>
       ) : (
@@ -109,7 +116,7 @@ function DayNav({ day, search }: { day: DayView; search: string }) {
         </span>
       )}
       {day.nextDayKey ? (
-        <Link to={dayPath(day.nextDayKey, search)} class="day-nav-link">
+        <Link to={dayPath(day.nextDayKey, search)} class="day-nav-link" onPrefetch={() => prefetchQuery(dayQuery(guildId, day.nextDayKey!))}>
           {formatDayShort(day.nextDayKey)} →
         </Link>
       ) : (

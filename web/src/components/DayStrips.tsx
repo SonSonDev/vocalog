@@ -1,6 +1,7 @@
 import type { DayStrip } from '@vocalog/shared';
 import { useState } from 'preact/hooks';
 import { binClock, formatDayShort, formatDuration, formatPeople, maxOf } from '../format.ts';
+import { dayQuery, prefetchQuery } from '../queries.ts';
 import { dayPath } from '../router.ts';
 import { Link } from './Link.tsx';
 
@@ -12,7 +13,7 @@ const AXIS = ['6 h', '12 h', '18 h', '0 h', '6 h'];
  * One line per day, from 6 h to 6 h so an evening that passes midnight stays in one piece. One hue, and the darker the
  * cell the more people were there (same idea as the heat map). Each line opens the page of that day.
  */
-export function DayStrips({ days, search }: { days: DayStrip[]; search: string }) {
+export function DayStrips({ days, guildId, search }: { days: DayStrip[]; guildId: string; search: string }) {
   const [expanded, setExpanded] = useState(false);
   const collapsible = days.length > INITIAL_DAYS + 1;
   const shown = collapsible && !expanded ? days.slice(0, INITIAL_DAYS) : days;
@@ -37,7 +38,7 @@ export function DayStrips({ days, search }: { days: DayStrip[]; search: string }
             const summary = day.totalMs > 0 ? `${formatDuration(day.totalMs)}, ${formatPeople(day.people)}, jusqu’à ${day.peak} en même temps` : 'personne en vocal';
             return (
               <li key={day.dayKey}>
-                <Link to={dayPath(day.dayKey, search)} class="day-row">
+                <Link to={dayPath(day.dayKey, search)} class="day-row" onPrefetch={() => prefetchQuery(dayQuery(guildId, day.dayKey))}>
                   <span class="sr-only">{`${label} : ${summary}`}</span>
                   <span class="day-label" aria-hidden="true">
                     {label}

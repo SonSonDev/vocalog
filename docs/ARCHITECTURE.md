@@ -69,6 +69,9 @@ Period windows never start before the first recorded event of the server, so a y
 `GET /api/guilds/:guildId/days/:dayKey` (one day in detail: 400 for a bad date, 404 for a future day) and `GET /api/guilds/:guildId/avatars/:userId` (the picture, fetched by `server/src/image.ts` from Discord's image host with an address built from two checked database values, redirects refused, PNG only, at most 200 kB, kept in memory; 404 when there is none; the browser may keep it). `GET /api/guilds/:guildId/icon` does the same for a server's icon (the hash comes from `guilds.icon`), and `/api/me` carries the logged-in person's name, `@username` (from the login) and avatar hash (if the bot has seen them). The summary also carries `days` (the strips). `server/src/names.ts` resolves ids to names and avatar hashes for every route; the avatar column is optional until the bot has migrated. Day and strip calculations are pure, in `shared/src/timeline.ts`.
 Answers are kept in a small in-memory cache (`server/src/cache.ts`, 200 entries) keyed by route, server, member and period; an entry is reused while the last `voice_events` id and the current minute are unchanged. A server error is logged by route (never the query) and answered with a generic 500. `scripts/backup.ts` makes `VACUUM INTO` copies and prunes old ones.
 
+## Web data layer
+`web/src/remoteCache.ts` keeps API answers in memory (60 entries, fresh for 30 s, one shared request per key); `web/src/useRemote.ts` shows the answer for the current key, else the last answer of the same scope (marked stale and dimmed), else a skeleton (`web/src/components/Skeleton.tsx`); `web/src/queries.ts` builds the key and loader of every request so a prefetch (`Link` `onPrefetch`, neighbouring days) fills exactly what the page reads. `web/src/motion.css` holds the placeholders and every animation.
+
 ## Conventions
 - UTC epoch milliseconds everywhere in storage.
 - Pure functions take plain data and return plain data.

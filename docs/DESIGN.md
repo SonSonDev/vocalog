@@ -36,7 +36,8 @@ Arcade, full-screen recap, audio studio, neo-brutalism, Japanese minimalism, ter
 - Heatmap: accent colour with opacity from 0.07 to 1.0 by value, so one hue carries the whole scale.
 - Type: Public Sans for text; JetBrains Mono for figures. **Currently system font stacks** (privacy: no external font service; self-host after a licence check, see DECISIONS). Sizes: 12 px labels, 14–15 px body, 26 px page title, 26–30 px key figures.
 - Spacing: 4 px base; card padding 14–16 px; gaps 12–20 px. Radius 8 px on cards, 2 px on heatmap cells. Borders 1 px.
-- Motion: none by default; any transition at most 150 ms and removed under `prefers-reduced-motion`.
+- Motion: nothing lasts more than 150 ms (a page rising 6 px while it fades in, gauges filling, a change of period moving the bars), plus the slow shimmer of a loading placeholder; all of it is removed under `prefers-reduced-motion` (placeholders stay, still).
+- Loading: placeholders shaped like the page, at the real heights, never a line of text; the previous page of the same scope stays, dimmed, while its next version loads; data is prefetched on hover, focus and touch.
 
 ## Patterns
 - Navigation: rail with four entries, current one outlined in the accent; bottom bar below 600 px. Server selector and period selector always visible.

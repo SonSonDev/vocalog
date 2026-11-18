@@ -1,0 +1,215 @@
+/*
+ * Loading and appearing. Calm on purpose (see docs/DESIGN.md): nothing lasts more than 150 ms except the shimmer of a
+ * placeholder, and everything moving is switched off for people who ask for less motion (the placeholders stay, still).
+ */
+
+/* Placeholders. */
+.sk {
+  display: block;
+  border-radius: 4px;
+  background: var(--line);
+}
+
+.sk-line {
+  height: 12px;
+}
+
+.sk-short {
+  width: 38%;
+}
+
+.sk-medium {
+  width: 62%;
+}
+
+.sk-title {
+  height: 16px;
+  width: 36%;
+  margin-bottom: 4px;
+}
+
+.sk-value {
+  height: 28px;
+  width: 52%;
+}
+
+.sk-h1 {
+  display: inline-block;
+  height: 28px;
+  width: 11rem;
+  vertical-align: middle;
+}
+
+.sk-picker {
+  height: 44px;
+  width: 15rem;
+  border-radius: var(--radius);
+}
+
+.sk-narrow {
+  width: 9rem;
+}
+
+.skeleton-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.skeleton-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.skeleton-card {
+  gap: 14px;
+  min-height: var(--h, 0);
+}
+
+.skeleton-figures .figure {
+  min-height: 121px;
+}
+
+.sk-nav {
+  height: 44px;
+  width: 11rem;
+  border-radius: var(--radius);
+}
+
+.skeleton-figures.n3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.skeleton-figures.n5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1199px) {
+  .skeleton-figures.n5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .skeleton-card {
+    min-height: var(--hm, 0);
+  }
+}
+
+@media (max-width: 699px) {
+  .skeleton-figures,
+  .skeleton-figures.n5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sk-picker {
+    width: 100%;
+  }
+
+  .skeleton-figures.n3 {
+    grid-template-columns: 1fr;
+  }
+
+  .skeleton-figures .figure {
+    min-height: 108px;
+  }
+
+  .skeleton-card {
+    min-height: var(--hs, 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sk {
+    background: linear-gradient(90deg, var(--line) 0%, color-mix(in srgb, var(--line) 50%, var(--card)) 50%, var(--line) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes fill-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes fill-y {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  /* The page rises when its data arrives: key figures first, then the cards one after the other. */
+  .content:not(.skeleton-page) > :not(.dashboard) {
+    animation: rise 150ms ease-out both;
+  }
+
+  .content:not(.skeleton-page) > :nth-child(2) {
+    animation-delay: 30ms;
+  }
+
+  .content:not(.skeleton-page) .dashboard > div {
+    animation: rise 150ms ease-out both;
+  }
+
+  .dashboard > div:nth-child(2) {
+    animation-delay: 30ms;
+  }
+
+  .dashboard > div:nth-child(3) {
+    animation-delay: 60ms;
+  }
+
+  .dashboard > div:nth-child(4) {
+    animation-delay: 90ms;
+  }
+
+  .dashboard > div:nth-child(5) {
+    animation-delay: 120ms;
+  }
+
+  .dashboard > div:nth-child(n + 6) {
+    animation-delay: 150ms;
+  }
+
+  /* Gauges and bars fill after their card has appeared, and follow a change of period instead of jumping. */
+  .bar-fill,
+  .split-with {
+    transform-origin: left;
+    animation: fill-x 150ms ease-out 90ms both;
+    transition: width 150ms ease-out;
+  }
+
+  .spark span,
+  .activity span {
+    transform-origin: bottom;
+    animation: fill-y 150ms ease-out 90ms both;
+    transition: height 150ms ease-out;
+  }
+
+  /* Dimmed while the next answer of the same page loads. */
+  .content.is-loading {
+    transition: opacity 150ms ease-out;
+  }
+}

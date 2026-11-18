@@ -37,9 +37,7 @@ h1.with-avatar {
   gap: 16px;
 }
 
-.back-link + h1.with-avatar {
-  margin-top: var(--space-1);
-}
+
 
 @media (max-width: 699px) {
   h1.with-avatar {
@@ -544,4 +542,18 @@ p > strong.mono {
   display: flex;
   flex: 1;
   flex-direction: column;
+}
+
+/* The back link sits above the title, never beside it. The small label that used to separate them is gone, and both are
+   inline boxes, so without this they ran together on one line. */
+.header-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+h1.with-avatar {
+  display: flex;
 }

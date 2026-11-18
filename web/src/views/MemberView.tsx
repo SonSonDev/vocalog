@@ -1,7 +1,8 @@
 import type { Period } from '@vocalog/shared';
-import { fetchMemberProfile } from '../api.ts';
+import { memberQuery } from '../queries.ts';
 import { Avatar } from '../components/Avatar.tsx';
 import { Header } from '../components/Header.tsx';
+import { PageSkeleton } from '../components/Skeleton.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Heatmap } from '../components/Heatmap.tsx';
 import { Channels } from '../components/Lists.tsx';
@@ -19,15 +20,15 @@ interface Props {
 }
 
 export function MemberView({ guildId, userId, period, search, controls }: Props) {
-  const { data: profile, status, retry } = useRemote(guildId === null ? null : `${guildId}|${userId}|${period}`, () =>
-    fetchMemberProfile(guildId!, userId, period),
-  );
+  const query = guildId === null ? null : memberQuery(guildId, userId, period);
+  // Changing the period keeps this member's page in place, dimmed; another member never shows under this title.
+  const { data: profile, status, stale, retry } = useRemote(query?.key ?? null, () => query!.load(), guildId === null ? null : `member|${guildId}|${userId}`);
 
   return (
     <>
       <Header
         controls={controls}
-        title={profile?.user.name ?? 'Membre'}
+        title={profile ? profile.user.name : <span class="sk sk-h1" role="status" aria-label="Chargement" />}
         handle={profile ? visibleHandle(profile.user.name, profile.user.handle) : null}
         avatar={profile && guildId ? <Avatar user={profile.user} guildId={guildId} size={44} /> : null}
         back={{ to: `/${search}`, label: 'Tous les membres' }}
@@ -48,14 +49,10 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
         </div>
       )}
 
-      {status === 'loading' && (
-        <p class="notice" role="status">
-          Chargement…
-        </p>
-      )}
+      {status === 'loading' && <PageSkeleton variant="member" />}
 
       {profile !== null && (
-        <div class="content">
+        <div class={stale ? 'content is-loading' : 'content'} aria-busy={stale}>
           <MemberFigures profile={profile} />
           <div class="dashboard">
             <div class="col-7">

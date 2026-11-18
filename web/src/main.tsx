@@ -2,5 +2,9 @@ import { render } from 'preact';
 import { App } from './App.tsx';
 import './styles.css';
 import './timeline.css';
+import './motion.css';
 
-render(<App />, document.getElementById('app')!);
+const root = document.getElementById('app')!;
+// The page ships with a static placeholder (web/index.html) for the moments before this script runs: clear it first.
+root.textContent = '';
+render(<App />, root);

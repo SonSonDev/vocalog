@@ -25,7 +25,7 @@ export interface Controls {
 
 interface Props {
   controls: Controls;
-  title: string;
+  title: ComponentChildren;
   /** A small @username shown after the title (member pages). */
   handle?: string | null;
   /** A picture shown before the title (member pages). */

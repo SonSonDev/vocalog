@@ -8,6 +8,7 @@ import type { Theme } from './theme.ts';
 import { useRemote } from './useRemote.ts';
 import { HomeView } from './views/HomeView.tsx';
 import { LoginView } from './views/LoginView.tsx';
+import { PageSkeleton } from './components/Skeleton.tsx';
 import { TooltipLayer } from './components/Tooltip.tsx';
 import { DayPageView } from './views/DayPageView.tsx';
 import { MemberView } from './views/MemberView.tsx';
@@ -79,11 +80,8 @@ export function App() {
             </button>
           </div>
         )}
-        {meStatus === 'loading' && (
-          <p class="notice" role="status">
-            Chargement…
-          </p>
-        )}
+        {/* Who is looking, then which servers, then the page: one continuous placeholder instead of three flashes of text. */}
+        {(meStatus === 'loading' || (me !== null && !needsLogin && status === 'loading')) && <PageSkeleton variant={route.name} withHeader />}
         {needsLogin && <LoginView />}
         {me !== null && !needsLogin && status === 'error' && (
           <div class="notice" role="alert">
@@ -92,11 +90,6 @@ export function App() {
               Réessayer
             </button>
           </div>
-        )}
-        {me !== null && !needsLogin && status === 'loading' && (
-          <p class="notice" role="status">
-            Chargement…
-          </p>
         )}
         {me !== null &&
           !needsLogin &&

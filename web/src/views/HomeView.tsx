@@ -1,8 +1,9 @@
 import type { Period } from '@vocalog/shared';
-import { fetchSummary } from '../api.ts';
+import { summaryQuery } from '../queries.ts';
 import { Header } from '../components/Header.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Heatmap } from '../components/Heatmap.tsx';
+import { PageSkeleton } from '../components/Skeleton.tsx';
 import { KeyFigures } from '../components/KeyFigures.tsx';
 import { DayStrips } from '../components/DayStrips.tsx';
 import { Channels, Records } from '../components/Lists.tsx';
@@ -18,7 +19,9 @@ interface Props {
 }
 
 export function HomeView({ guildId, period, search, controls }: Props) {
-  const { data: summary, status, retry } = useRemote(guildId === null ? null : `${guildId}|${period}`, () => fetchSummary(guildId!, period));
+  const query = guildId === null ? null : summaryQuery(guildId, period);
+  // Changing the period keeps the page in place, dimmed, until the new figures arrive (same scope).
+  const { data: summary, status, stale, retry } = useRemote(query?.key ?? null, () => query!.load(), guildId === null ? null : `home|${guildId}`);
 
   return (
     <>
@@ -39,26 +42,22 @@ export function HomeView({ guildId, period, search, controls }: Props) {
         </div>
       )}
 
-      {status === 'loading' && (
-        <p class="notice" role="status">
-          Chargement…
-        </p>
-      )}
+      {status === 'loading' && <PageSkeleton variant="home" />}
 
       {summary !== null && (
-        <div class="content">
+        <div class={stale ? 'content is-loading' : 'content'} aria-busy={stale}>
           <KeyFigures summary={summary} />
           {summary.members.length > 0 ? (
             <div class="dashboard">
               <div class="col-7">
-                <MemberTable members={summary.members} guildId={summary.guild.id} search={search} viewerId={controls.viewer?.id ?? null} />
+                <MemberTable members={summary.members} guildId={summary.guild.id} period={period} search={search} viewerId={controls.viewer?.id ?? null} />
               </div>
               <div class="col-5">
                 <Heatmap heat={summary.heat} />
               </div>
               {summary.days.length > 0 && (
                 <div class="col-12">
-                  <DayStrips days={summary.days} search={search} />
+                  <DayStrips days={summary.days} guildId={summary.guild.id} search={search} />
                 </div>
               )}
               <div class="col-6">
