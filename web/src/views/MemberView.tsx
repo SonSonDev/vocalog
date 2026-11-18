@@ -28,7 +28,6 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
       <Header
         controls={controls}
         title={profile?.user.name ?? 'Membre'}
-        eyebrow={profile?.guild.name ?? 'Vocalog'}
         handle={profile ? visibleHandle(profile.user.name, profile.user.handle) : null}
         avatar={profile && guildId ? <Avatar user={profile.user} guildId={guildId} size={44} /> : null}
         back={{ to: `/${search}`, label: 'Tous les membres' }}

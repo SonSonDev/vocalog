@@ -252,3 +252,18 @@ describe('response headers', () => {
     expect((await app(discordAuth(fakeDiscord().fetchFn)).inject('/auth/login')).headers['cache-control']).toBe('no-store');
   });
 });
+
+describe('who is looking', () => {
+  it('tells the person their own name and @username, and their picture when the bot has seen them', async () => {
+    const instance = app(discordAuth(fakeDiscord().fetchFn));
+    const body = (await instance.inject({ url: '/api/me', headers: { cookie: cookieOf({ userHandle: 'alex_42' }) } })).json();
+    expect(body.user).toMatchObject({ id: 'u1', handle: 'alex_42' });
+  });
+
+  it('still works for a cookie made before the @username was kept', async () => {
+    const instance = app(discordAuth(fakeDiscord().fetchFn));
+    const body = (await instance.inject({ url: '/api/me', headers: { cookie: cookieOf() } })).json();
+    expect(body.user.id).toBe('u1');
+    expect(body.user.handle).toBeUndefined();
+  });
+});

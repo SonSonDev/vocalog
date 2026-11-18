@@ -4,6 +4,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 export interface Session {
   userId: string;
   userName: string;
+  /** The Discord @username, when it was known at login (older cookies do not have it). */
+  userHandle?: string;
   /** Servers the person belongs to AND that Vocalog records, fixed at login time. */
   guildIds: string[];
   expiresAtSec: number;
@@ -15,7 +17,7 @@ function mac(payload: string, secret: string): string {
 
 /** `payload.signature`: the payload is readable, but cannot be changed without the secret. */
 export function signSession(session: Session, secret: string): string {
-  const payload = Buffer.from(JSON.stringify({ u: session.userId, n: session.userName, g: session.guildIds, e: session.expiresAtSec })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({ u: session.userId, n: session.userName, h: session.userHandle, g: session.guildIds, e: session.expiresAtSec })).toString('base64url');
   return `${payload}.${mac(payload, secret)}`;
 }
 
@@ -33,11 +35,11 @@ export function verifySession(token: string | undefined, secret: string, nowSec:
   try {
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Record<string, unknown> | null;
     if (typeof data !== 'object' || data === null) return null;
-    const { u, n, g, e } = data;
+    const { u, n, h, g, e } = data;
     if (typeof u !== 'string' || typeof n !== 'string' || typeof e !== 'number') return null;
     if (!Array.isArray(g) || !g.every((id) => typeof id === 'string')) return null;
     if (e <= nowSec) return null;
-    return { userId: u, userName: n, guildIds: g as string[], expiresAtSec: e };
+    return { userId: u, userName: n, ...(typeof h === 'string' && h !== '' ? { userHandle: h } : {}), guildIds: g as string[], expiresAtSec: e };
   } catch {
     return null;
   }

@@ -26,7 +26,7 @@ function freshDb() {
 describe('migrations', () => {
   it('applies once and is idempotent', () => {
     const db = openDb(':memory:');
-    expect(migrate(db)).toEqual(['001_init.sql', '002_names_and_afk.sql', '003_user_avatar.sql']);
+    expect(migrate(db)).toEqual(['001_init.sql', '002_names_and_afk.sql', '003_user_avatar.sql', '004_guild_icon.sql']);
     expect(migrate(db)).toEqual([]);
   });
 });
@@ -125,6 +125,28 @@ describe('names and AFK', () => {
     expect(db.prepare('SELECT avatar FROM users WHERE id = ?').get('u2')).toEqual({ avatar: null });
   });
 
+  it('keeps the icon hash of a server and follows its changes', () => {
+    const db = freshDb();
+    upsertGuild(db, { id: 'g1', name: 'Server', afkChannelId: null, icon: 'abc' }, 100);
+    expect(db.prepare('SELECT icon FROM guilds WHERE id = ?').get('g1')).toEqual({ icon: 'abc' });
+    upsertGuild(db, { id: 'g1', name: 'Server', afkChannelId: null, icon: null }, 200);
+    expect(db.prepare('SELECT icon FROM guilds WHERE id = ?').get('g1')).toEqual({ icon: null });
+    upsertGuild(db, { id: 'g2', name: 'Other', afkChannelId: null }, 100);
+    expect(db.prepare('SELECT icon FROM guilds WHERE id = ?').get('g2')).toEqual({ icon: null });
+  });
+
+  it('adds the icon column to a database made by the previous schema, keeping its rows', () => {
+    const db = openDb(':memory:');
+    const dir = join(import.meta.dirname, '..', '..', 'db', 'migrations');
+    const old = mkdtempSync(join(tmpdir(), 'vocalog-migrations-'));
+    for (const file of ['001_init.sql', '002_names_and_afk.sql', '003_user_avatar.sql']) copyFileSync(join(dir, file), join(old, file));
+    migrate(db, old);
+    rmSync(old, { recursive: true, force: true });
+    db.prepare("INSERT INTO guilds (id, name, updated_ms) VALUES ('g1', 'Server', 1)").run();
+    expect(migrate(db)).toEqual(['004_guild_icon.sql']);
+    expect(db.prepare('SELECT id, name, icon FROM guilds').all()).toEqual([{ id: 'g1', name: 'Server', icon: null }]);
+  });
+
   it('adds the avatar column to a database made by the previous schema, keeping its rows', () => {
     const db = openDb(':memory:');
     const dir = join(import.meta.dirname, '..', '..', 'db', 'migrations');
@@ -134,13 +156,13 @@ describe('names and AFK', () => {
     migrate(db, old);
     rmSync(old, { recursive: true, force: true });
     db.prepare("INSERT INTO users (id, name, updated_ms) VALUES ('u1', 'alex_42', 1)").run();
-    expect(migrate(db)).toEqual(['003_user_avatar.sql']);
+    expect(migrate(db)).toEqual(['003_user_avatar.sql', '004_guild_icon.sql']);
     expect(db.prepare('SELECT id, name, avatar FROM users').all()).toEqual([{ id: 'u1', name: 'alex_42', avatar: null }]);
   });
 
   it('applies on top of an existing database without losing events', () => {
     const db = openDb(':memory:');
     migrate(db, join(import.meta.dirname, '..', '..', 'db', 'migrations'));
-    expect(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get()).toEqual({ n: 3 });
+    expect(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get()).toEqual({ n: 4 });
   });
 });

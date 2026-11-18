@@ -22,12 +22,36 @@ interface Props {
   controls: Controls;
 }
 
+const ZOOM_KEY = 'vocalog-day-zoom';
+
+function loadZoomed(): boolean {
+  try {
+    return window.localStorage.getItem(ZOOM_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+}
+
+function saveZoomed(zoomed: boolean): void {
+  try {
+    window.localStorage.setItem(ZOOM_KEY, String(zoomed));
+  } catch {
+    // ignore: the choice just is not remembered after a reload
+  }
+}
+
 export function DayPageView({ guildId, dayKey, search, controls }: Props) {
+  // Kept here, not in the timeline: the timeline disappears while the next day loads, and the choice must survive that.
+  const [zoomed, setZoomed] = useState(loadZoomed);
+  const toggleZoom = (): void => {
+    setZoomed(!zoomed);
+    saveZoomed(!zoomed);
+  };
   const { data: day, status, retry } = useRemote(guildId === null ? null : `${guildId}|${dayKey}`, () => fetchDay(guildId!, dayKey));
 
   return (
     <>
-      <Header controls={controls} title={formatDayLong(dayKey)} eyebrow={day?.guild.name ?? 'Vocalog'} back={{ to: `/${search}`, label: 'Tableau de bord' }} />
+      <Header controls={controls} title={formatDayLong(dayKey)} back={{ to: `/${search}`, label: 'Tableau de bord' }} showPeriod={false} />
 
       {guildId === null && (
         <p class="notice" role="status">
@@ -60,7 +84,7 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
           ) : (
             <>
               <DayFigures day={day} />
-              <Timeline day={day} guildId={guildId} search={search} />
+              <Timeline day={day} guildId={guildId} search={search} zoomed={zoomed} onToggleZoom={toggleZoom} />
             </>
           )}
           <p class="footnote">
@@ -120,8 +144,7 @@ function DayFigures({ day }: { day: DayView }) {
   );
 }
 
-function Timeline({ day, guildId, search }: { day: DayView; guildId: string; search: string }) {
-  const [zoomed, setZoomed] = useState(true);
+function Timeline({ day, guildId, search, zoomed, onToggleZoom }: { day: DayView; guildId: string; search: string; zoomed: boolean; onToggleZoom: () => void }) {
   const firstMs = Math.min(...day.members.map((member) => member.spans[0]!.startMs));
   const lastMs = Math.max(...day.members.flatMap((member) => member.spans.map((span) => span.endMs)));
   // Zoomed: only the hours where something happened, so bars are wide enough to read. Otherwise the whole day, 6 h to 6 h.
@@ -143,7 +166,7 @@ function Timeline({ day, guildId, search }: { day: DayView; guildId: string; sea
         <h2 id="timeline-title" class="sr-only">
           Chronologie du jour
         </h2>
-        <button type="button" class="tl-zoom" aria-pressed={!zoomed} onClick={() => setZoomed(!zoomed)}>
+        <button type="button" class="tl-zoom" aria-pressed={!zoomed} onClick={onToggleZoom}>
           {zoomed ? 'Voir la journée entière' : 'Zoomer sur l’activité'}
         </button>
       </div>

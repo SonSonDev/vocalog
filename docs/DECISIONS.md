@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — Top bar and title row, server picture, the viewer's @username, a period only where it applies
+- Decision: the header has two rows. Top bar: server (with its Discord icon) and selector on the left, the logged-in person (picture, name, @username, "Déconnexion") and the theme on the right. Title row: page title and the period selector, shown only on pages the period changes (not on a single day). The session cookie now also holds the Discord @username. The server's icon hash is stored by the bot (migration 004) and fetched by the dashboard server like avatars (same proxy, kind `icons`). The day page keeps its zoom choice in browser storage, kept above the timeline so it survives the next day loading.
+- Why: the owner asked for the server picture, their name next to their @username at the top, a more logical top of page, and no period selector where it does nothing. Identity and context sit together in the top bar; what belongs to the page sits in its title row.
+- Alternatives rejected: keeping everything in one row (the period looked global when it is not); a brand name in the bar (the server picker already says where you are); fetching icons straight from Discord (leaks visitors' addresses, same reason as avatars).
+- Consequences / risks accepted: icons and the viewer's picture appear only after the bot has restarted on this version and seen them; cookies made before this change show no @username until the next login; the viewer's own picture is 404 (initials) if the bot never saw them in voice.
+
 ## 2026-11-18 — One shared tooltip instead of the browser's `title`
 - Decision: a single `TooltipLayer` listens to the document and shows the `data-tip` text of the element under the pointer immediately; every chart and cell uses `data-tip` instead of `title`.
 - Why: the native tooltip takes about half a second to appear, which makes scanning a timeline with the mouse feel slow; one listener also costs nothing for the hundreds of cells of the strips and the heat map, where a component per cell would.

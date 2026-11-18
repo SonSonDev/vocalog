@@ -9,6 +9,8 @@ export type Period = (typeof PERIODS)[number];
 export interface GuildInfo {
   id: string;
   name: string;
+  /** Hash of the server's Discord icon when it has one, served by `/api/guilds/<id>/icon`. */
+  icon?: string;
 }
 
 export interface NamedRef {

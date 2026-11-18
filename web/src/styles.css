@@ -118,10 +118,8 @@ select {
 
 .header {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
 .eyebrow {
@@ -132,22 +130,78 @@ select {
   text-transform: uppercase;
 }
 
-.header-controls {
+/* Top bar: where you are (the server) on the left, who you are and the theme on the right. */
+.topbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
 }
 
-.select select,
-.theme-toggle,
-.notice button {
+.server-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.server-picker select {
+  min-width: 0;
+  max-width: 100%;
   min-height: 44px;
   padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--card);
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+}
+
+.topbar-end {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.viewer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.viewer-name {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-button,
+.notice button {
+  min-height: 44px;
+  white-space: nowrap;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  cursor: pointer;
+}
+
+/* Title row: the page title and, when it applies, its period. */
+.titlebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
 .segmented {
@@ -477,8 +531,22 @@ select {
     font-size: 22px;
   }
 
-  .header {
-    align-items: stretch;
+  .server-picker {
+    flex: 1 1 100%;
+  }
+
+  .server-picker select {
+    flex: 1;
+  }
+
+  .topbar-end {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+
+  .viewer {
+    flex: 1;
   }
 
   .header-title {
@@ -486,29 +554,12 @@ select {
     flex-direction: column;
   }
 
-  .header-controls {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .header-controls .select {
-    grid-column: 1;
-  }
-
-  .header-controls .select select {
-    width: 100%;
-  }
-
-  .theme-toggle {
-    grid-column: 2;
-    grid-row: 1;
+  .titlebar {
+    align-items: stretch;
   }
 
   .segmented {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    width: 100%;
   }
 
   .segmented button {
@@ -754,12 +805,6 @@ select {
   align-self: flex-start;
 }
 
-.viewer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .you {
   color: var(--muted);
   font-size: 12px;
@@ -784,13 +829,6 @@ select {
 
 .more:hover {
   border-color: var(--accent);
-}
-
-@media (max-width: 699px) {
-  .viewer {
-    grid-column: 1 / -1;
-    justify-content: space-between;
-  }
 }
 
 /* The small @username next to a name. */

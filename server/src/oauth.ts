@@ -5,7 +5,8 @@ export interface OAuthSettings {
 }
 
 export interface DiscordIdentity {
-  user: { id: string; name: string };
+  /** `name` is the display name, `handle` the Discord @username. */
+  user: { id: string; name: string; handle: string };
   /** Ids of every server the person belongs to (up to the 200 Discord returns). */
   guildIds: string[];
 }
@@ -61,7 +62,7 @@ export async function fetchDiscordIdentity(settings: OAuthSettings, code: string
   if (!Array.isArray(guilds)) throw new Error('Discord returned an unexpected server list');
 
   return {
-    user: { id: user.id, name: typeof user.global_name === 'string' && user.global_name !== '' ? user.global_name : user.username },
+    user: { id: user.id, name: typeof user.global_name === 'string' && user.global_name !== '' ? user.global_name : user.username, handle: user.username },
     guildIds: guilds.map((guild) => guild.id).filter((id): id is string => typeof id === 'string'),
   };
 }

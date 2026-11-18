@@ -1,7 +1,10 @@
 import { PERIODS } from '@vocalog/shared';
 import type { GuildInfo, NamedRef, Period } from '@vocalog/shared';
 import type { ComponentChildren } from 'preact';
+import { visibleHandle } from '../format.ts';
 import type { Theme } from '../theme.ts';
+import { Avatar } from './Avatar.tsx';
+import { GuildIcon } from './GuildIcon.tsx';
 import { Link } from './Link.tsx';
 
 const PERIOD_LABELS: Record<Period, string> = { '7d': '7 j', '30d': '30 j', '1y': '1 an', all: 'Tout' };
@@ -23,60 +26,79 @@ export interface Controls {
 interface Props {
   controls: Controls;
   title: string;
-  eyebrow?: string;
   /** A small @username shown after the title (member pages). */
   handle?: string | null;
   /** A picture shown before the title (member pages). */
   avatar?: ComponentChildren;
   back?: { to: string; label: string };
+  /** False on a page the period does not change (a single day): the selector would do nothing there. */
+  showPeriod?: boolean;
 }
 
-export function Header({ controls, title, eyebrow, handle, avatar, back }: Props) {
+/**
+ * Two rows. Top bar: where you are (the server, with its picture) on the left, who you are (picture, name, @username,
+ * log out) and the theme on the right. Title row: the page title and, when it applies, its period.
+ */
+export function Header({ controls, title, handle, avatar, back, showPeriod = true }: Props) {
   const { guilds, guildId, period, theme, onGuild, onPeriod, onTheme, viewer, onLogout } = controls;
+  const guild = guilds.find((entry) => entry.id === guildId) ?? null;
+  const viewerHandle = viewer ? visibleHandle(viewer.name, viewer.handle) : null;
+
   return (
     <header class="header">
-      <div class="header-title">
-        {back && (
-          <Link to={back.to} class="back-link">
-            ← {back.label}
-          </Link>
-        )}
-        {eyebrow && <p class="eyebrow">{eyebrow}</p>}
-        <h1 class={avatar ? 'with-avatar' : undefined}>
-          {avatar}
-          <span>
-            {title}
-            {handle && <span class="handle">{handle}</span>}
-          </span>
-        </h1>
-      </div>
-      <div class="header-controls">
-        <label class="select">
+      <div class="topbar">
+        <label class="server-picker">
           <span class="sr-only">Serveur</span>
+          <GuildIcon guild={guild} size={36} />
           <select value={guildId ?? ''} onChange={(event) => onGuild(event.currentTarget.value)} disabled={guilds.length === 0}>
-            {guilds.map((guild) => (
-              <option key={guild.id} value={guild.id}>
-                {guild.name}
+            {guilds.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.name}
               </option>
             ))}
           </select>
         </label>
-        <div class="segmented" role="group" aria-label="Période">
-          {PERIODS.map((value) => (
-            <button key={value} type="button" aria-pressed={value === period} onClick={() => onPeriod(value)}>
-              {PERIOD_LABELS[value]}
-            </button>
-          ))}
+        <div class="topbar-end">
+          {viewer && (
+            <div class="viewer">
+              <Avatar user={viewer} guildId={guildId} size={32} />
+              <span class="viewer-name">
+                {viewer.name}
+                {viewerHandle && <span class="handle">{viewerHandle}</span>}
+              </span>
+              <button type="button" class="topbar-button" onClick={onLogout}>
+                Déconnexion
+              </button>
+            </div>
+          )}
+          <button type="button" class="topbar-button" onClick={onTheme} aria-label={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'}>
+            {theme === 'dark' ? 'Clair' : 'Sombre'}
+          </button>
         </div>
-        <button type="button" class="theme-toggle" onClick={onTheme} aria-label={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'}>
-          {theme === 'dark' ? 'Clair' : 'Sombre'}
-        </button>
-        {viewer && (
-          <div class="viewer">
-            <span class="muted">{viewer.name}</span>
-            <button type="button" class="theme-toggle" onClick={onLogout}>
-              Se déconnecter
-            </button>
+      </div>
+
+      <div class="titlebar">
+        <div class="header-title">
+          {back && (
+            <Link to={back.to} class="back-link">
+              ← {back.label}
+            </Link>
+          )}
+          <h1 class={avatar ? 'with-avatar' : undefined}>
+            {avatar}
+            <span>
+              {title}
+              {handle && <span class="handle">{handle}</span>}
+            </span>
+          </h1>
+        </div>
+        {showPeriod && (
+          <div class="segmented" role="group" aria-label="Période">
+            {PERIODS.map((value) => (
+              <button key={value} type="button" aria-pressed={value === period} onClick={() => onPeriod(value)}>
+                {PERIOD_LABELS[value]}
+              </button>
+            ))}
           </div>
         )}
       </div>

@@ -18,27 +18,31 @@ export function isAvatarHash(value: string): boolean {
   return /^(a_)?[0-9a-f]{32}$/.test(value);
 }
 
+/** The two kinds of picture the dashboard shows: a person's avatar and a server's icon. */
+export type ImageKind = 'avatars' | 'icons';
+
 /**
- * Fetches avatars from Discord for the dashboard, so visitors never contact Discord themselves.
+ * Fetches avatars and server icons from Discord for the dashboard, so visitors never contact Discord themselves.
  *
- * The address is built here from two checked values (an id and a hash, both read from the database), never from
- * anything the visitor sends, and redirects are refused: this can only reach Discord's image host. Only a small PNG is
- * accepted. Images are kept in memory (bounded); a failure is remembered for a few minutes so Discord is not hammered.
+ * The address is built here from a fixed kind and two checked values (an id and a hash, both read from the database),
+ * never from anything the visitor sends, and redirects are refused: this can only reach Discord's image host. Only a
+ * small PNG is accepted. Images are kept in memory (bounded); a failure is remembered for a few minutes so Discord is
+ * not hammered.
  */
-export function createAvatarProxy(fetchFn: typeof fetch, now: () => number) {
+export function createImageProxy(fetchFn: typeof fetch, now: () => number) {
   const images = new Map<string, AvatarImage>();
   const misses = new Map<string, number>();
 
-  return async function getAvatar(userId: string, hash: string): Promise<AvatarImage | null> {
-    if (!isUserId(userId) || !isAvatarHash(hash)) return null;
-    const key = `${userId}/${hash}`;
+  return async function getImage(kind: ImageKind, id: string, hash: string): Promise<AvatarImage | null> {
+    if (!isUserId(id) || !isAvatarHash(hash)) return null;
+    const key = `${kind}/${id}/${hash}`;
     const known = images.get(key);
     if (known) return known;
     const missedAt = misses.get(key);
     if (missedAt !== undefined && now() - missedAt < MISS_TTL_MS) return null;
 
     try {
-      const response = await fetchFn(`${CDN}/avatars/${userId}/${hash}.png?size=64`, { redirect: 'error', signal: AbortSignal.timeout(TIMEOUT_MS) });
+      const response = await fetchFn(`${CDN}/${kind}/${id}/${hash}.png?size=64`, { redirect: 'error', signal: AbortSignal.timeout(TIMEOUT_MS) });
       const contentType = response.headers.get('content-type') ?? '';
       if (!response.ok || !contentType.startsWith('image/png')) throw new Error(`unexpected answer (${response.status})`);
       const body = Buffer.from(await response.arrayBuffer());

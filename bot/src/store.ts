@@ -51,13 +51,13 @@ function logName(db: Db, kind: NameKind, entityId: string, guildId: string | nul
   db.prepare('INSERT INTO name_history (kind, entity_id, guild_id, name, at_ms) VALUES (?, ?, ?, ?, ?)').run(kind, entityId, guildId, name, nowMs);
 }
 
-export function upsertGuild(db: Db, guild: { id: string; name: string; afkChannelId: string | null }, nowMs: number): void {
+export function upsertGuild(db: Db, guild: { id: string; name: string; afkChannelId: string | null; icon?: string | null }, nowMs: number): void {
   db.transaction(() => {
     const previous = db.prepare('SELECT name FROM guilds WHERE id = ?').get(guild.id) as { name: string } | undefined;
     db.prepare(
-      `INSERT INTO guilds (id, name, afk_channel_id, updated_ms) VALUES (?, ?, ?, ?)
-       ON CONFLICT (id) DO UPDATE SET name = excluded.name, afk_channel_id = excluded.afk_channel_id, updated_ms = excluded.updated_ms`,
-    ).run(guild.id, guild.name, guild.afkChannelId, nowMs);
+      `INSERT INTO guilds (id, name, afk_channel_id, icon, updated_ms) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO UPDATE SET name = excluded.name, afk_channel_id = excluded.afk_channel_id, icon = excluded.icon, updated_ms = excluded.updated_ms`,
+    ).run(guild.id, guild.name, guild.afkChannelId, guild.icon ?? null, nowMs);
     logName(db, 'guild', guild.id, null, guild.name, previous?.name, nowMs);
   })();
 }

@@ -80,6 +80,7 @@ export function createAuth(options: AuthOptions, now: () => number): Auth {
           const session: Session = {
             userId: identity.user.id,
             userName: identity.user.name,
+            userHandle: identity.user.handle,
             guildIds,
             expiresAtSec: Math.floor(now() / 1000) + ttl,
           };

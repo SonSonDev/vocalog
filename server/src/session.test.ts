@@ -80,3 +80,19 @@ describe('cookies', () => {
     expect(clearCookie('s', true)).toContain('Max-Age=0');
   });
 });
+
+describe('session @username', () => {
+  const secret = SECRET;
+  const base = { userId: 'u1', userName: 'Alex', guildIds: ['g1'], expiresAtSec: 2_000_000_000 };
+
+  it('survives a round trip when present and is absent otherwise', () => {
+    expect(verifySession(signSession({ ...base, userHandle: 'alex_42' }, secret), secret, 1)?.userHandle).toBe('alex_42');
+    expect(verifySession(signSession(base, secret), secret, 1)?.userHandle).toBeUndefined();
+  });
+
+  it('ignores a handle that is not text', () => {
+    const payload = Buffer.from(JSON.stringify({ u: 'u1', n: 'Alex', h: 42, g: ['g1'], e: 2_000_000_000 })).toString('base64url');
+    const token = `${payload}.${createHmac('sha256', secret).update(payload).digest('base64url')}`;
+    expect(verifySession(token, secret, 1)?.userHandle).toBeUndefined();
+  });
+});

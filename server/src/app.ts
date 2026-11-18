@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { isDayKey } from '@vocalog/shared';
 import type { MeResponse, Period } from '@vocalog/shared';
-import { createAvatarProxy } from './avatar.ts';
+import { createImageProxy } from './image.ts';
 import { createCache } from './cache.ts';
 import { buildDayView } from './day.ts';
 import { createAuth } from './auth.ts';
@@ -32,7 +32,7 @@ export function buildApp(options: AppOptions): FastifyInstance {
   const auth = createAuth(options.auth, now);
   const app = Fastify({ logger: false });
   const cached = createCache(db, now);
-  const getAvatar = createAvatarProxy(options.fetch ?? globalThis.fetch, now);
+  const getImage = createImageProxy(options.fetch ?? globalThis.fetch, now);
 
   // Nothing is logged by Fastify here, so a failure would leave no trace. Log the route only (the query of a login
   // callback carries a one-time code) and never send internals to the browser.
@@ -64,7 +64,9 @@ export function buildApp(options: AppOptions): FastifyInstance {
 
   app.get('/api/me', async (request): Promise<MeResponse> => {
     const viewer = auth.viewer(request);
-    return { authMode: auth.mode, user: viewer ? { id: viewer.userId, name: viewer.userName } : null };
+    if (!viewer) return { authMode: auth.mode, user: null };
+    // The person's own @username comes from the login; the picture hash from what the bot has seen of them (may be absent).
+    return { authMode: auth.mode, user: { id: viewer.userId, name: viewer.userName, handle: viewer.userHandle, avatar: userAvatars(db).get(viewer.userId) } };
   });
 
   app.get('/api/guilds', async (request) => listGuilds(db).filter((guild) => auth.canSeeGuild(request, guild.id)));
@@ -106,8 +108,16 @@ export function buildApp(options: AppOptions): FastifyInstance {
     const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
     if (!guild || !userHasEvents(db, guild.id, request.params.userId)) return reply.code(404).send({ error: 'unknown member' });
     const hash = userAvatars(db).get(request.params.userId);
-    const image = hash ? await getAvatar(request.params.userId, hash) : null;
+    const image = hash ? await getImage('avatars', request.params.userId, hash) : null;
     if (!image) return reply.code(404).send({ error: 'no avatar' });
+    return reply.header('cache-control', 'private, max-age=86400').type(image.contentType).send(image.body);
+  });
+
+  // The server's icon, fetched from Discord by this server. Same rules as an avatar: the hash comes from the database.
+  app.get<{ Params: { guildId: string } }>('/api/guilds/:guildId/icon', async (request, reply) => {
+    const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
+    const image = guild?.icon ? await getImage('icons', guild.id, guild.icon) : null;
+    if (!image) return reply.code(404).send({ error: 'no icon' });
     return reply.header('cache-control', 'private, max-age=86400').type(image.contentType).send(image.body);
   });
 

@@ -340,3 +340,50 @@ describe('avatars', () => {
     expect((await app.inject('/api/guilds/g1/avatars/u1')).statusCode).toBe(404);
   });
 });
+
+describe('server icon', () => {
+  const GUILD = '123456789012345679';
+  const HASH = 'b'.repeat(32);
+  const png = Buffer.from('89504e470d0a1a0a', 'hex');
+  const pngResponse = () => new Response(png, { status: 200, headers: { 'content-type': 'image/png' } });
+
+  function withIcon(fetchFn: typeof fetch, icon: string | null = HASH) {
+    const db = testDb();
+    db.prepare('INSERT INTO guilds (id, name, icon, updated_ms) VALUES (?, ?, ?, 0)').run(GUILD, 'Icon server', icon);
+    addEvent(db, { guildId: GUILD, userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 2 * HOUR });
+    addEvent(db, { guildId: GUILD, userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - HOUR });
+    return buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW, fetch: fetchFn });
+  }
+
+  it('lists the icon hash with the server and serves the picture from Discord, kept by the browser', async () => {
+    const urls: string[] = [];
+    const app = withIcon((async (url: string) => (urls.push(url), pngResponse())) as unknown as typeof fetch);
+    expect((await app.inject('/api/guilds')).json()).toEqual([{ id: GUILD, name: 'Icon server', icon: HASH }]);
+    const response = await app.inject(`/api/guilds/${GUILD}/icon`);
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toContain('image/png');
+    expect(response.headers['cache-control']).toBe('private, max-age=86400');
+    expect(urls).toEqual([`https://cdn.discordapp.com/icons/${GUILD}/${HASH}.png?size=64`]);
+  });
+
+  it('answers 404 without calling Discord for no icon, an unsafe hash or an unknown server', async () => {
+    let calls = 0;
+    const spy = (async () => (calls++, pngResponse())) as unknown as typeof fetch;
+    expect((await withIcon(spy, null).inject(`/api/guilds/${GUILD}/icon`)).statusCode).toBe(404);
+    expect((await withIcon(spy, '../../x').inject(`/api/guilds/${GUILD}/icon`)).statusCode).toBe(404);
+    expect((await withIcon(spy).inject('/api/guilds/nope/icon')).statusCode).toBe(404);
+    expect(calls).toBe(0);
+  });
+
+  it('works on a database made before the icon column existed', async () => {
+    const db = testDb();
+    addNames(db);
+    db.exec('ALTER TABLE guilds DROP COLUMN icon');
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    expect((await app.inject('/api/guilds')).json()).toEqual([
+      { id: 'g2', name: 'Other server' },
+      { id: 'g1', name: 'Test server' },
+    ]);
+    expect((await app.inject('/api/guilds/g1/icon')).statusCode).toBe(404);
+  });
+});

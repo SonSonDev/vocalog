@@ -5,7 +5,7 @@ A Discord bot that records voice-channel activity into a permanent event journal
 Status: the collector (`bot/`) works and is deployed. The dashboard (`server/`, `web/`) has a Discord login and is covered by tests, but has not been checked against the real Discord login or in a browser, and has not been deployed yet (raspi-manager now runs several processes per app). Do not expose it before that check.
 
 ### Avatars
-The bot stores each person's Discord avatar hash (migration 003, applied when the bot starts); the dashboard server downloads the pictures from Discord's image host and serves them, so the server needs outbound HTTPS and visitors never contact Discord. Order does not matter: until the bot has restarted once with this version, the dashboard simply shows initials. With raspi-manager, restart the `bot` process by hand after an update (it is set to `keep`).
+The bot stores each person's Discord avatar hash and each server's icon hash (migrations 003 and 004, applied when the bot starts); the dashboard server downloads the pictures from Discord's image host and serves them, so the server needs outbound HTTPS and visitors never contact Discord. Order does not matter: until the bot has restarted once with this version, the dashboard simply shows initials. With raspi-manager, restart the `bot` process by hand after an update (it is set to `keep`).
 
 ### Dashboard login (Discord developer portal)
 1. In your application, OAuth2 page: copy the **Client ID** and the **Client Secret**.

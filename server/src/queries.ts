@@ -15,12 +15,35 @@ interface EventRow {
   source: VoiceEvent['source'];
 }
 
+interface GuildRow {
+  id: string;
+  name: string;
+  icon?: string | null;
+}
+
+const iconColumnSeen = new WeakSet<Db>();
+
+/** The icon column is added by a migration the bot applies at start: until then there are no icons, never an error. */
+function guildColumns(db: Db): string {
+  if (!iconColumnSeen.has(db)) {
+    const columns = db.prepare("SELECT name FROM pragma_table_info('guilds')").all() as { name: string }[];
+    if (!columns.some((column) => column.name === 'icon')) return 'id, name';
+    iconColumnSeen.add(db);
+  }
+  return 'id, name, icon';
+}
+
+function toGuildInfo(row: GuildRow): GuildInfo {
+  return row.icon ? { id: row.id, name: row.name, icon: row.icon } : { id: row.id, name: row.name };
+}
+
 export function listGuilds(db: Db): GuildInfo[] {
-  return db.prepare('SELECT id, name FROM guilds ORDER BY name').all() as GuildInfo[];
+  return (db.prepare(`SELECT ${guildColumns(db)} FROM guilds ORDER BY name`).all() as GuildRow[]).map(toGuildInfo);
 }
 
 export function findGuild(db: Db, guildId: string): GuildInfo | null {
-  return (db.prepare('SELECT id, name FROM guilds WHERE id = ?').get(guildId) as GuildInfo | undefined) ?? null;
+  const row = db.prepare(`SELECT ${guildColumns(db)} FROM guilds WHERE id = ?`).get(guildId) as GuildRow | undefined;
+  return row ? toGuildInfo(row) : null;
 }
 
 /** Events of one server in time order. */

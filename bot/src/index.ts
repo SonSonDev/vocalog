@@ -43,7 +43,7 @@ function aliveUntil(): number {
 
 /** Records the names and the AFK channel of a server and returns who is in voice there right now. */
 function collectGuild(guild: Guild, nowMs: number): LiveVoiceState[] {
-  upsertGuild(db, { id: guild.id, name: guild.name, afkChannelId: guild.afkChannelId }, nowMs);
+  upsertGuild(db, { id: guild.id, name: guild.name, afkChannelId: guild.afkChannelId, icon: guild.icon }, nowMs);
   for (const channel of guild.channels.cache.values()) {
     if (channel.isVoiceBased()) upsertChannel(db, { id: channel.id, guildId: guild.id, name: channel.name, type: channel.type }, nowMs);
   }
@@ -106,7 +106,7 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
     const event = toEvent(before, after, nowMs);
     if (!event) return;
     insertEvent(db, event, { old: snapshot(before), new: snapshot(after) });
-    upsertGuild(db, { id: newState.guild.id, name: newState.guild.name, afkChannelId: newState.guild.afkChannelId }, nowMs);
+    upsertGuild(db, { id: newState.guild.id, name: newState.guild.name, afkChannelId: newState.guild.afkChannelId, icon: newState.guild.icon }, nowMs);
     if (newState.member) {
       upsertUser(db, newState.id, newState.member.user.username, nowMs, newState.member.user.avatar);
       upsertMember(db, newState.guild.id, newState.id, newState.member.displayName, false, nowMs);
@@ -131,7 +131,7 @@ client.on(Events.ChannelUpdate, (_old, channel) => {
 });
 client.on(Events.GuildUpdate, (_old, guild) => {
   try {
-    if (isAllowed(allowed, guild.id)) upsertGuild(db, { id: guild.id, name: guild.name, afkChannelId: guild.afkChannelId }, Date.now());
+    if (isAllowed(allowed, guild.id)) upsertGuild(db, { id: guild.id, name: guild.name, afkChannelId: guild.afkChannelId, icon: guild.icon }, Date.now());
   } catch (error) {
     console.error('Failed to record a server change', error);
   }
