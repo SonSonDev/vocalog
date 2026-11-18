@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  activeHourWindow,
+  describeHourWindow,
   binClock,
   formatDayLong,
   formatDayShort,
@@ -206,5 +208,39 @@ describe('timelineView', () => {
 
   it('labels a whole hour', () => {
     expect(formatHourLabel(at(21), 'UTC')).toBe('21 h');
+  });
+});
+
+describe('hourly profile window', () => {
+  const totals = (active: Record<number, number>) => Array.from({ length: 24 }, (_, hour) => active[hour] ?? 0);
+
+  it('starts the day at 06:00 so an evening that passes midnight is one block', () => {
+    const hours = activeHourWindow(totals({ 20: 5, 21: 5, 22: 5, 23: 5, 0: 3, 1: 1 }));
+    expect(hours).toEqual([19, 20, 21, 22, 23, 0, 1, 2]);
+  });
+
+  it('cuts the hours where nobody ever is, keeping one hour of margin', () => {
+    expect(activeHourWindow(totals({ 14: 1, 15: 1, 16: 1, 17: 1, 18: 1, 19: 1, 20: 1, 21: 1, 22: 1 }))).toEqual([13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]);
+  });
+
+  it('keeps at least eight bars, inside the day', () => {
+    expect(activeHourWindow(totals({ 21: 1 }))).toHaveLength(8);
+    const early = activeHourWindow(totals({ 6: 1 }));
+    expect(early[0]).toBe(6);
+    expect(early).toHaveLength(8);
+    const late = activeHourWindow(totals({ 5: 1 }));
+    expect(late[late.length - 1]).toBe(5);
+    expect(late).toHaveLength(8);
+  });
+
+  it('shows the whole day when activity is spread, and when there is none', () => {
+    expect(activeHourWindow(totals({ 7: 1, 3: 1 }))).toHaveLength(23);
+    expect(activeHourWindow(totals({ 6: 1, 5: 1 }))).toHaveLength(24);
+    expect(activeHourWindow(totals({}))).toHaveLength(24);
+  });
+
+  it('describes the window', () => {
+    expect(describeHourWindow([19, 20, 21, 22, 23, 0, 1, 2])).toBe('de 19 h à 3 h');
+    expect(describeHourWindow(Array.from({ length: 24 }, (_, i) => (i + 6) % 24))).toBe('sur 24 h');
   });
 });

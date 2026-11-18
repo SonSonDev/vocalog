@@ -21,7 +21,8 @@ export function Heatmap({ heat }: { heat: number[][] }) {
                     key={hour}
                     class="heat-cell"
                     style={{ '--v': max > 0 ? (value / max).toFixed(3) : '0' }}
-                    title={`${WEEKDAYS_LONG[weekday]} ${hour} h : ${formatDuration(value)}`}
+                    data-tip={`${WEEKDAYS_LONG[weekday]} ${hour} h
+${formatDuration(value)}`}
                   />
                 ))}
               </div>

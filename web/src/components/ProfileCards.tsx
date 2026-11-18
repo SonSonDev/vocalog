@@ -72,7 +72,8 @@ export function ActivityChart({ activity }: { activity: MemberProfile['activity'
                 key={bucket.startKey}
                 class={bucket === best ? 'peak' : undefined}
                 style={{ height: `${barPercent(bucket.ms, max)}%` }}
-                title={`${label(bucket.startKey)} : ${formatDuration(bucket.ms)}`}
+                data-tip={`${label(bucket.startKey)}
+${formatDuration(bucket.ms)}`}
               />
             ))}
           </div>
@@ -114,9 +115,11 @@ export function Together({ together, totalMs, guildId }: { together: MemberProfi
                 <li key={entry.user.id}>
                   <span class="bar-name with-avatar">
                     <Avatar user={entry.user} guildId={guildId} size={24} />
-                    <span>
+                    <span class="name-lines">
                       {entry.user.name}
-                      <Handle user={entry.user} />
+                      <span class="name-sub">
+                        <Handle user={entry.user} />
+                      </span>
                     </span>
                   </span>
                   <span class="bar-track" aria-hidden="true">

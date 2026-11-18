@@ -49,7 +49,8 @@ export function DayStrips({ days, search }: { days: DayStrip[]; search: string }
                         key={index}
                         class="day-cell"
                         style={{ '--v': max > 0 ? (value / max).toFixed(3) : '0' }}
-                        title={`${label}, ${binClock(index, STRIP_BIN_MINUTES)} : ${formatPeople(value)}`}
+                        data-tip={`${label}, ${binClock(index, STRIP_BIN_MINUTES)}
+${formatPeople(value)}`}
                       />
                     ))}
                   </span>

@@ -170,7 +170,8 @@ function Timeline({ day, guildId, search }: { day: DayView; guildId: string; sea
                 key={index}
                 class="day-cell"
                 style={{ '--v': maxBin > 0 ? (value / maxBin).toFixed(3) : '0' }}
-                title={`${binClock(firstBin + index, DAY_BIN_MINUTES)} : ${formatPeople(value)}`}
+                data-tip={`${binClock(firstBin + index, DAY_BIN_MINUTES)}
+${formatPeople(value)}`}
               />
             ))}
           </span>
@@ -192,7 +193,8 @@ function Timeline({ day, guildId, search }: { day: DayView; guildId: string; sea
                   key={index}
                   class="tl-span"
                   style={{ left: `${((span.startMs - view.startMs) / length) * 100}%`, width: `${Math.max(0.4, ((span.endMs - span.startMs) / length) * 100)}%` }}
-                  title={`${span.channel.name} · ${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} (${formatDuration(span.endMs - span.startMs)})`}
+                  data-tip={`${span.channel.name}
+${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`}
                 >
                   {span.channel.name}
                 </span>

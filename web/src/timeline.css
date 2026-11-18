@@ -337,3 +337,62 @@ p > strong.mono {
   flex: none;
   white-space: nowrap;
 }
+
+/* A name over its @username: two lines, the second one small and muted (it also holds the "toi" marker). */
+.name-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.name-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+}
+
+.name-sub:empty {
+  display: none;
+}
+
+.name-sub .handle {
+  margin-left: 0;
+}
+
+/* Wide screens: the "Sessions" column header already says what the number is, so the word is only read aloud. */
+@media (min-width: 700px) {
+  .member-sessions .unit {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+/* The shared tooltip (TooltipLayer): instant, follows the pointer, never takes a click. */
+.tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  max-width: 260px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-line;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+}
+
+.tooltip[hidden] {
+  display: none;
+}

@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — One shared tooltip instead of the browser's `title`
+- Decision: a single `TooltipLayer` listens to the document and shows the `data-tip` text of the element under the pointer immediately; every chart and cell uses `data-tip` instead of `title`.
+- Why: the native tooltip takes about half a second to appear, which makes scanning a timeline with the mouse feel slow; one listener also costs nothing for the hundreds of cells of the strips and the heat map, where a component per cell would.
+- Alternatives rejected: a Tooltip component wrapped around each cell (hundreds of components for no gain); a tooltip library (a new dependency for about 100 lines).
+- Consequences / risks accepted: tooltips are not part of the page's text, so anything important must also be available as normal text or in the table view (the strips have a hidden summary per day, the day page a table).
+
 ## 2026-11-18 — Avatars through the server, per-day strips and a day page, new home title
 - Decision: the home title is "Qui était en vocal" (owner's choice). Avatars: the bot stores the avatar hash of each person (migration 003), the dashboard server fetches the image from Discord and serves it (in-memory cache, `?v=<hash>` so the browser keeps it), initials when there is none. Days run 06:00 to 06:00; the home page gets a "Jour par jour" section (one strip per day, up to 31) and a day page with one row per member, zoomed on the active hours by default.
 - Why: the owner asked for avatars and per-day timelines. Through the server, visitors' addresses never reach Discord (same privacy rule that kept external fonts out). A 06:00 day keeps an evening that passes midnight in one piece, as the habits figures already do.

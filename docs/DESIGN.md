@@ -46,6 +46,10 @@ Arcade, full-screen recap, audio studio, neo-brutalism, Japanese minimalism, ter
 
 - Day strips and day page (2026-11-18): same single accent hue as the heat map (cell darkness = people present), one line per day from 06:00 to 06:00, bars 22 px with the channel name inside (text on accent), a hairline at each time mark, a table version for screen readers and keyboards, a zoom on the active hours. Avatars are 24 to 44 px circles, neutral initials as fallback; they never replace the name.
 
+- Member list (2026-11-18): the name on the first line and the `@username` (and the "toi" marker) on the second, small and muted. On wide screens the sessions cell shows only the number (the column header says what it is); on phones the word stays, with the time on the right and the 24-bar hourly profile across the full row (2 px gaps, rounded tops).
+- Hourly profiles are drawn on the group's active hours only, from 06:00, so regular schedules do not leave a lone bar at each end and a large hole between. One shared window per list keeps rows comparable; the heat map and the member page still show the whole day.
+- Tooltips: one shared `TooltipLayer` shows any `data-tip` text at once (the browser's `title` waits about half a second), follows the pointer, flips near the edges and also appears on keyboard focus and touch. It is a hint only: the same facts exist as text or in the table view.
+
 ## Aesthetic risk and guard-rail
 Risk: the sober table look may feel cold for a friends' recap. Guard-rail: keep the accent small and consistent, and reserve any expressive treatment for the optional yearly recap view.
 

@@ -8,6 +8,7 @@ import type { Theme } from './theme.ts';
 import { useRemote } from './useRemote.ts';
 import { HomeView } from './views/HomeView.tsx';
 import { LoginView } from './views/LoginView.tsx';
+import { TooltipLayer } from './components/Tooltip.tsx';
 import { DayPageView } from './views/DayPageView.tsx';
 import { MemberView } from './views/MemberView.tsx';
 
@@ -68,6 +69,7 @@ export function App() {
 
   return (
     <div class="app">
+      <TooltipLayer />
       <main class="main">
         {meStatus === 'error' && (
           <div class="notice" role="alert">
