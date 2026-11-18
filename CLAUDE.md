@@ -45,6 +45,7 @@
 ## UX & design rules
 - Follow docs/DESIGN.md (direction "Rail and table", light and dark themes, one accent colour, strict grid).
 - Always design the four states: loading, empty, error, content. Touch targets >= 44 px, AA contrast including text on the accent, visible focus, full keyboard use, `prefers-reduced-motion`.
+- Be critical about spacing, padding and alignment by default (scale and rules in docs/DESIGN.md): measure in a browser and fix before reporting; never wait for the owner to point out each element.
 - UI text in French. Code and keys in English.
 
 ## Quality gates (a task is not done until these pass; say which were run)

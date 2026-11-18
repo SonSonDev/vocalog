@@ -51,6 +51,16 @@ Arcade, full-screen recap, audio studio, neo-brutalism, Japanese minimalism, ter
 - No explanatory captions under or over charts (owner's call, 2026-11-18): headings, axes and tooltips explain; definitions of terms live in tooltips; every chart keeps an accessible text label. Lists of gauges use a fixed value column (and fixed sub-columns for "own % / group %") so gauges and figures line up from row to row; below 1024 px the gauge goes under its label.
 - Tooltips: one shared `TooltipLayer` shows any `data-tip` text at once (the browser's `title` waits about half a second), follows the pointer, flips near the edges and also appears on keyboard focus and touch. It is a hint only: the same facts exist as text or in the table view.
 
+## Spacing rules (owner's standing request, 2026-11-18)
+Generous by default; audit every UI change critically instead of waiting for remarks. Scale in `web/src/styles.css`: `--space-1..6` = 4, 8, 12, 16, 24, 32 px.
+- Page: 24 px top and between blocks, 32 px at the sides (16 px on phones).
+- Card: 22 px inside (18 px on phones), 16 px between its title and its content.
+- List rows (`rows`, `bars`, `compare`): 12 px above and below, a hairline between rows; members 14 px (16 px on phones). When a gauge sits under its label, 10 px between them.
+- Key figures 16 x 20 px. Gauges 10 px high. Day cells 24 px, timeline tracks 32 px, 10 px between timeline rows.
+- A large picture next to a title: about a third of its size as gap, and room above it (it has no line height to give air).
+- Alignment: one value-column width per list, so gauges and figures line up from row to row; no `auto` columns in a repeated row. Names break between words, never letter by letter; a figure never breaks across lines.
+- Check before reporting: browser measurements and screenshots at 390, 768, 1024 and 1280 px, with long names and @usernames, and the neighbours of every changed element.
+
 ## Aesthetic risk and guard-rail
 Risk: the sober table look may feel cold for a friends' recap. Guard-rail: keep the accent small and consistent, and reserve any expressive treatment for the optional yearly recap view.
 

@@ -147,7 +147,7 @@ export function VoiceStates({ states }: { states: MemberProfile['voiceStates'] }
         <p class="muted">Aucune activité sur cette période.</p>
       ) : (
         <>
-          <ul class="bars">
+          <ul class="bars wide-values">
             {rows.map((row) => (
               <li key={row.label}>
                 <span class="bar-name" data-tip={'tip' in row ? row.tip : undefined}>
@@ -200,7 +200,9 @@ export function Habits({ profile }: { profile: MemberProfile }) {
               const others = shareOf(group.partsOfDay[part.key], groupTotal);
               return (
                 <li key={part.key}>
-                  <span class="compare-label">{part.label}</span>
+                  <span class="compare-label" data-tip={part.label}>
+                    {part.label.split(' (')[0]}
+                  </span>
                   <span
                     class="compare-bars"
                     aria-hidden="true"
@@ -249,19 +251,19 @@ export function GroupCompare({ profile }: { profile: MemberProfile }) {
           </li>
           <li>
             <span>
-              Temps total <span class="muted">· moyenne du groupe {formatDuration(group.avgMemberTotalMs)}</span>
+              Temps total <span class="muted">· moyenne du groupe <span class="nowrap">{formatDuration(group.avgMemberTotalMs)}</span></span>
             </span>
             <span class="mono">{totalVsGroup === null ? '—' : formatSignedPercent(totalVsGroup)}</span>
           </li>
           <li>
             <span>
-              Durée d’une session <span class="muted">· moyenne du groupe {formatDuration(group.avgSessionMs)}</span>
+              Durée d’une session <span class="muted">· moyenne du groupe <span class="nowrap">{formatDuration(group.avgSessionMs)}</span></span>
             </span>
             <span class="mono">{sessionVsGroup === null ? '—' : formatSignedPercent(sessionVsGroup)}</span>
           </li>
           <li>
             <span>
-              Micro coupé <span class="muted">· groupe {group.mutedShare === null ? '—' : formatPercent(group.mutedShare)}</span>
+              Micro coupé <span class="muted">· groupe <span class="nowrap">{group.mutedShare === null ? '—' : formatPercent(group.mutedShare)}</span></span>
             </span>
             <span class="mono">{voiceStates.voiceMs > 0 && ownMuted !== null ? formatPercent(ownMuted) : '—'}</span>
           </li>
