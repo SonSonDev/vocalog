@@ -129,7 +129,7 @@ export function Together({ together, totalMs }: { together: MemberProfile['toget
   );
 }
 
-export function VoiceStates({ states }: { states: NonNullable<MemberProfile['voiceStates']> }) {
+export function VoiceStates({ states }: { states: MemberProfile['voiceStates'] }) {
   const rows = [
     { label: 'Micro coupé', ms: states.mutedMs },
     { label: 'Casque coupé', ms: states.deafMs },
@@ -220,7 +220,7 @@ export function Habits({ profile }: { profile: MemberProfile }) {
 
 export function GroupCompare({ profile }: { profile: MemberProfile }) {
   const { group, habits, voiceStates } = profile;
-  const ownMuted = voiceStates ? shareOf(voiceStates.mutedMs, voiceStates.voiceMs) : null;
+  const ownMuted = shareOf(voiceStates.mutedMs, voiceStates.voiceMs);
   const totalVsGroup = group.avgMemberTotalMs > 0 ? Math.round(((profile.totalMs - group.avgMemberTotalMs) / group.avgMemberTotalMs) * 100) : null;
   const sessionVsGroup = group.avgSessionMs > 0 && profile.sessions > 0 ? Math.round(((profile.avgSessionMs - group.avgSessionMs) / group.avgSessionMs) * 100) : null;
 
@@ -247,14 +247,12 @@ export function GroupCompare({ profile }: { profile: MemberProfile }) {
             </span>
             <span class="mono">{sessionVsGroup === null ? '—' : formatSignedPercent(sessionVsGroup)}</span>
           </li>
-          {voiceStates !== null && (
-            <li>
-              <span>
-                Micro coupé <span class="muted">· groupe {group.mutedShare === null ? '—' : formatPercent(group.mutedShare)}</span>
-              </span>
-              <span class="mono">{voiceStates.voiceMs > 0 && ownMuted !== null ? formatPercent(ownMuted) : '—'}</span>
-            </li>
-          )}
+          <li>
+            <span>
+              Micro coupé <span class="muted">· groupe {group.mutedShare === null ? '—' : formatPercent(group.mutedShare)}</span>
+            </span>
+            <span class="mono">{voiceStates.voiceMs > 0 && ownMuted !== null ? formatPercent(ownMuted) : '—'}</span>
+          </li>
           <li>
             <span>Heure d’arrivée</span>
             <span>

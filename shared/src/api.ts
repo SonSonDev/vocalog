@@ -41,7 +41,7 @@ export interface Summary {
 }
 
 /** Personal statistics of one member, with names resolved. */
-export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' | 'together' | 'longestSession' | 'voiceStates'> {
+export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' | 'together' | 'longestSession'> {
   guild: GuildInfo;
   user: NamedRef;
   period: Period;
@@ -49,10 +49,6 @@ export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' |
   toMs: number;
   timeZone: string;
   generatedAtMs: number;
-  /** True when the viewer is not this member: the sensitive fields below are removed by the server. */
-  restricted: boolean;
-  /** Microphone, headphones, screen sharing and camera time. Null when `restricted`. */
-  voiceStates: FlagTimes | null;
   longestSession: { channel: NamedRef; startMs: number; durationMs: number } | null;
   channels: { channel: NamedRef; totalMs: number }[];
   together: {

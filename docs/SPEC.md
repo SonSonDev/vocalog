@@ -33,7 +33,7 @@ Status: `in progress` (built and covered by tests with a fake Discord; the real 
 - OAuth2 with the two non-privileged scopes `identify` and `guilds`. The Discord access token is used once at login and never stored, logged or put in a cookie.
 - Signed session cookie (`HttpOnly`, `SameSite=Lax`, `Secure` over https), valid 7 days. It holds the Discord id, the name and the servers the person shares with Vocalog, fixed at login: leaving a server takes effect at the next login or when the cookie expires. A forged, altered or expired cookie counts as nobody.
 - Every statistics route answers 401 without a session. Only `/api/me` is open, to say whether a login is needed. A person sees only servers they belong to and that Vocalog records; any other server answers exactly like one that does not exist (404).
-- Visibility of a member page: a person sees their own page in full. On anyone else's page the server removes microphone, headphones, screen-sharing and camera time, and the group's muted share, so they are not in the response at all; the page says so.
+- Visibility of a member page: since 2026-11-18 every person who can see a server sees the full member page of any member of it, including microphone, headphones, screen-sharing and camera time and the group's muted share (the earlier hide-from-others rule was removed, see DECISIONS).
 - Screens: login (with the reasons for a refusal), logged in with the name and a logout button, "toi" marked in the member list.
 - Local development without login only with `INSECURE_NO_AUTH=1`, which the server refuses to combine with the login settings.
 - Not covered: a person in more than 200 servers (Discord returns 200 per request); CSRF tokens on logout (cookies are `SameSite=Lax`, which blocks cross-site POSTs); a content security policy (to add after checking the page in a browser).
@@ -60,8 +60,8 @@ Status: `in progress` (member page built and tested; not yet checked in a browse
 - Yearly recap: `planned`.
 
 ## F8 — Opt-out and deletion
-Status: `planned`
-- A member can stop being recorded and ask for deletion of their data (the only allowed exception to the append-only journal). Exact commands to define (see QUESTIONS).
+Status: `dropped` (2026-11-18, the owner does not need it; friends are told what is collected)
+- Was: a member can stop being recorded and ask for deletion of their data. Not built; the journal has no exception to append-only.
 
 ## F9 — Backup and operation
 Status: `planned`

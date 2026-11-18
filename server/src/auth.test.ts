@@ -228,38 +228,14 @@ describe('the statistics need a login', () => {
   });
 });
 
-describe('what only the person concerned may see', () => {
+describe('member pages for any member of the server', () => {
   const mutedApp = () => app(discordAuth(fakeDiscord().fetchFn));
 
-  it('gives the full page, with the real microphone time, to the person themselves', async () => {
-    const body = (await mutedApp().inject({ url: '/api/guilds/g1/members/u2', headers: { cookie: cookieOf({ userId: 'u2', guildIds: ['g1'] }) } })).json();
-    expect(body.restricted).toBe(false);
+  it('gives another person the same page, with microphone time and group muted share', async () => {
+    const body = (await mutedApp().inject({ url: '/api/guilds/g1/members/u2', headers: { cookie: cookieOf({ userId: 'u1' }) } })).json();
     expect(body.voiceStates.mutedMs).toBe(30 * 60_000);
     expect(body.group.mutedShare).toBeGreaterThan(0);
-  });
-
-  it('removes microphone, headphones, screen and camera data from another person\'s page, on the server', async () => {
-    const response = await mutedApp().inject({ url: '/api/guilds/g1/members/u2', headers: { cookie: cookieOf({ userId: 'u1' }) } });
-    const body = response.json();
-    expect(body.restricted).toBe(true);
-    expect(body.voiceStates).toBeNull();
-    expect(body.group.mutedShare).toBeNull();
-    // Nothing of the removed fields may be present anywhere in the raw response.
-    for (const field of ['mutedMs', 'deafMs', 'streamingMs', 'videoMs']) expect(response.body).not.toContain(field);
-    // The rest of the page is still there.
-    expect(body.totalMs).toBeGreaterThan(0);
-  });
-
-  it('restricts a person who looks at a member they are not', async () => {
-    const body = (await mutedApp().inject({ url: '/api/guilds/g1/members/u1', headers: { cookie: cookieOf({ userId: 'someone-else' }) } })).json();
-    expect(body.restricted).toBe(true);
-    expect(body.voiceStates).toBeNull();
-  });
-
-  it('hides nothing in local mode, where nobody is logged in', async () => {
-    const body = (await app({ mode: 'none' }).inject('/api/guilds/g1/members/u2')).json();
-    expect(body.restricted).toBe(false);
-    expect(body.voiceStates).not.toBeNull();
+    expect(body).not.toHaveProperty('restricted');
   });
 });
 

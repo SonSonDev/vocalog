@@ -34,7 +34,7 @@
 ## Architecture rules
 - Four packages in one repo: `bot/` (collector), `server/` (API + OAuth), `web/` (Preact app), `shared/` (types and pure calculations).
 - `bot/` depends only on `shared/`. `server/` reads the database read-only. `web/` talks to `server/` through the JSON API only.
-- **The event journal is the source of truth.** `voice_events` is append-only: never update or delete rows (except a user's own deletion request, see SPEC). Sessions and aggregates are derived and rebuildable.
+- **The event journal is the source of truth.** `voice_events` is append-only: never update or delete rows. Sessions and aggregates are derived and rebuildable.
 - **Never store message text or any message data.** The bot requests no message intent.
 - Pure calculations (sessions, time together, aggregates) live in `shared/`, take plain data, and have unit tests.
 - Time is stored as UTC epoch milliseconds. Convert to a timezone only at the display layer.
@@ -54,7 +54,7 @@
 ## Data safety & security
 - No secrets in git: bot token, OAuth client secret and session secret come from environment variables; keep `.env` ignored; commit `.env.example` with placeholders only.
 - Database file is ignored by git. Nightly backup with `VACUUM INTO` is part of the deployment.
-- Collected personal data: Discord user IDs and presence times only. Friends are informed; an opt-out and deletion path must exist.
+- Collected personal data: Discord user IDs and presence times only. Friends are informed of what is collected (no opt-out or deletion feature, see DECISIONS 2026-11-18).
 - Never put private information (personal paths, names, e-mails, hostnames, IPs, domains) in docs, code, comments, tests or commits: use placeholders (`~/apps/<app>`, `example.com`). Use the `privacy-audit` skill before a first push.
 
 ## Safety (environment)
@@ -77,4 +77,4 @@
 - Local dashboard without login (development only): `DB_PATH=<db> WEB_DIR=<abs path of web/dist> PORT=3111 INSECURE_NO_AUTH=1 node server/src/index.ts`, then open `http://127.0.0.1:3111`. For live reload run `npm run dev -w web` with `API_PORT=3111` (Vite proxies `/api` and `/auth`). The server opens the database read-only.
 - Dashboard with the real login: set `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `SESSION_SECRET` and `PUBLIC_URL` instead of the flag (see README). The server refuses both together.
 - **Never set `INSECURE_NO_AUTH=1` on the Pi or anywhere a tunnel can reach.** Never print or commit the client secret or the session secret.
-- Security rules for the server: statistics routes need a session; a person only sees servers they belong to; sensitive per-member fields are removed on the server, not hidden in the browser; the Discord access token is never stored.
+- Security rules for the server: statistics routes need a session; a person only sees servers they belong to; the Discord access token is never stored.

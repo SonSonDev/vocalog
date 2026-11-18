@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-18 — Drop the per-member visibility rule and the opt-out feature (F8)
+- Decision: any person who can see a server sees every member's full page, including microphone, headphones, screen-sharing and camera time and the group's muted share. The server no longer removes these fields (`restricted` and the nullable `voiceStates` are gone from the API). F8 (opt-out and deletion) is dropped: no `/optout`, no deletion path.
+- Why: the owner's call; the dashboard is for a few friends who know what is collected, and the rule added code and a special page state for little gain.
+- Alternatives rejected: keeping the rule only for muted/deafened time; keeping a manual deletion on request.
+- Consequences / risks accepted: friends can see each other's mute and camera habits; nobody can ask the system to stop recording or erase them (a request to the owner would mean editing the database by hand). Supersedes the visibility rule of the 2026-11-18 login entry and the deletion exception in older entries.
+
 ## 2026-11-18 — Deploy the collector and the dashboard as two raspi-manager processes
 - Decision: one raspi-manager app with two processes: `bot` (update rule `keep`) and `web` (`restart`). Scheduled jobs are still missing, so the nightly backup stays manual.
 - Why: the updated raspi-manager supports several processes per app and moving an app with its data (both built, tested on a fake Pi). `keep` stops an update from cutting the voice sessions the collector is tracking; the web server has no such state.

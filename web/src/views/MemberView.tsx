@@ -67,14 +67,7 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
               <Together together={profile.together} totalMs={profile.totalMs} />
             </div>
             <div class="col-6">
-              {profile.voiceStates !== null ? (
-                <VoiceStates states={profile.voiceStates} />
-              ) : (
-                <section class="card" aria-labelledby="states-title">
-                  <h2 id="states-title">États en vocal</h2>
-                  <p class="muted">Micro, casque, partage d’écran et caméra ne sont visibles que par la personne concernée.</p>
-                </section>
-              )}
+              <VoiceStates states={profile.voiceStates} />
             </div>
             <div class="col-6">
               <Habits profile={profile} />

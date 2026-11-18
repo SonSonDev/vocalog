@@ -1,7 +1,7 @@
 # Open questions
 Doubtful behaviours awaiting the developer's answer. Ask, never decide silently. Remove once answered
 (and record the answer in SPEC / DECISIONS).
-- [ ] Opt-out and deletion — should it be a slash command, a button in the dashboard, or a request to the developer? Recommendation: slash command `/optout` plus a dashboard button; deletion on request first.
+- [x] (dropped 2026-11-18: not needed) Opt-out and deletion — should it be a slash command, a button in the dashboard, or a request to the developer? Recommendation: slash command `/optout` plus a dashboard button; deletion on request first.
 - [ ] Timezone for "per day" and "per hour" statistics — one fixed timezone for the group, or per-viewer? Recommendation: one timezone per server (default Europe/Paris), configurable.
 - [ ] "Together" is implemented as the same channel at the same time, regardless of mute (the earlier recommendation). Confirm, or say if muted time should not count.
 - [ ] The AFK channel of each server is now recorded. Should time in it count as voice time? Recommendation: exclude it from the totals and heat maps and show it as its own figure.

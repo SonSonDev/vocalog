@@ -67,10 +67,7 @@ export function buildApp(options: AppOptions): FastifyInstance {
       const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
       if (!guild) return reply.code(404).send({ error: 'unknown server' });
       if (!userHasEvents(db, guild.id, request.params.userId)) return reply.code(404).send({ error: 'unknown member' });
-      // Microphone, headphones, camera and screen sharing are only for the person concerned.
-      // In local mode there is no viewer, so nothing is hidden.
-      const restricted = auth.mode === 'discord' && auth.viewer(request)?.userId !== request.params.userId;
-      return buildMemberProfile(db, guild, request.params.userId, period as Period, now(), timeZone, restricted);
+      return buildMemberProfile(db, guild, request.params.userId, period as Period, now(), timeZone);
     },
   );
 

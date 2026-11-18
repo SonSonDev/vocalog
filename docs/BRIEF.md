@@ -16,5 +16,5 @@ Collect everything accessible in voice now, as raw events that are never deleted
 | better-sqlite3 installs on the Pi (arm64) with Node 24 | Slice blocked | Install test in the first slice; fallback `node:sqlite` | to verify |
 | raspi-manager contract is met by a two-process app | Deployment friction | Run the `raspi-ready` skill in the first slice | to verify |
 | OAuth `guilds` listing is enough to gate access per server | Users see wrong servers | Prototype the login and intersect with servers where the bot is present | planned |
-| Friends accept being tracked | Social friction | Tell them what is collected; build `/optout` and deletion | planned |
+| Friends accept being tracked | Social friction | Tell them what is collected; opt-out and deletion dropped on 2026-11-18 | accepted |
 | Discord rate limits for OAuth calls are not an issue at this size | Login errors | Accepted (numeric limits not verified; handle HTTP 429 with retry) | accepted |
