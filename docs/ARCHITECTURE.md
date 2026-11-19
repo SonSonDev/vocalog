@@ -19,7 +19,7 @@ shared/   Types and pure calculations. No I/O. (built)
   src/reconcile.ts  planReconcile (restart synthetic events)
   src/aggregate.ts  aggregate(): totals, members, hourly profile, heat map, pairs, channels, records, streak (pure, time-zone aware)
   src/api.ts        types of the JSON API (Summary, MemberProfile, Period, GuildInfo), used by server and web
-  src/flags.ts      flagTimesByUser(): time muted, deafened, sharing screen, on camera, from the journal states
+  src/flags.ts      flagTimesByUser(): time muted, deafened, sharing screen, on camera, from the journal states; flagIntervalsByUser(): the same states as stretches of time (day timeline layers)
   src/profile.ts    buildMemberStats(): everything on a member page (habits, activity buckets, room roles, group comparison)
 server/   Fastify API. Opens the bot's database READ-ONLY. Serves web/dist when WEB_DIR is set. (built; Discord login not built)
   src/index.ts      process entry: config, read-only database, listen on 127.0.0.1
@@ -38,7 +38,7 @@ web/      Vite + Preact app, French UI, design "Rail and table" (built; not yet 
   src/useRemote.ts  loads data for a key; never shows the previous key's data; retry
   src/views/        HomeView (summary), MemberView (profile)
   src/components/   Header (with back link), Link, KeyFigures, MemberTable (list, links to profiles), Heatmap, Lists (Records, Channels), ProfileCards (member figures, activity, together, voice states, habits, group, rooms)
-  src/charts/       hand-written SVG for time bars: layout.ts (pure `layoutSpans`, tested), useWidth.ts (ResizeObserver), Timeline.tsx (`TimelineTrack`, used by the day and week pages)
+  src/charts/       hand-written SVG (`TimelineTrack` also draws the thin state lanes) for time bars: layout.ts (pure `layoutSpans`, tested), useWidth.ts (ResizeObserver), Timeline.tsx (`TimelineTrack`, used by the day and week pages)
   src/format.ts     durations, dates, bars (pure, tested); src/settings.ts + accents.ts + components/SettingsMenu.tsx: client settings (theme, accent, density, motion, default period, time zone, first weekday) in browser storage, applied as data attributes and CSS variables
   src/styles.css    tokens from docs/DESIGN.md; system fonts
 scripts/  seed-demo.ts: demo database with fictional members (refuses to overwrite an existing file)

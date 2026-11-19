@@ -2,6 +2,12 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-19 — Day timeline layers: screen sharing, microphone off, headphones off
+- Decision: the day page shows optional layers under each member's voice bar, switched by four global toggle buttons (variant A of three mock-ups; kept per device in local storage, only voice on by default). The day API now gives each member `states` (stretches of screen sharing, microphone off, headphones off), computed by a new pure `flagIntervalsByUser` in `shared/` from the same flags as `flagTimesByUser`.
+- Why: the journal already records the states; the owner wanted to see who was muted or sharing and when. A global switch is the simplest control and fits a phone.
+- Alternatives rejected: a menu per row (B: long to set for everyone) and a members × layers grid (C: heavier; can be added later if per-member choice is wanted); overlays inside the voice bar (unreadable when states overlap).
+- Consequences / risks accepted: no per-member choice; the response grows by a few intervals per member; time before a state change the bot missed is attributed to the previous state (as in the member page); the loading placeholder of the day page does not include the chip row (about 100 px shorter on a phone).
+
 ## 2026-11-19 — Time-based charts are hand-written SVG; no chart library
 - Decision: the day and week timelines are drawn as SVG by Preact (`web/src/charts/`): a pure `layoutSpans` turns time spans into pixel rectangles (edges rounded to the pixel, 2 px minimum, 1 px gap, no overlap) and a `ResizeObserver` hook gives the real track width. Grids (heat map, 12-month grid, calendar) and gauges stay CSS. No new dependency.
 - Why: the HTML spans had `padding` and a `border-right` inside `border-box`, so a span could never be narrower than 14 px (day) or became pure border and invisible (week); measured at 390 px, short sessions were drawn up to ten times too wide and overlapped. SVG rectangles have exactly the width given.

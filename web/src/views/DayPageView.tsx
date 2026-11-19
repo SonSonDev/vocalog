@@ -6,6 +6,7 @@ import { PeriodNav } from '../components/PeriodNav.tsx';
 import { dayQuery, monthQuery, prefetchQuery, weekQuery } from '../queries.ts';
 import { Avatar } from '../components/Avatar.tsx';
 import { TimelineTrack } from '../charts/Timeline.tsx';
+import type { TimelineKind } from '../charts/Timeline.tsx';
 import { Header } from '../components/Header.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
 import type { Controls } from '../components/Header.tsx';
@@ -45,12 +46,40 @@ function saveZoomed(zoomed: boolean): void {
   }
 }
 
+const LAYERS_KEY = 'vocalog-day-layers';
+const ALL_LAYERS: TimelineKind[] = ['voice', 'share', 'mute', 'deaf'];
+const LAYER_LABELS: Record<TimelineKind, string> = { voice: 'En vocal', share: 'Partage d’écran', mute: 'Micro coupé', deaf: 'Son coupé' };
+
+function loadLayers(): TimelineKind[] {
+  try {
+    const stored: unknown = JSON.parse(window.localStorage.getItem(LAYERS_KEY) ?? 'null');
+    if (Array.isArray(stored)) return ALL_LAYERS.filter((layer) => stored.includes(layer));
+  } catch {
+    // fall through to the default
+  }
+  return ['voice'];
+}
+
+function saveLayers(layers: TimelineKind[]): void {
+  try {
+    window.localStorage.setItem(LAYERS_KEY, JSON.stringify(layers));
+  } catch {
+    // ignore: the choice just is not remembered after a reload
+  }
+}
+
 export function DayPageView({ guildId, dayKey, search, controls }: Props) {
   // Kept here, not in the timeline: the timeline disappears while the next day loads, and the choice must survive that.
   const [zoomed, setZoomed] = useState(loadZoomed);
   const toggleZoom = (): void => {
     setZoomed(!zoomed);
     saveZoomed(!zoomed);
+  };
+  const [layers, setLayers] = useState(loadLayers);
+  const toggleLayer = (layer: TimelineKind): void => {
+    const next = ALL_LAYERS.filter((candidate) => (candidate === layer ? !layers.includes(candidate) : layers.includes(candidate)));
+    setLayers(next);
+    saveLayers(next);
   };
   const query = guildId === null ? null : dayQuery(guildId, dayKey);
   const { data: day, status, retry } = useRemote(query?.key ?? null, () => query!.load());
@@ -95,7 +124,7 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
           ) : (
             <>
               <DayFigures day={day} />
-              <Timeline day={day} guildId={guildId} search={search} zoomed={zoomed} onToggleZoom={toggleZoom} />
+              <Timeline day={day} guildId={guildId} search={search} zoomed={zoomed} onToggleZoom={toggleZoom} layers={layers} onToggleLayer={toggleLayer} />
             </>
           )}
           <p class="footnote">
@@ -148,7 +177,38 @@ function DayFigures({ day }: { day: DayView }) {
   );
 }
 
-function Timeline({ day, guildId, search, zoomed, onToggleZoom }: { day: DayView; guildId: string; search: string; zoomed: boolean; onToggleZoom: () => void }) {
+interface TimelineProps {
+  day: DayView;
+  guildId: string;
+  search: string;
+  zoomed: boolean;
+  onToggleZoom: () => void;
+  layers: TimelineKind[];
+  onToggleLayer: (layer: TimelineKind) => void;
+}
+
+/** The time ranges of one layer for one member. */
+function layerSpans(member: DayView['members'][number], layer: TimelineKind, day: DayView) {
+  if (layer === 'voice') {
+    return member.spans.map((span) => ({
+      startMs: span.startMs,
+      endMs: span.endMs,
+      label: span.channel.name,
+      tip: `${span.channel.name}\n${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`,
+    }));
+  }
+  return member.states[layer].map((range) => ({
+    startMs: range.startMs,
+    endMs: range.endMs,
+    tip: `${LAYER_LABELS[layer]}\n${formatClock(range.startMs, day.timeZone)}–${formatClock(range.endMs, day.timeZone)} · ${formatDuration(range.endMs - range.startMs)}`,
+  }));
+}
+
+function layerTotal(day: DayView, layer: TimelineKind): number {
+  return day.members.reduce((sum, member) => sum + (layer === 'voice' ? member.totalMs : member.states[layer].reduce((inner, range) => inner + range.endMs - range.startMs, 0)), 0);
+}
+
+function Timeline({ day, guildId, search, zoomed, onToggleZoom, layers, onToggleLayer }: TimelineProps) {
   const firstMs = Math.min(...day.members.map((member) => member.spans[0]!.startMs));
   const lastMs = Math.max(...day.members.flatMap((member) => member.spans.map((span) => span.endMs)));
   // Zoomed: only the hours where something happened, so bars are wide enough to read. Otherwise the whole day, 6 h to 6 h.
@@ -170,10 +230,32 @@ function Timeline({ day, guildId, search, zoomed, onToggleZoom }: { day: DayView
         <h2 id="timeline-title" class="sr-only">
           Chronologie du jour
         </h2>
+        <div class="tl-layers" role="group" aria-label="Afficher sur la chronologie">
+          {ALL_LAYERS.map((layer) => (
+            <label key={layer} class={`tl-chip tl-chip-${layer}`}>
+              <input type="checkbox" checked={layers.includes(layer)} onChange={() => onToggleLayer(layer)} />
+              <span>
+                <i aria-hidden="true" />
+                {LAYER_LABELS[layer]}
+                <em class="mono">{formatDuration(layerTotal(day, layer))}</em>
+              </span>
+            </label>
+          ))}
+        </div>
         <button type="button" class="tl-zoom" aria-pressed={!zoomed} onClick={onToggleZoom}>
           {zoomed ? 'Voir la journée entière' : 'Zoomer sur l’activité'}
         </button>
       </div>
+      <svg class="tl-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <defs>
+          <pattern id="tl-hatch-mute" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="3" height="6" class="tl-hatch-mute" />
+          </pattern>
+          <pattern id="tl-hatch-deaf" width="4" height="4" patternUnits="userSpaceOnUse">
+            <rect width="2" height="4" class="tl-hatch-deaf" />
+          </pattern>
+        </defs>
+      </svg>
       <div class="timeline">
         <div class="tl-row tl-axis-row" aria-hidden="true">
           <span class="tl-name" />
@@ -215,18 +297,18 @@ ${formatPeople(value)}`}
                 <span class="tl-sub muted mono">{formatDuration(member.totalMs)}</span>
               </span>
             </span>
-            <TimelineTrack
-              spans={member.spans.map((span) => ({
-                startMs: span.startMs,
-                endMs: span.endMs,
-                label: span.channel.name,
-                tip: `${span.channel.name}
-${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`,
-              }))}
-              fromMs={view.startMs}
-              toMs={view.endMs}
-              style={trackStyle}
-            />
+            <span class="tl-lanes">
+              {(layers.length === 0 ? (['voice'] as TimelineKind[]) : layers).map((layer) => (
+                <TimelineTrack
+                  key={layer}
+                  kind={layer}
+                  spans={layers.length === 0 ? [] : layerSpans(member, layer, day)}
+                  fromMs={view.startMs}
+                  toMs={view.endMs}
+                  style={trackStyle}
+                />
+              ))}
+            </span>
           </div>
         ))}
       </div>
@@ -250,6 +332,13 @@ ${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZ
                       {formatClock(span.startMs, day.timeZone)}–{formatClock(span.endMs, day.timeZone)} · {span.channel.name}
                     </span>
                   ))}
+                  {(['share', 'mute', 'deaf'] as const).flatMap((layer) =>
+                    member.states[layer].map((range, index) => (
+                      <span class="tl-table-span muted" key={`${layer}${index}`}>
+                        {formatClock(range.startMs, day.timeZone)}–{formatClock(range.endMs, day.timeZone)} · {LAYER_LABELS[layer]}
+                      </span>
+                    )),
+                  )}
                 </td>
                 <td class="mono">{formatDuration(member.totalMs)}</td>
               </tr>
