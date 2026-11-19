@@ -7,10 +7,11 @@
   --line: #d3ddd9;
   --accent: #0e7c66;
   --on-accent: #ffffff;
-  /* Voice states on the day timeline: semantic colours, always paired with a texture. */
-  --share: #3a68c9;
+  /* Voice states on the day timeline. --share is replaced by the chosen accent's own value (accents.ts) so it always stands out from the accent. */
+  --share: #bedafe;
   --mute: #a8650a;
   --deaf: #b03636;
+  --share-edge: color-mix(in srgb, var(--share) 45%, var(--fg));
   --radius: 8px;
   /* Spacing scale: be generous. Cards 22-24 px inside, rows 12 px above and below, 16-24 px between blocks. */
   --space-1: calc(4px * var(--density, 1));
@@ -33,7 +34,7 @@
     --line: #27322f;
     --accent: #3ddbb5;
     --on-accent: #06201a;
-    --share: #7fa3f5;
+    --share: #2b61a3;
     --mute: #e5a53c;
     --deaf: #ef7b7b;
     color-scheme: dark;
@@ -48,7 +49,7 @@
   --line: #27322f;
   --accent: #3ddbb5;
   --on-accent: #06201a;
-  --share: #7fa3f5;
+  --share: #2b61a3;
   --mute: #e5a53c;
   --deaf: #ef7b7b;
   color-scheme: dark;

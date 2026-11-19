@@ -221,6 +221,7 @@ a.tl-who:hover {
 
 .tl-rect-share {
   fill: var(--share);
+  stroke: var(--share-edge);
 }
 
 .tl-rect-mute {
@@ -231,6 +232,10 @@ a.tl-who:hover {
 .tl-rect-deaf {
   fill: url(#tl-hatch-deaf);
   stroke: var(--deaf);
+}
+
+.tl-hatch-base {
+  fill: var(--card);
 }
 
 .tl-hatch-mute {
@@ -259,7 +264,7 @@ a.tl-who:hover {
 }
 
 .tl-chip-share {
-  --chip: var(--share);
+  --chip: var(--share-edge);
 }
 
 .tl-chip-mute {
@@ -313,6 +318,10 @@ a.tl-who:hover {
 
 .tl-chip input:checked + span i {
   background: var(--chip);
+}
+
+.tl-chip-share input:checked + span i {
+  background: var(--share);
 }
 
 .tl-chip input:focus-visible + span {

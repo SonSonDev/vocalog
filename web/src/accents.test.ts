@@ -39,4 +39,11 @@ describe('accents', () => {
     expect(contrast(accent.dark.accent, DARK.card)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(accent.dark.onAccent, accent.dark.accent)).toBeGreaterThanOrEqual(4.5);
   });
+
+  it.each(ACCENTS.map((accent) => [accent.id, accent] as const))('keeps screen sharing in %s distinct from the accent bar, in both themes', (_id, accent) => {
+    expect(accent.light.share).toMatch(/^#[0-9a-f]{6}$/);
+    expect(accent.dark.share).toMatch(/^#[0-9a-f]{6}$/);
+    expect(contrast(accent.light.share, accent.light.accent)).toBeGreaterThanOrEqual(3.4);
+    expect(contrast(accent.dark.share, accent.dark.accent)).toBeGreaterThanOrEqual(3.4);
+  });
 });

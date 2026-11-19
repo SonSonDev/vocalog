@@ -250,9 +250,11 @@ function Timeline({ day, guildId, search, zoomed, onToggleZoom, layers, onToggle
       <svg class="tl-defs" width="0" height="0" aria-hidden="true" focusable="false">
         <defs>
           <pattern id="tl-hatch-mute" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="6" height="6" class="tl-hatch-base" />
             <rect width="3" height="6" class="tl-hatch-mute" />
           </pattern>
           <pattern id="tl-hatch-deaf" width="4" height="4" patternUnits="userSpaceOnUse">
+            <rect width="4" height="4" class="tl-hatch-base" />
             <rect width="2" height="4" class="tl-hatch-deaf" />
           </pattern>
         </defs>

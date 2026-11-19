@@ -109,9 +109,11 @@ export function applySettings(settings: Settings): void {
   if (!accent || accent.id === DEFAULT_ACCENT) {
     root.style.removeProperty('--accent');
     root.style.removeProperty('--on-accent');
+    root.style.removeProperty('--share');
   } else {
     root.style.setProperty('--accent', accent[theme].accent);
     root.style.setProperty('--on-accent', accent[theme].onAccent);
+    root.style.setProperty('--share', accent[theme].share);
   }
 }
 
