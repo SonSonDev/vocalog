@@ -6,7 +6,7 @@ import type { Controls } from '../components/Header.tsx';
 import { Link } from '../components/Link.tsx';
 import { PeriodNav } from '../components/PeriodNav.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
-import { WEEKDAYS_SHORT, formatClock, formatCompactDuration, formatDateTime, formatDayLong, formatDayShort, formatDayWeekday, formatDuration, formatMonthLong, formatPeople, isoWeekNumber, maxOf } from '../format.ts';
+import { weekdaysShort, formatClock, formatCompactDuration, formatDateTime, formatDayLong, formatDayShort, formatDayWeekday, formatDuration, formatMonthLong, formatPeople, isoWeekNumber, maxOf } from '../format.ts';
 import { dayQuery, monthQuery, prefetchQuery, weekQuery, yearQuery } from '../queries.ts';
 import { dayPath, monthPath, weekPath, yearPath } from '../router.ts';
 import { useRemote } from '../useRemote.ts';
@@ -118,14 +118,14 @@ function Calendar({ month, guildId, search }: { month: MonthView; guildId: strin
       <div class="cal">
         <div class="cal-head" aria-hidden="true">
           <span />
-          {WEEKDAYS_SHORT.map((label) => (
+          {weekdaysShort().map((label) => (
             <span key={label}>{label}</span>
           ))}
         </div>
         {month.weeks.map((week) => (
-          <div class="cal-row" key={week.mondayKey}>
-            <Link to={weekPath(week.mondayKey, search)} class="cal-week" onPrefetch={() => prefetchQuery(weekQuery(guildId, week.mondayKey))}>
-              <span class="sr-only">Semaine </span>S{isoWeekNumber(week.mondayKey)}
+          <div class="cal-row" key={week.startKey}>
+            <Link to={weekPath(week.startKey, search)} class="cal-week" onPrefetch={() => prefetchQuery(weekQuery(guildId, week.startKey))}>
+              <span class="sr-only">Semaine </span>S{isoWeekNumber(week.startKey)}
             </Link>
             {week.days.map((day, index) => {
               if (day === null || day.future) {

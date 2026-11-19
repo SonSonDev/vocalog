@@ -1,23 +1,24 @@
-import { clipSessions, dayKeyOf, dayNumber, peakOf, weekdayOf } from './aggregate.ts';
+import { clipSessions, dayKeyOf, dayNumber, peakOf, weekdayIndex } from './aggregate.ts';
 import { isDayKey, presenceBins, timelineDayKey, timelineDayWindow } from './timeline.ts';
-import type { Session } from './types.ts';
+import type { Session, WeekStart } from './types.ts';
 
 /*
- * Weeks and months of the timelines. A week starts on Monday and, like every day of the timelines, runs from 06:00 to
+ * Weeks and months of the timelines. A week starts on Monday (or Sunday, when asked) and, like every day of the timelines, runs from 06:00 to
  * 06:00 (so it is 167 or 169 hours around a daylight saving change). A month is the set of timeline days whose date is in
  * that month, which is what a calendar shows.
  */
 
 const HOUR_MS = 3_600_000;
 
-/** The Monday (`YYYY-MM-DD`) of the week that contains this day. */
-export function mondayOf(dayKey: string): string {
+/** The first day (`YYYY-MM-DD`) of the week that contains this day: a Monday, or a Sunday when weeks start on Sunday. */
+export function weekStartOf(dayKey: string, weekStart: WeekStart = 'monday'): string {
   const day = dayNumber(dayKey);
-  return dayKeyOf(day - weekdayOf(day));
+  return dayKeyOf(day - weekdayIndex(day, weekStart));
 }
 
-export function isMondayKey(value: string): boolean {
-  return isDayKey(value) && weekdayOf(dayNumber(value)) === 0;
+/** True for the date of a real first day of a week. */
+export function isWeekStartKey(value: string, weekStart: WeekStart = 'monday'): boolean {
+  return isDayKey(value) && weekdayIndex(dayNumber(value), weekStart) === 0;
 }
 
 /** `YYYY-MM`, with a real month. */
@@ -40,10 +41,10 @@ export function daysInMonth(monthKey: string): number {
   return new Date(Date.UTC(year!, month!, 0)).getUTCDate();
 }
 
-export function weekWindow(mondayKey: string, timeZone: string): { startMs: number; endMs: number } {
+export function weekWindow(startKey: string, timeZone: string): { startMs: number; endMs: number } {
   return {
-    startMs: timelineDayWindow(mondayKey, timeZone).startMs,
-    endMs: timelineDayWindow(dayKeyOf(dayNumber(mondayKey) + 6), timeZone).endMs,
+    startMs: timelineDayWindow(startKey, timeZone).startMs,
+    endMs: timelineDayWindow(dayKeyOf(dayNumber(startKey) + 6), timeZone).endMs,
   };
 }
 
@@ -63,20 +64,22 @@ function dayTotal(sessions: readonly Session[], dayKey: string, limitMs: number,
 }
 
 export interface WeekStrip {
-  mondayKey: string;
+  startKey: string;
   startMs: number;
   endMs: number;
   totalMs: number;
   people: number;
   /** Most people at once. */
   peak: number;
-  /** Voice time of everybody on each of the seven days, Monday first. */
+  /** Voice time of everybody on each of the seven days, the first day of the week first. */
   dayTotals: number[];
   /** Average number of people in each hour from the start of the week. */
   bins: number[];
 }
 
 export interface PeriodInput {
+  /** The day weeks start on, for the strips of weeks. Monday when absent. */
+  weekStart?: WeekStart;
   fromMs: number;
   /** End of the window; never later than `nowMs`. */
   limitMs: number;
@@ -88,17 +91,17 @@ export interface PeriodInput {
 
 /** One strip per week of the window, newest first. */
 export function weekStrips(sessions: readonly Session[], input: PeriodInput): WeekStrip[] {
-  const { fromMs, limitMs, nowMs, timeZone, max } = input;
+  const { fromMs, limitMs, nowMs, timeZone, max, weekStart = 'monday' } = input;
   if (limitMs <= fromMs) return [];
-  const first = dayNumber(mondayOf(timelineDayKey(fromMs, timeZone)));
-  const last = dayNumber(mondayOf(timelineDayKey(limitMs - 1, timeZone)));
+  const first = dayNumber(weekStartOf(timelineDayKey(fromMs, timeZone), weekStart));
+  const last = dayNumber(weekStartOf(timelineDayKey(limitMs - 1, timeZone), weekStart));
   const strips: WeekStrip[] = [];
   for (let monday = last; monday >= first && strips.length < max; monday -= 7) {
-    const mondayKey = dayKeyOf(monday);
-    const { startMs, endMs } = weekWindow(mondayKey, timeZone);
+    const startKey = dayKeyOf(monday);
+    const { startMs, endMs } = weekWindow(startKey, timeZone);
     const clipped = clipSessions(sessions, startMs, Math.min(endMs, limitMs), nowMs);
     strips.push({
-      mondayKey,
+      startKey,
       startMs,
       endMs,
       totalMs: sumMs(clipped),
@@ -142,7 +145,7 @@ export function monthStrips(sessions: readonly Session[], input: PeriodInput): M
 }
 
 export interface WeekTimeline {
-  mondayKey: string;
+  startKey: string;
   startMs: number;
   endMs: number;
   /** The seven days with their own window and voice time. */
@@ -156,8 +159,8 @@ export interface WeekTimeline {
 }
 
 /** Everything that happened in one week, sessions clipped to it (an open session ends at `nowMs`). */
-export function buildWeekTimeline(sessions: readonly Session[], mondayKey: string, nowMs: number, timeZone: string): WeekTimeline {
-  const { startMs, endMs } = weekWindow(mondayKey, timeZone);
+export function buildWeekTimeline(sessions: readonly Session[], startKey: string, nowMs: number, timeZone: string): WeekTimeline {
+  const { startMs, endMs } = weekWindow(startKey, timeZone);
   const limit = Math.min(endMs, nowMs);
   const clipped = clipSessions(sessions, startMs, limit, nowMs);
   const byUser = new Map<string, WeekTimeline['members'][number]>();
@@ -173,11 +176,11 @@ export function buildWeekTimeline(sessions: readonly Session[], mondayKey: strin
   const members = [...byUser.values()].map((member) => ({ ...member, spans: member.spans.sort((a, b) => a.startMs - b.startMs) }));
   members.sort((a, b) => b.totalMs - a.totalMs || a.userId.localeCompare(b.userId));
   return {
-    mondayKey,
+    startKey,
     startMs,
     endMs,
     days: Array.from({ length: 7 }, (_, offset) => {
-      const dayKey = dayKeyOf(dayNumber(mondayKey) + offset);
+      const dayKey = dayKeyOf(dayNumber(startKey) + offset);
       return { dayKey, ...timelineDayWindow(dayKey, timeZone), totalMs: dayTotal(sessions, dayKey, limit, nowMs, timeZone) };
     }),
     totalMs: sumMs(clipped),
@@ -204,12 +207,12 @@ export interface MonthCalendar {
   activeDays: number;
   busiest: { dayKey: string; totalMs: number } | null;
   peak: { count: number; atMs: number } | null;
-  /** Weeks as rows, Monday first; a day outside the month is null. */
-  weeks: { mondayKey: string; days: (CalendarDay | null)[] }[];
+  /** Weeks as rows, the first day of the week first; a day outside the month is null. */
+  weeks: { startKey: string; days: (CalendarDay | null)[] }[];
 }
 
 /** A month as a calendar: one cell per day with the voice time of the group. */
-export function buildMonthCalendar(sessions: readonly Session[], monthKey: string, nowMs: number, timeZone: string): MonthCalendar {
+export function buildMonthCalendar(sessions: readonly Session[], monthKey: string, nowMs: number, timeZone: string, weekStart: WeekStart = 'monday'): MonthCalendar {
   const { startMs, endMs } = monthWindow(monthKey, timeZone);
   const clipped = clipSessions(sessions, startMs, Math.min(endMs, nowMs), nowMs);
 
@@ -230,10 +233,10 @@ export function buildMonthCalendar(sessions: readonly Session[], monthKey: strin
   const busiest = active.reduce<CalendarDay | null>((best, day) => (best === null || day.totalMs > best.totalMs ? day : best), null);
 
   const weeks: MonthCalendar['weeks'] = [];
-  const firstMonday = dayNumber(mondayOf(days[0]!.dayKey));
+  const firstMonday = dayNumber(weekStartOf(days[0]!.dayKey, weekStart));
   const byKey = new Map(days.map((day) => [day.dayKey, day]));
   for (let monday = firstMonday; monday <= dayNumber(days[days.length - 1]!.dayKey); monday += 7) {
-    weeks.push({ mondayKey: dayKeyOf(monday), days: Array.from({ length: 7 }, (_, offset) => byKey.get(dayKeyOf(monday + offset)) ?? null) });
+    weeks.push({ startKey: dayKeyOf(monday), days: Array.from({ length: 7 }, (_, offset) => byKey.get(dayKeyOf(monday + offset)) ?? null) });
   }
 
   return {
@@ -332,14 +335,14 @@ export interface YearCalendar {
     monthKey: string;
     totalMs: number;
     activeDays: number;
-    /** Weekday of the 1st, 0 = Monday: how many empty cells come first in a Monday-first grid. */
+    /** Weekday of the 1st counted from the first day of the week (0 = Monday, or Sunday): how many empty cells come first in the grid. */
     firstWeekday: number;
     days: { dayKey: string; totalMs: number; future: boolean }[];
   }[];
 }
 
 /** A year as twelve small calendars: one cell per day with the voice time of the group. */
-export function buildYearCalendar(sessions: readonly Session[], yearKey: string, nowMs: number, timeZone: string): YearCalendar {
+export function buildYearCalendar(sessions: readonly Session[], yearKey: string, nowMs: number, timeZone: string, weekStart: WeekStart = 'monday'): YearCalendar {
   const { startMs, endMs } = yearWindow(yearKey, timeZone);
   const clipped = clipSessions(sessions, startMs, Math.min(endMs, nowMs), nowMs);
   const firstDay = dayNumber(`${yearKey}-01-01`);
@@ -356,7 +359,7 @@ export function buildYearCalendar(sessions: readonly Session[], yearKey: string,
       monthKey,
       totalMs: days.reduce((sum, day) => sum + day.totalMs, 0),
       activeDays: days.filter((day) => day.totalMs > 0).length,
-      firstWeekday: weekdayOf(dayNumber(`${monthKey}-01`)),
+      firstWeekday: weekdayIndex(dayNumber(`${monthKey}-01`), weekStart),
       days,
     };
   });
@@ -393,8 +396,8 @@ export function buildYearCalendar(sessions: readonly Session[], yearKey: string,
 /* ---- One member over the last twelve months ---- */
 
 /**
- * Voice time of one member on each of the last 53 weeks, ending with the current week (Monday first). `totals` has one
- * value per day from `startKey` (a Monday), always a whole number of weeks; the days after today (the end of the current
+ * Voice time of one member on each of the last 53 weeks, ending with the current week. `totals` has one
+ * value per day from `startKey` (the first day of a week), always a whole number of weeks; the days after today (the end of the current
  * week) are the ones from index `elapsedDays` on, and hold nothing yet.
  */
 export interface MemberYear {
@@ -404,9 +407,9 @@ export interface MemberYear {
 }
 
 /** A set of sessions (a member's, or the whole group's) as a year of days, for a contribution-style grid. */
-export function buildMemberYear(ownSessions: readonly Session[], nowMs: number, timeZone: string): MemberYear {
+export function buildMemberYear(ownSessions: readonly Session[], nowMs: number, timeZone: string, weekStart: WeekStart = 'monday'): MemberYear {
   const today = dayNumber(timelineDayKey(nowMs, timeZone));
-  const rawStart = today - 52 * 7 - weekdayOf(today); // the Monday of the week 52 weeks before this one
+  const rawStart = today - 52 * 7 - weekdayIndex(today, weekStart); // the first day of the week 52 weeks before this one
   const dayCount = 53 * 7;
   const startKey = dayKeyOf(rawStart);
   const firstWindow = timelineDayWindow(startKey, timeZone);

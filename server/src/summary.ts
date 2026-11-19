@@ -1,5 +1,5 @@
 import { aggregate, buildMemberYear, dayStrips, monthStrips, weekStrips, yearStrips } from '@vocalog/shared';
-import type { GuildInfo, Period, Summary } from '@vocalog/shared';
+import type { GuildInfo, Period, Summary, WeekStart } from '@vocalog/shared';
 import { periodWindow } from './period.ts';
 import { createNamer } from './names.ts';
 import { firstEventMs, loadGuildSessions } from './queries.ts';
@@ -9,7 +9,7 @@ const MAX_STRIP_DAYS = 31;
 const MAX_STRIP_PERIODS = 12;
 const MAX_STRIP_YEARS = 6;
 
-export function buildSummary(db: Db, guild: GuildInfo, period: Period, nowMs: number, timeZone: string): Summary {
+export function buildSummary(db: Db, guild: GuildInfo, period: Period, nowMs: number, timeZone: string, weekStart: WeekStart = 'monday'): Summary {
   const { fromMs, toMs } = periodWindow(period, nowMs, firstEventMs(db, guild.id));
   const sessions = loadGuildSessions(db, guild.id);
   const result = aggregate(sessions, { fromMs, toMs, nowMs, timeZone });
@@ -43,9 +43,9 @@ export function buildSummary(db: Db, guild: GuildInfo, period: Period, nowMs: nu
     channels: result.channels.map((entry) => ({ channel: channel(entry.channelId), totalMs: entry.totalMs })),
     heat: result.heat,
     days: dayStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, maxDays: MAX_STRIP_DAYS }),
-    weeks: weekStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_PERIODS }),
+    weeks: weekStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_PERIODS, weekStart }),
     months: monthStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_PERIODS }),
     years: yearStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_YEARS }),
-    yearGrid: buildMemberYear(sessions, nowMs, timeZone),
+    yearGrid: buildMemberYear(sessions, nowMs, timeZone, weekStart),
   };
 }

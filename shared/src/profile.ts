@@ -1,9 +1,9 @@
-import { aggregate, clipSessions, dayKeyOf, dayNumber, hourSlices, localParts, streaks, weekdayOf } from './aggregate.ts';
+import { aggregate, clipSessions, dayKeyOf, dayNumber, hourSlices, localParts, streaks, weekdayIndex } from './aggregate.ts';
 import type { AggregateOptions, ChannelStat } from './aggregate.ts';
 import { emptyFlagTimes, flagTimesByUser } from './flags.ts';
 import type { FlagTimes } from './flags.ts';
 import { togetherWithUser } from './together.ts';
-import type { Session, VoiceEvent } from './types.ts';
+import type { Session, VoiceEvent, WeekStart } from './types.ts';
 
 const MINUTES_PER_DAY = 1440;
 /** The "day" of a night owl starts at 06:00, so 23:00 and 01:00 average out to midnight rather than noon. */
@@ -105,12 +105,13 @@ function minuteOfDay(ms: number, timeZone: string): number {
   return parts.hour * 60 + parts.minute;
 }
 
-/** Voice time per local day, or per week (Monday start) when the window is long. Zero-filled over the whole window. */
+/** Voice time per local day, or per week (Monday or Sunday start) when the window is long. Zero-filled over the whole window. */
 export function activityBuckets(
   clipped: readonly Session[],
   timeZone: string,
   fromMs: number,
   limitMs: number,
+  weekStart: WeekStart = 'monday',
 ): { granularity: 'day' | 'week'; buckets: ActivityBucket[] } {
   const perDay = new Map<number, number>();
   for (const session of clipped) {
@@ -131,10 +132,10 @@ export function activityBuckets(
   }
 
   const buckets: ActivityBucket[] = [];
-  for (let weekStart = firstDay - weekdayOf(firstDay); weekStart <= lastDay; weekStart += 7) {
+  for (let first = firstDay - weekdayIndex(firstDay, weekStart); first <= lastDay; first += 7) {
     let ms = 0;
-    for (let day = weekStart; day < weekStart + 7; day++) ms += perDay.get(day) ?? 0;
-    buckets.push({ startKey: dayKeyOf(weekStart), ms });
+    for (let day = first; day < first + 7; day++) ms += perDay.get(day) ?? 0;
+    buckets.push({ startKey: dayKeyOf(first), ms });
   }
   return { granularity: 'week', buckets };
 }
@@ -253,7 +254,7 @@ export function buildMemberStats({ sessions, events, userId, options }: MemberSt
     hourMs,
     heat: ownAgg.heat,
     channels: ownAgg.channels,
-    activity: activityBuckets(clippedOwn, timeZone, fromMs, limitMs),
+    activity: activityBuckets(clippedOwn, timeZone, fromMs, limitMs, options.weekStart),
     together: { withOthersMs: together.withOthersMs, aloneMs: Math.max(0, totalMs - together.withOthersMs), top },
     voiceStates: flagTimes.get(userId) ?? emptyFlagTimes(),
     habits: {

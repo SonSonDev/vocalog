@@ -1,10 +1,8 @@
 import type { Period } from '@vocalog/shared';
-import { useEffect, useState } from 'preact/hooks';
 import { fetchGuilds, fetchMe, logout } from './api.ts';
 import type { Controls } from './components/Header.tsx';
 import { buildSearch, navigate, parseRoute, readParams, useLocation } from './router.ts';
-import { applyTheme, loadTheme } from './theme.ts';
-import type { Theme } from './theme.ts';
+import { useSettings } from './settings.ts';
 import { useRemote } from './useRemote.ts';
 import { HomeView } from './views/HomeView.tsx';
 import { LoginView } from './views/LoginView.tsx';
@@ -38,10 +36,8 @@ export function App() {
   const location = useLocation();
   const route = parseRoute(location.pathname);
   const params = readParams(location.search);
-  const period: Period = params.period ?? '30d';
-
-  const [theme, setTheme] = useState<Theme>(loadTheme);
-  useEffect(() => applyTheme(theme), [theme]);
+  const settings = useSettings();
+  const period: Period = params.period ?? settings.defaultPeriod;
 
   // First ask who is looking: with login on and nobody logged in, only the login screen is shown.
   const { data: me, status: meStatus, retry: retryMe } = useRemote('me', fetchMe);
@@ -57,7 +53,6 @@ export function App() {
     guilds: list,
     guildId,
     period,
-    theme,
     viewer: me?.user ?? null,
     // Changing the period keeps the page; changing the server goes back to the summary (members differ per server).
     onPeriod: (value) => navigate(`${location.pathname}${buildSearch({ guildId, period: value })}`, true),
@@ -65,7 +60,6 @@ export function App() {
       saveGuildId(id);
       navigate(`/${buildSearch({ guildId: id, period })}`);
     },
-    onTheme: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
     onLogout: () => {
       void logout().finally(() => window.location.assign('/'));
     },
@@ -102,7 +96,7 @@ export function App() {
           ) : route.name === 'day' ? (
             <DayPageView guildId={guildId} dayKey={route.dayKey} period={period} search={search} controls={controls} />
           ) : route.name === 'week' ? (
-            <WeekPageView guildId={guildId} mondayKey={route.mondayKey} period={period} search={search} controls={controls} />
+            <WeekPageView guildId={guildId} startKey={route.startKey} period={period} search={search} controls={controls} />
           ) : route.name === 'month' ? (
             <MonthPageView guildId={guildId} monthKey={route.monthKey} period={period} search={search} controls={controls} />
           ) : route.name === 'year' ? (

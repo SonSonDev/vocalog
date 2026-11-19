@@ -1,4 +1,11 @@
 import type { DayView, GuildInfo, MonthView, WeekView, YearView, MemberProfile, MeResponse, Period, Summary } from '@vocalog/shared';
+import { getSettings, viewQuery } from './settings.ts';
+
+/** Adds what the settings change about the figures (the time zone) to a request. */
+function withSettings(url: string): string {
+  const query = viewQuery(getSettings());
+  return query === '' ? url : `${url}${url.includes('?') ? '&' : '?'}${query}`;
+}
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { headers: { accept: 'application/json' } });
@@ -13,27 +20,27 @@ export function fetchGuilds(): Promise<GuildInfo[]> {
 }
 
 export function fetchSummary(guildId: string, period: Period): Promise<Summary> {
-  return getJson<Summary>(`/api/guilds/${encodeURIComponent(guildId)}/summary?period=${period}`);
+  return getJson<Summary>(withSettings(`/api/guilds/${encodeURIComponent(guildId)}/summary?period=${period}`));
 }
 
 export function fetchMemberProfile(guildId: string, userId: string, period: Period): Promise<MemberProfile> {
-  return getJson<MemberProfile>(`/api/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}?period=${period}`);
+  return getJson<MemberProfile>(withSettings(`/api/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}?period=${period}`));
 }
 
 export function fetchDay(guildId: string, dayKey: string): Promise<DayView> {
-  return getJson<DayView>(`/api/guilds/${encodeURIComponent(guildId)}/days/${encodeURIComponent(dayKey)}`);
+  return getJson<DayView>(withSettings(`/api/guilds/${encodeURIComponent(guildId)}/days/${encodeURIComponent(dayKey)}`));
 }
 
-export function fetchWeek(guildId: string, mondayKey: string): Promise<WeekView> {
-  return getJson<WeekView>(`/api/guilds/${encodeURIComponent(guildId)}/weeks/${encodeURIComponent(mondayKey)}`);
+export function fetchWeek(guildId: string, startKey: string): Promise<WeekView> {
+  return getJson<WeekView>(withSettings(`/api/guilds/${encodeURIComponent(guildId)}/weeks/${encodeURIComponent(startKey)}`));
 }
 
 export function fetchMonth(guildId: string, monthKey: string): Promise<MonthView> {
-  return getJson<MonthView>(`/api/guilds/${encodeURIComponent(guildId)}/months/${encodeURIComponent(monthKey)}`);
+  return getJson<MonthView>(withSettings(`/api/guilds/${encodeURIComponent(guildId)}/months/${encodeURIComponent(monthKey)}`));
 }
 
 export function fetchYear(guildId: string, yearKey: string): Promise<YearView> {
-  return getJson<YearView>(`/api/guilds/${encodeURIComponent(guildId)}/years/${encodeURIComponent(yearKey)}`);
+  return getJson<YearView>(withSettings(`/api/guilds/${encodeURIComponent(guildId)}/years/${encodeURIComponent(yearKey)}`));
 }
 
 export function fetchMe(): Promise<MeResponse> {

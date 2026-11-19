@@ -170,12 +170,12 @@ describe('who is looking: GET /api/me', () => {
   it('says login is needed when nobody is logged in', async () => {
     const response = await app(discordAuth(fakeDiscord().fetchFn)).inject('/api/me');
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ authMode: 'discord', user: null });
+    expect(response.json()).toEqual({ authMode: 'discord', serverTimeZone: 'UTC', user: null });
   });
 
   it('gives the name of the logged-in person and nothing else', async () => {
     const body = (await app(discordAuth(fakeDiscord().fetchFn)).inject({ url: '/api/me', headers: { cookie: cookieOf() } })).json();
-    expect(body).toEqual({ authMode: 'discord', user: { id: 'u1', name: 'Alex' } });
+    expect(body).toEqual({ authMode: 'discord', serverTimeZone: 'UTC', user: { id: 'u1', name: 'Alex' } });
   });
 
   it('treats a forged or expired cookie as nobody', async () => {
@@ -187,7 +187,7 @@ describe('who is looking: GET /api/me', () => {
   });
 
   it('reports the local mode', async () => {
-    expect((await app({ mode: 'none' }).inject('/api/me')).json()).toEqual({ authMode: 'none', user: null });
+    expect((await app({ mode: 'none' }).inject('/api/me')).json()).toEqual({ authMode: 'none', serverTimeZone: 'UTC', user: null });
   });
 });
 

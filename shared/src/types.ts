@@ -40,3 +40,6 @@ export interface Session {
   startMs: number;
   endMs: number | null;
 }
+
+/** The day a week starts on. The figures were always Monday-first; a person may ask for Sunday-first weeks. */
+export type WeekStart = 'monday' | 'sunday';

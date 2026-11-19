@@ -1,10 +1,10 @@
-export type { EventKind, EventSource, LiveVoiceState, Session, VoiceEvent } from './types.ts';
+export type { EventKind, EventSource, LiveVoiceState, Session, VoiceEvent, WeekStart } from './types.ts';
 export { VoiceFlag } from './types.ts';
 export { deriveSessions, durationMs, totalByUser } from './sessions.ts';
 export { planReconcile } from './reconcile.ts';
 export { PERIODS } from './api.ts';
 export type { DayView, GuildInfo, MemberProfile, MeResponse, MonthView, NamedRef, Period, Summary, WeekView, YearView } from './api.ts';
-export { aggregate, clipSessions, streaks } from './aggregate.ts';
+export { aggregate, clipSessions, streaks, weekdayIndex } from './aggregate.ts';
 export { flagTimesByUser } from './flags.ts';
 export type { FlagTimes } from './flags.ts';
 export { activityBuckets, averageMinute, buildMemberStats, partsOfDay, roomRoles } from './profile.ts';
@@ -14,7 +14,7 @@ export type { Aggregate, AggregateOptions, ChannelStat, MemberStat } from './agg
 export { buildDayTimeline, dayStrips, isDayKey, presenceBins, timelineDayKey, timelineDayWindow, TIMELINE_DAY_START_HOUR } from './timeline.ts';
 export type { DayStrip, DayTimeline } from './timeline.ts';
 export { dayKeyOf, dayNumber } from './aggregate.ts';
-export { addMonths, buildMonthCalendar, buildWeekTimeline, daysInMonth, isMondayKey, isMonthKey, mondayOf, monthOf, monthStrips, weekStrips, weekWindow } from './calendar.ts';
+export { addMonths, buildMonthCalendar, buildWeekTimeline, daysInMonth, isWeekStartKey, isMonthKey, weekStartOf, monthOf, monthStrips, weekStrips, weekWindow } from './calendar.ts';
 export type { CalendarDay, MonthCalendar, MonthStrip, WeekStrip, WeekTimeline } from './calendar.ts';
 export { buildYearCalendar, isYearKey, yearOf, yearStrips } from './calendar.ts';
 export type { YearCalendar, YearStrip } from './calendar.ts';

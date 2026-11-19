@@ -388,7 +388,7 @@ describe('server icon', () => {
   });
 });
 
-describe('GET /api/guilds/:guildId/weeks/:mondayKey', () => {
+describe('GET /api/guilds/:guildId/weeks/:startKey', () => {
   it('gives who was in voice that week, most time first, with the days, hours and names', async () => {
     const response = await seeded().inject('/api/guilds/g1/weeks/2026-11-16');
     expect(response.statusCode).toBe(200);
@@ -403,14 +403,14 @@ describe('GET /api/guilds/:guildId/weeks/:mondayKey', () => {
     expect(body.days[1]).toMatchObject({ dayKey: '2026-11-17', totalMs: 4 * HOUR });
     expect(body.totalMs).toBe(4 * HOUR);
     expect(body.bins).toHaveLength(168);
-    expect(body.prevMondayKey).toBeNull(); // the first event is in this week
-    expect(body.nextMondayKey).toBeNull(); // and it is the current week
+    expect(body.prevStartKey).toBeNull(); // the first event is in this week
+    expect(body.nextStartKey).toBeNull(); // and it is the current week
   });
 
   it('answers an earlier empty week, with its neighbour', async () => {
     const body = (await seeded().inject('/api/guilds/g1/weeks/2026-11-09')).json();
     expect(body.members).toEqual([]);
-    expect(body.nextMondayKey).toBe('2026-11-16');
+    expect(body.nextStartKey).toBe('2026-11-16');
   });
 
   it('refuses a date that is not a Monday, a bad date, a week in the future and an unknown server', async () => {
@@ -429,7 +429,7 @@ describe('GET /api/guilds/:guildId/months/:monthKey', () => {
     expect(body.people).toBe(2);
     expect(body.activeDays).toBe(1);
     expect(body.busiest).toEqual({ dayKey: '2026-11-17', totalMs: 4 * HOUR });
-    expect(body.weeks[0].mondayKey).toBe('2026-10-26'); // 1 November 2026 is a Sunday
+    expect(body.weeks[0].startKey).toBe('2026-10-26'); // 1 November 2026 is a Sunday
     expect(body.weeks.every((week: { days: unknown[] }) => week.days.length === 7)).toBe(true);
     expect(body.prevMonthKey).toBeNull();
     expect(body.nextMonthKey).toBeNull();
@@ -454,7 +454,7 @@ describe('GET /api/guilds/:guildId/months/:monthKey', () => {
 describe('summary weeks and months', () => {
   it('lists the weeks and months of the period, newest first', async () => {
     const body = (await seeded().inject('/api/guilds/g1/summary?period=7d')).json();
-    expect(body.weeks[0]).toMatchObject({ mondayKey: '2026-11-16', people: 2, peak: 2 });
+    expect(body.weeks[0]).toMatchObject({ startKey: '2026-11-16', people: 2, peak: 2 });
     expect(body.weeks[0].bins).toHaveLength(168);
     expect(body.weeks[0].dayTotals).toHaveLength(7);
     expect(body.months[0]).toMatchObject({ monthKey: '2026-11', people: 2 });
@@ -526,6 +526,109 @@ describe('summary year grid', () => {
       expect(body.yearGrid.startKey).toBe('2025-11-17');
       expect(body.yearGrid.totals[body.yearGrid.elapsedDays - 1]).toBe(4 * HOUR); // u1 3 h and u2 1 h, today
       expect(body.yearGrid.totals.reduce((sum: number, value: number) => sum + value, 0)).toBe(4 * HOUR);
+    }
+  });
+});
+
+describe('time zone of a request', () => {
+  it('uses the server zone by default and the one asked for with ?tz, in every kind of answer', async () => {
+    const app = seeded();
+    for (const url of [
+      '/api/guilds/g1/summary?period=7d',
+      '/api/guilds/g1/members/u1?period=7d',
+      '/api/guilds/g1/days/2026-11-17',
+      '/api/guilds/g1/weeks/2026-11-16',
+      '/api/guilds/g1/months/2026-11',
+      '/api/guilds/g1/years/2026',
+    ]) {
+      const separator = url.includes('?') ? '&' : '?';
+      expect((await app.inject(url)).json().timeZone, url).toBe('UTC');
+      expect((await app.inject(`${url}${separator}tz=Asia/Tokyo`)).json().timeZone, url).toBe('Asia/Tokyo');
+    }
+  });
+
+  it('moves the hours of the figures with the zone: 07:00 to 10:00 UTC is 16:00 to 19:00 in Tokyo', async () => {
+    const app = seeded();
+    const hours = async (query: string): Promise<number[]> => {
+      const body = (await app.inject(`/api/guilds/g1/summary?period=7d${query}`)).json();
+      return body.members.find((m: { user: { id: string } }) => m.user.id === 'u1').hourMs.map((ms: number) => Math.round(ms / 3_600_000));
+    };
+    const utc = await hours('');
+    const tokyo = await hours('&tz=Asia/Tokyo');
+    expect(utc.slice(7, 10)).toEqual([1, 1, 1]);
+    expect(tokyo.slice(16, 19)).toEqual([1, 1, 1]);
+    expect(tokyo.slice(7, 10)).toEqual([0, 0, 0]);
+  });
+
+  it('does not mix the answers of two zones in its cache', async () => {
+    const app = seeded();
+    const first = (await app.inject('/api/guilds/g1/days/2026-11-17?tz=Pacific/Auckland')).json();
+    const second = (await app.inject('/api/guilds/g1/days/2026-11-17')).json();
+    expect(first.startMs).not.toBe(second.startMs);
+    expect(first.timeZone).toBe('Pacific/Auckland');
+    expect(second.timeZone).toBe('UTC');
+  });
+
+  it('refuses an unknown zone with a 400, on every route', async () => {
+    const app = seeded();
+    for (const url of ['/api/guilds/g1/summary', '/api/guilds/g1/members/u1', '/api/guilds/g1/days/2026-11-17', '/api/guilds/g1/weeks/2026-11-16', '/api/guilds/g1/months/2026-11', '/api/guilds/g1/years/2026']) {
+      const separator = url.includes('?') ? '&' : '?';
+      for (const bad of ['Mars/Olympus', '..%2Fetc', 'Europe/Paris;x']) expect((await app.inject(`${url}${separator}tz=${bad}`)).statusCode, `${url} ${bad}`).toBe(400);
+    }
+  });
+
+  it('tells the settings menu which zone is the server own', async () => {
+    expect((await seeded().inject('/api/me')).json().serverTimeZone).toBe('UTC');
+  });
+});
+
+describe('weeks that start on Sunday (?ws=sunday)', () => {
+  it('serves a week by its Sunday, with the days from Sunday and the neighbours a week apart', async () => {
+    const body = (await seeded().inject('/api/guilds/g1/weeks/2026-11-15?ws=sunday')).json();
+    expect(body.startKey).toBe('2026-11-15');
+    expect(body.days.map((day: { dayKey: string }) => day.dayKey)).toEqual(['2026-11-15', '2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21']);
+    expect(body.totalMs).toBe(4 * HOUR); // Tuesday 17 November
+    expect(body.nextStartKey).toBeNull(); // the current week
+    expect(body.prevStartKey).toBeNull(); // the first event is in this week too
+  });
+
+  it('refuses the key of the other kind of week, a Monday for Sunday weeks and a Sunday for Monday weeks', async () => {
+    const app = seeded();
+    expect((await app.inject('/api/guilds/g1/weeks/2026-11-16?ws=sunday')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/weeks/2026-11-15')).statusCode).toBe(400);
+    expect((await app.inject('/api/guilds/g1/weeks/2026-11-16')).statusCode).toBe(200);
+  });
+
+  it('starts the rows of a month and the cells of a year from Sunday', async () => {
+    const app = seeded();
+    const month = (await app.inject('/api/guilds/g1/months/2026-11?ws=sunday')).json();
+    expect(month.weeks[0].startKey).toBe('2026-11-01');
+    const year = (await app.inject('/api/guilds/g1/years/2026?ws=sunday')).json();
+    expect(year.months[0].firstWeekday).toBe(4);
+    expect((await app.inject('/api/guilds/g1/years/2026')).json().months[0].firstWeekday).toBe(3);
+  });
+
+  it('cuts the strips of weeks and the last 53 weeks of the group and of a member on Sundays', async () => {
+    const app = seeded();
+    const summary = (await app.inject('/api/guilds/g1/summary?period=7d&ws=sunday')).json();
+    expect(summary.weeks[0].startKey).toBe('2026-11-15');
+    expect(summary.yearGrid.startKey).toBe('2025-11-16');
+    const member = (await app.inject('/api/guilds/g1/members/u1?period=7d&ws=sunday')).json();
+    expect(member.yearGrid.startKey).toBe('2025-11-16');
+    expect((await app.inject('/api/guilds/g1/summary?period=7d')).json().yearGrid.startKey).toBe('2025-11-17');
+  });
+
+  it('does not mix the answers of the two kinds of week in its cache', async () => {
+    const app = seeded();
+    const sunday = (await app.inject('/api/guilds/g1/months/2026-11?ws=sunday')).json();
+    const monday = (await app.inject('/api/guilds/g1/months/2026-11')).json();
+    expect(sunday.weeks[0].startKey).not.toBe(monday.weeks[0].startKey);
+  });
+
+  it('refuses a week start that is neither, on every route that takes one', async () => {
+    const app = seeded();
+    for (const url of ['/api/guilds/g1/summary', '/api/guilds/g1/members/u1', '/api/guilds/g1/weeks/2026-11-16', '/api/guilds/g1/months/2026-11', '/api/guilds/g1/years/2026']) {
+      for (const bad of ['friday', 'Sunday', '1']) expect((await app.inject(`${url}?ws=${bad}`)).statusCode, `${url} ${bad}`).toBe(400);
     }
   });
 });

@@ -1,5 +1,5 @@
 import { buildMemberStats, buildMemberYear, deriveSessions } from '@vocalog/shared';
-import type { GuildInfo, MemberProfile, Period } from '@vocalog/shared';
+import type { GuildInfo, MemberProfile, Period, WeekStart } from '@vocalog/shared';
 import { periodWindow } from './period.ts';
 import { createNamer } from './names.ts';
 import { firstEventMs, loadGuildEvents } from './queries.ts';
@@ -12,11 +12,12 @@ export function buildMemberProfile(
   period: Period,
   nowMs: number,
   timeZone: string,
+  weekStart: WeekStart = 'monday',
 ): MemberProfile {
   const { fromMs, toMs } = periodWindow(period, nowMs, firstEventMs(db, guild.id));
   const events = loadGuildEvents(db, guild.id);
   const sessions = deriveSessions(events);
-  const stats = buildMemberStats({ sessions, events, userId, options: { fromMs, toMs, nowMs, timeZone } });
+  const stats = buildMemberStats({ sessions, events, userId, options: { fromMs, toMs, nowMs, timeZone, weekStart } });
 
   const { user, channel } = createNamer(db, guild.id);
 
@@ -27,6 +28,7 @@ export function buildMemberProfile(
       sessions.filter((session) => session.userId === userId),
       nowMs,
       timeZone,
+      weekStart,
     ),
     guild,
     user: user(userId),

@@ -10,7 +10,7 @@ describe('parseRoute', () => {
   });
 
   it('recognises a week page and a month page', () => {
-    expect(parseRoute('/semaines/2026-11-09')).toEqual({ name: 'week', mondayKey: '2026-11-09' });
+    expect(parseRoute('/semaines/2026-11-09')).toEqual({ name: 'week', startKey: '2026-11-09' });
     expect(parseRoute('/mois/2026-11/')).toEqual({ name: 'month', monthKey: '2026-11' });
     expect(parseRoute('/semaines/lundi')).toEqual({ name: 'home' });
     expect(parseRoute('/mois/2026-1')).toEqual({ name: 'home' });

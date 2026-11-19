@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { WEEKDAYS_SHORT, formatDayShort, formatDuration, formatMonthAbbr, maxOf } from '../format.ts';
+import { weekdaysShort, formatDayShort, formatDuration, formatMonthAbbr, maxOf } from '../format.ts';
 import type { YearGrid } from '../yearGrid.ts';
 
 /**
- * Weeks as columns (Monday first), weekdays as rows, one cell per day, darker for more voice time, like the contributions
+ * Weeks as columns (first day of the week at the top), weekdays as rows, one cell per day, darker for more voice time, like the contributions
  * of a code hosting site. On a phone it scrolls sideways (53 columns would be 6 px each); `scrollToEnd` starts it at the
  * latest weeks. The labels are part of the same grid, so they always line up with the cells.
  */
@@ -25,7 +25,7 @@ export function ContributionGrid({ grid, label, scrollToEnd, resetKey }: { grid:
         ))}
         {[0, 2, 4].map((row) => (
           <span key={row} class="gh-dow" style={{ gridRow: row + 2 }}>
-            {WEEKDAYS_SHORT[row]}
+            {weekdaysShort()[row]}
           </span>
         ))}
         {grid.cells.map((cell) => (

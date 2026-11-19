@@ -1,6 +1,9 @@
 import { Avatar } from './Avatar.tsx';
-import type { MemberProfile } from '@vocalog/shared';
+import type { MemberProfile, Period } from '@vocalog/shared';
 import { Handle } from './Handle.tsx';
+import { Link } from './Link.tsx';
+import { memberQuery, prefetchQuery } from '../queries.ts';
+import { memberPath } from '../router.ts';
 import {
   barPercent,
   describeTimeDifference,
@@ -87,7 +90,7 @@ ${formatDuration(bucket.ms)}`}
   );
 }
 
-export function Together({ together, totalMs, guildId }: { together: MemberProfile['together']; totalMs: number; guildId: string }) {
+export function Together({ together, totalMs, guildId, period, search }: { together: MemberProfile['together']; totalMs: number; guildId: string; period: Period; search: string }) {
   const withShare = shareOf(together.withOthersMs, totalMs);
   const max = maxOf(together.top.map((entry) => entry.ms));
   return (
@@ -113,7 +116,9 @@ export function Together({ together, totalMs, guildId }: { together: MemberProfi
                   <span class="bar-name with-avatar">
                     <Avatar user={entry.user} guildId={guildId} size={24} />
                     <span class="name-lines">
-                      {entry.user.name}
+                      <Link to={memberPath(entry.user.id, search)} onPrefetch={() => prefetchQuery(memberQuery(guildId, entry.user.id, period))}>
+                        {entry.user.name}
+                      </Link>
                       <span class="name-sub">
                         <Handle user={entry.user} />
                       </span>

@@ -72,7 +72,7 @@ export function MemberView({ guildId, userId, period, search, controls }: Props)
               </section>
             </div>
             <div class="col-6">
-              <Together together={profile.together} totalMs={profile.totalMs} guildId={guildId!} />
+              <Together together={profile.together} totalMs={profile.totalMs} guildId={guildId!} period={period} search={search} />
             </div>
             <div class="col-6">
               <VoiceStates states={profile.voiceStates} />

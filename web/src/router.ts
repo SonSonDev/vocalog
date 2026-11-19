@@ -6,7 +6,7 @@ export type Route =
   | { name: 'home' }
   | { name: 'member'; userId: string }
   | { name: 'day'; dayKey: string }
-  | { name: 'week'; mondayKey: string }
+  | { name: 'week'; startKey: string }
   | { name: 'month'; monthKey: string }
   | { name: 'year'; yearKey: string };
 
@@ -22,7 +22,7 @@ export function parseRoute(pathname: string): Route {
   const day = /^\/jours\/(\d{4}-\d{2}-\d{2})\/?$/.exec(pathname);
   if (day) return { name: 'day', dayKey: day[1]! };
   const week = /^\/semaines\/(\d{4}-\d{2}-\d{2})\/?$/.exec(pathname);
-  if (week) return { name: 'week', mondayKey: week[1]! };
+  if (week) return { name: 'week', startKey: week[1]! };
   const month = /^\/mois\/(\d{4}-\d{2})\/?$/.exec(pathname);
   if (month) return { name: 'month', monthKey: month[1]! };
   const year = /^\/annees\/(\d{4})\/?$/.exec(pathname);
@@ -55,8 +55,8 @@ export function dayPath(dayKey: string, search: string): string {
   return `/jours/${dayKey}${search}`;
 }
 
-export function weekPath(mondayKey: string, search: string): string {
-  return `/semaines/${mondayKey}${search}`;
+export function weekPath(startKey: string, search: string): string {
+  return `/semaines/${startKey}${search}`;
 }
 
 export function monthPath(monthKey: string, search: string): string {

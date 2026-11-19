@@ -38,7 +38,7 @@ web/      Vite + Preact app, French UI, design "Rail and table" (built; not yet 
   src/useRemote.ts  loads data for a key; never shows the previous key's data; retry
   src/views/        HomeView (summary), MemberView (profile)
   src/components/   Header (with back link), Link, KeyFigures, MemberTable (list, links to profiles), Heatmap, Lists (Records, Channels), ProfileCards (member figures, activity, together, voice states, habits, group, rooms)
-  src/format.ts     durations, dates, bars (pure, tested); src/theme.ts light/dark with storage fallbacks
+  src/format.ts     durations, dates, bars (pure, tested); src/settings.ts + accents.ts + components/SettingsMenu.tsx: client settings (theme, accent, density, motion, default period, time zone, first weekday) in browser storage, applied as data attributes and CSS variables
   src/styles.css    tokens from docs/DESIGN.md; system fonts
 scripts/  seed-demo.ts: demo database with fictional members (refuses to overwrite an existing file)
 db/       Numbered SQL migrations (001_init.sql). (built)
@@ -70,6 +70,7 @@ Period windows never start before the first recorded event of the server, so a y
 Answers are kept in a small in-memory cache (`server/src/cache.ts`, 200 entries) keyed by route, server, member and period; an entry is reused while the last `voice_events` id and the current minute are unchanged. A server error is logged by route (never the query) and answered with a generic 500. `scripts/backup.ts` makes `VACUUM INTO` copies and prunes old ones.
 
 ## Web data layer
+- View settings that change the figures travel with each request as `?tz=<IANA zone>` and `?ws=sunday` (nothing for the defaults); `queries.ts` puts both in every cache key, so another zone or week start never shows a cached answer. The server validates them in `server/src/viewOptions.ts` (unknown values answer 400) and adds them to its own cache keys. `shared/` takes the zone and a `WeekStart` as plain arguments.
 `web/src/remoteCache.ts` keeps API answers in memory (60 entries, fresh for 30 s, one shared request per key); `web/src/useRemote.ts` shows the answer for the current key, else the last answer of the same scope (marked stale and dimmed), else a skeleton (`web/src/components/Skeleton.tsx`); `web/src/queries.ts` builds the key and loader of every request so a prefetch (`Link` `onPrefetch`, neighbouring days) fills exactly what the page reads. `web/src/motion.css` holds the placeholders and every animation. `web/src/yearGrid.ts` lays days out as weeks and weekdays for the contribution-style grid (a calendar year or a member's last 53 weeks; pure, tested) and `web/src/components/ContributionGrid.tsx` draws it. The member profile carries `yearGrid` (`startKey`, one total per day, `elapsedDays`), computed from the member's own sessions by `buildMemberYear`.
 
 ## Conventions

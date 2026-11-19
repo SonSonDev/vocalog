@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, buildMemberYear, buildMonthCalendar, buildWeekTimeline, buildYearCalendar, daysInMonth, isMondayKey, isMonthKey, isYearKey, mondayOf, monthOf, monthStrips, weekStrips, weekWindow, yearOf, yearStrips } from './calendar.ts';
-import { dayNumber } from './aggregate.ts';
+import { addMonths, buildMemberYear, buildMonthCalendar, buildWeekTimeline, buildYearCalendar, daysInMonth, isWeekStartKey, isMonthKey, isYearKey, weekStartOf, monthOf, monthStrips, weekStrips, weekWindow, yearOf, yearStrips } from './calendar.ts';
+import { dayNumber, weekdayIndex } from './aggregate.ts';
 import type { Session } from './types.ts';
 
 const HOUR = 3_600_000;
@@ -9,15 +9,15 @@ const at = (month: number, day: number, hour = 0) => Date.UTC(2026, month - 1, d
 
 describe('week and month keys', () => {
   it('finds the Monday of a week, across a month and a year', () => {
-    expect(mondayOf('2026-11-15')).toBe('2026-11-09'); // a Sunday
-    expect(mondayOf('2026-11-09')).toBe('2026-11-09');
-    expect(mondayOf('2026-11-01')).toBe('2026-10-26');
-    expect(mondayOf('2027-01-01')).toBe('2026-12-28');
+    expect(weekStartOf('2026-11-15')).toBe('2026-11-09'); // a Sunday
+    expect(weekStartOf('2026-11-09')).toBe('2026-11-09');
+    expect(weekStartOf('2026-11-01')).toBe('2026-10-26');
+    expect(weekStartOf('2027-01-01')).toBe('2026-12-28');
   });
 
   it('accepts only real Mondays and real months', () => {
-    expect(isMondayKey('2026-11-09')).toBe(true);
-    for (const bad of ['2026-11-10', '2026-02-30', '', '2026-11', '../x']) expect(isMondayKey(bad)).toBe(false);
+    expect(isWeekStartKey('2026-11-09')).toBe(true);
+    for (const bad of ['2026-11-10', '2026-02-30', '', '2026-11', '../x']) expect(isWeekStartKey(bad)).toBe(false);
     expect(isMonthKey('2026-11')).toBe(true);
     for (const bad of ['2026-13', '2026-00', '2026-1', '2026-11-01', '']) expect(isMonthKey(bad)).toBe(false);
   });
@@ -50,8 +50,8 @@ describe('weekStrips', () => {
   it('gives one strip per week, newest first, with the total of each day', () => {
     const sessions = [s('a', 'c', at(11, 10, 20), at(11, 10, 22)), s('b', 'c', at(11, 10, 21), at(11, 10, 23)), s('a', 'c', at(11, 14, 20), at(11, 14, 21))];
     const strips = weekStrips(sessions, input);
-    expect(strips.map((strip) => strip.mondayKey)).toEqual(['2026-11-16', '2026-11-09', '2026-11-02', '2026-10-26']);
-    const week = strips.find((strip) => strip.mondayKey === '2026-11-09')!;
+    expect(strips.map((strip) => strip.startKey)).toEqual(['2026-11-16', '2026-11-09', '2026-11-02', '2026-10-26']);
+    const week = strips.find((strip) => strip.startKey === '2026-11-09')!;
     expect(week.totalMs).toBe(5 * HOUR);
     expect(week.people).toBe(2);
     expect(week.peak).toBe(2);
@@ -60,9 +60,9 @@ describe('weekStrips', () => {
   });
 
   it('keeps an evening that passes midnight on the day it started', () => {
-    const week = weekStrips([s('a', 'c', at(11, 15, 22), at(11, 16, 2))], input).find((strip) => strip.mondayKey === '2026-11-09')!;
+    const week = weekStrips([s('a', 'c', at(11, 15, 22), at(11, 16, 2))], input).find((strip) => strip.startKey === '2026-11-09')!;
     expect(week.dayTotals[6]).toBe(4 * HOUR); // Sunday evening, not Monday
-    const next = weekStrips([s('a', 'c', at(11, 15, 22), at(11, 16, 2))], input).find((strip) => strip.mondayKey === '2026-11-16')!;
+    const next = weekStrips([s('a', 'c', at(11, 15, 22), at(11, 16, 2))], input).find((strip) => strip.startKey === '2026-11-16')!;
     expect(next.totalMs).toBe(0);
   });
 
@@ -123,11 +123,11 @@ describe('buildMonthCalendar', () => {
 
   it('lays the days out as weeks of seven, Monday first, with empty cells outside the month', () => {
     const calendar = buildMonthCalendar(sessions, '2026-11', now, 'UTC');
-    expect(calendar.weeks[0]!.mondayKey).toBe('2026-10-26'); // 1 November 2026 is a Sunday: the first row is mostly October
+    expect(calendar.weeks[0]!.startKey).toBe('2026-10-26'); // 1 November 2026 is a Sunday: the first row is mostly October
     expect(calendar.weeks[0]!.days.filter((day) => day === null)).toHaveLength(6);
     expect(calendar.weeks[0]!.days[6]!.dayKey).toBe('2026-11-01');
     const october = buildMonthCalendar([], '2026-10', now, 'UTC');
-    expect(october.weeks[0]!.mondayKey).toBe('2026-09-28');
+    expect(october.weeks[0]!.startKey).toBe('2026-09-28');
     expect(october.weeks[0]!.days.slice(0, 3)).toEqual([null, null, null]);
     expect(october.weeks[0]!.days[3]!.dayKey).toBe('2026-10-01');
     expect(october.weeks.every((week) => week.days.length === 7)).toBe(true);
@@ -229,7 +229,7 @@ describe('buildMemberYear', () => {
   it('covers 53 whole weeks starting on a Monday and ending with the current week', () => {
     const year = buildMemberYear(ownSessions, now, 'UTC');
     expect(year.totals).toHaveLength(371);
-    expect(mondayOf(year.startKey)).toBe(year.startKey);
+    expect(weekStartOf(year.startKey)).toBe(year.startKey);
     expect(year.startKey).toBe('2025-11-17'); // 52 weeks before the Monday 16 November 2026
     expect(year.elapsedDays).toBe(367); // from the first Monday to Wednesday 18 November 2026 included
     expect(year.totals.slice(year.elapsedDays).every((value) => value === 0)).toBe(true); // Thursday to Sunday: nothing yet
@@ -254,5 +254,70 @@ describe('buildMemberYear', () => {
   it('counts an open stay up to now', () => {
     const year = buildMemberYear([s('u1', 'c', at(11, 18, 8), null)], now, 'UTC');
     expect(year.totals[year.elapsedDays - 1]).toBe(4 * HOUR);
+  });
+});
+
+describe('weeks that start on Sunday', () => {
+  const now = Date.UTC(2026, 10, 18, 12); // Wednesday 18 November 2026
+
+  it('counts weekdays from the first day of the week', () => {
+    // 2026-11-15 is a Sunday, 2026-11-16 a Monday, 2026-11-21 a Saturday.
+    expect(weekdayIndex(dayNumber('2026-11-15'))).toBe(6);
+    expect(weekdayIndex(dayNumber('2026-11-16'))).toBe(0);
+    expect(weekdayIndex(dayNumber('2026-11-15'), 'sunday')).toBe(0);
+    expect(weekdayIndex(dayNumber('2026-11-16'), 'sunday')).toBe(1);
+    expect(weekdayIndex(dayNumber('2026-11-21'), 'sunday')).toBe(6);
+  });
+
+  it('finds the Sunday of a week, across a month and a year, and keeps Monday as the default', () => {
+    expect(weekStartOf('2026-11-18', 'sunday')).toBe('2026-11-15');
+    expect(weekStartOf('2026-11-15', 'sunday')).toBe('2026-11-15');
+    expect(weekStartOf('2026-11-14', 'sunday')).toBe('2026-11-08');
+    expect(weekStartOf('2027-01-01', 'sunday')).toBe('2026-12-27');
+    expect(weekStartOf('2026-11-18')).toBe('2026-11-16');
+    expect(weekStartOf('2026-11-15')).toBe('2026-11-09');
+  });
+
+  it('accepts as the key of a week only a real first day of the kind asked', () => {
+    expect(isWeekStartKey('2026-11-15', 'sunday')).toBe(true);
+    expect(isWeekStartKey('2026-11-16', 'sunday')).toBe(false);
+    expect(isWeekStartKey('2026-11-16')).toBe(true);
+    expect(isWeekStartKey('2026-11-15')).toBe(false);
+    expect(isWeekStartKey('2026-02-30', 'sunday')).toBe(false);
+  });
+
+  it('cuts the strips of weeks on Sundays, and puts the Sunday first in each', () => {
+    const sessions = [s('a', 'c', at(11, 15, 20), at(11, 15, 22)), s('a', 'c', at(11, 17, 8), at(11, 17, 9))];
+    const strips = weekStrips(sessions, { fromMs: at(11, 1), limitMs: now, nowMs: now, timeZone: 'UTC', max: 6, weekStart: 'sunday' });
+    expect(strips[0]!.startKey).toBe('2026-11-15');
+    expect(strips.every((strip) => isWeekStartKey(strip.startKey, 'sunday'))).toBe(true);
+    expect(strips[0]!.dayTotals).toEqual([2 * HOUR, 0, HOUR, 0, 0, 0, 0]); // Sunday 15, Tuesday 17
+  });
+
+  it('starts the calendar rows of a month on Sunday', () => {
+    const november = buildMonthCalendar([], '2026-11', now, 'UTC', 'sunday');
+    expect(november.weeks[0]!.startKey).toBe('2026-11-01'); // 1 November 2026 is a Sunday: a full first row
+    expect(november.weeks[0]!.days.every((day) => day !== null)).toBe(true);
+    const october = buildMonthCalendar([], '2026-10', now, 'UTC', 'sunday');
+    expect(october.weeks[0]!.startKey).toBe('2026-09-27');
+    expect(october.weeks[0]!.days.slice(0, 4)).toEqual([null, null, null, null]); // Thursday 1 October is the fifth cell
+    expect(october.weeks[0]!.days[4]!.dayKey).toBe('2026-10-01');
+  });
+
+  it('counts the empty cells before the 1st of each month from Sunday', () => {
+    const monday = buildYearCalendar([], '2026', now, 'UTC');
+    const sunday = buildYearCalendar([], '2026', now, 'UTC', 'sunday');
+    expect(monday.months[0]!.firstWeekday).toBe(3); // 1 January 2026 is a Thursday
+    expect(sunday.months[0]!.firstWeekday).toBe(4);
+    expect(monday.months[10]!.firstWeekday).toBe(6); // 1 November is a Sunday: last for Monday-first, first for Sunday-first
+    expect(sunday.months[10]!.firstWeekday).toBe(0);
+  });
+
+  it('starts the last 53 weeks of a member on a Sunday', () => {
+    const year = buildMemberYear([], now, 'UTC', 'sunday');
+    expect(year.startKey).toBe('2025-11-16'); // 52 weeks before the Sunday 15 November 2026
+    expect(isWeekStartKey(year.startKey, 'sunday')).toBe(true);
+    expect(year.totals).toHaveLength(371);
+    expect(year.elapsedDays).toBe(368); // Sunday 16 November 2025 to Wednesday 18 November 2026
   });
 });

@@ -1,4 +1,4 @@
-import { WEEKDAYS_LONG, WEEKDAYS_SHORT, busiestCell, formatDuration, maxOf } from '../format.ts';
+import { WEEKDAYS_LONG, busiestCell, weekdayOrder, weekdaysShort, formatDuration, maxOf } from '../format.ts';
 
 const HOUR_LABELS = [0, 6, 12, 18, 23];
 
@@ -12,11 +12,11 @@ export function Heatmap({ heat }: { heat: number[][] }) {
       <h2 id="heat-title">Heures de présence</h2>
       <div class="table-scroll">
         <div class="heat" role="img" aria-label={`Carte de chaleur de la présence par jour et par heure. ${summary}`}>
-          {heat.map((row, weekday) => (
+          {weekdayOrder().map((weekday, position) => (
             <div class="heat-row" key={weekday}>
-              <span class="heat-day">{WEEKDAYS_SHORT[weekday]}</span>
+              <span class="heat-day">{weekdaysShort()[position]}</span>
               <div class="heat-cells">
-                {row.map((value, hour) => (
+                {heat[weekday]!.map((value, hour) => (
                   <span
                     key={hour}
                     class="heat-cell"

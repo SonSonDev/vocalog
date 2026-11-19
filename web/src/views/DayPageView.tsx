@@ -1,4 +1,5 @@
-import { mondayOf, monthOf } from '@vocalog/shared';
+import { getSettings } from '../settings.ts';
+import { weekStartOf, monthOf } from '@vocalog/shared';
 import type { DayView, Period } from '@vocalog/shared';
 import { useEffect, useState } from 'preact/hooks';
 import { PeriodNav } from '../components/PeriodNav.tsx';
@@ -107,7 +108,7 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
 
 function DayNav({ day, guildId, search }: { day: DayView; guildId: string; search: string }) {
   const dayTarget = (key: string) => ({ to: dayPath(key, search), label: formatDayShort(key), onPrefetch: () => prefetchQuery(dayQuery(guildId, key)) });
-  const monday = mondayOf(day.dayKey);
+  const monday = weekStartOf(day.dayKey, getSettings().weekStart);
   const month = monthOf(day.dayKey);
   return (
     <PeriodNav

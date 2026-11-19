@@ -1,7 +1,18 @@
+import { getSettings } from './settings.ts';
 const HOUR_MS = 3_600_000;
 const MINUTE_MS = 60_000;
 
-export const WEEKDAYS_SHORT = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+const WEEKDAYS_MONDAY_FIRST = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+
+/** Indices (0 = Monday) of the weekdays in display order: Monday first, or Sunday first when the setting says so. */
+export function weekdayOrder(): number[] {
+  return getSettings().weekStart === 'sunday' ? [6, 0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4, 5, 6];
+}
+
+/** The short weekday names in display order. */
+export function weekdaysShort(): string[] {
+  return weekdayOrder().map((index) => WEEKDAYS_MONDAY_FIRST[index]!);
+}
 export const WEEKDAYS_LONG = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
 /** "7 h 05", "45 min", "0 min". */
@@ -188,22 +199,22 @@ export const HOURS_FROM_SIX: readonly number[] = Array.from({ length: 24 }, (_, 
 
 const longDay = (ms: number): string => new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', month: 'long' }).format(ms);
 
-function mondayMs(mondayKey: string): number {
-  const [year, month, day] = mondayKey.split('-').map(Number);
+function mondayMs(startKey: string): number {
+  const [year, month, day] = startKey.split('-').map(Number);
   return Date.UTC(year!, month! - 1, day!);
 }
 
 /** "9 au 15 novembre" or "26 octobre au 1 novembre" from the Monday of a week. */
-export function formatWeekRange(mondayKey: string): string {
-  const start = mondayMs(mondayKey);
+export function formatWeekRange(startKey: string): string {
+  const start = mondayMs(startKey);
   const end = start + 6 * 86_400_000;
   const sameMonth = new Date(start).getUTCMonth() === new Date(end).getUTCMonth();
   return `${sameMonth ? String(new Date(start).getUTCDate()) : longDay(start)} au ${longDay(end)}`;
 }
 
 /** "9 – 15 nov." from the Monday of a week, for a small label. */
-export function formatWeekShort(mondayKey: string): string {
-  const start = mondayMs(mondayKey);
+export function formatWeekShort(startKey: string): string {
+  const start = mondayMs(startKey);
   const end = start + 6 * 86_400_000;
   const short = (ms: number): string => new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', month: 'short' }).format(ms);
   const sameMonth = new Date(start).getUTCMonth() === new Date(end).getUTCMonth();
@@ -211,8 +222,9 @@ export function formatWeekShort(mondayKey: string): string {
 }
 
 /** The ISO week number (the week of the year's first Thursday is week 1). */
-export function isoWeekNumber(mondayKey: string): number {
-  const thursday = mondayMs(mondayKey) + 3 * 86_400_000;
+export function isoWeekNumber(startKey: string): number {
+  // Thursday is 3 days after a Monday and 4 after a Sunday.
+  const thursday = mondayMs(startKey) + (getSettings().weekStart === 'sunday' ? 4 : 3) * 86_400_000;
   const januaryFirst = Date.UTC(new Date(thursday).getUTCFullYear(), 0, 1);
   return Math.floor((thursday - januaryFirst) / (7 * 86_400_000)) + 1;
 }

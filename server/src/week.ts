@@ -1,28 +1,28 @@
-import { buildWeekTimeline, dayKeyOf, dayNumber, mondayOf, timelineDayKey } from '@vocalog/shared';
-import type { GuildInfo, WeekView } from '@vocalog/shared';
+import { buildWeekTimeline, dayKeyOf, dayNumber, weekStartOf, timelineDayKey } from '@vocalog/shared';
+import type { GuildInfo, WeekStart, WeekView } from '@vocalog/shared';
 import { createNamer } from './names.ts';
 import { firstEventMs, loadGuildSessions } from './queries.ts';
 import type { Db } from './queries.ts';
 
 /** One week in detail, or null when it starts after today (nothing can have happened yet). */
-export function buildWeekView(db: Db, guild: GuildInfo, mondayKey: string, nowMs: number, timeZone: string): WeekView | null {
-  const today = mondayOf(timelineDayKey(nowMs, timeZone));
-  if (dayNumber(mondayKey) > dayNumber(today)) return null;
+export function buildWeekView(db: Db, guild: GuildInfo, startKey: string, nowMs: number, timeZone: string, weekStart: WeekStart = 'monday'): WeekView | null {
+  const today = weekStartOf(timelineDayKey(nowMs, timeZone), weekStart);
+  if (dayNumber(startKey) > dayNumber(today)) return null;
 
-  const week = buildWeekTimeline(loadGuildSessions(db, guild.id), mondayKey, nowMs, timeZone);
+  const week = buildWeekTimeline(loadGuildSessions(db, guild.id), startKey, nowMs, timeZone);
   const { user, channel } = createNamer(db, guild.id);
   const first = firstEventMs(db, guild.id);
-  const firstMonday = first === null ? today : mondayOf(timelineDayKey(first, timeZone));
+  const firstWeek = first === null ? today : weekStartOf(timelineDayKey(first, timeZone), weekStart);
 
   return {
     guild,
-    mondayKey,
+    startKey,
     startMs: week.startMs,
     endMs: week.endMs,
     timeZone,
     generatedAtMs: nowMs,
-    prevMondayKey: dayNumber(mondayKey) > dayNumber(firstMonday) ? dayKeyOf(dayNumber(mondayKey) - 7) : null,
-    nextMondayKey: dayNumber(mondayKey) < dayNumber(today) ? dayKeyOf(dayNumber(mondayKey) + 7) : null,
+    prevStartKey: dayNumber(startKey) > dayNumber(firstWeek) ? dayKeyOf(dayNumber(startKey) - 7) : null,
+    nextStartKey: dayNumber(startKey) < dayNumber(today) ? dayKeyOf(dayNumber(startKey) + 7) : null,
     days: week.days,
     totalMs: week.totalMs,
     peak: week.peak,

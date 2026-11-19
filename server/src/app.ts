@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { isDayKey, isMondayKey, isMonthKey, isYearKey } from '@vocalog/shared';
+import { isDayKey, isWeekStartKey, isMonthKey, isYearKey } from '@vocalog/shared';
 import type { MeResponse, Period } from '@vocalog/shared';
 import { createImageProxy } from './image.ts';
 import { createCache } from './cache.ts';
@@ -15,6 +15,7 @@ import type { Db } from './queries.ts';
 import { resolveStatic } from './static.ts';
 import { buildSummary } from './summary.ts';
 import { buildWeekView } from './week.ts';
+import { resolveTimeZone, resolveWeekStart } from './viewOptions.ts';
 import { buildYearView } from './year.ts';
 
 export interface AppOptions {
@@ -67,23 +68,27 @@ export function buildApp(options: AppOptions): FastifyInstance {
 
   app.get('/api/me', async (request): Promise<MeResponse> => {
     const viewer = auth.viewer(request);
-    if (!viewer) return { authMode: auth.mode, user: null };
+    if (!viewer) return { authMode: auth.mode, serverTimeZone: timeZone, user: null };
     // The person's own @username comes from the login; the picture hash from what the bot has seen of them (may be absent).
-    return { authMode: auth.mode, user: { id: viewer.userId, name: viewer.userName, handle: viewer.userHandle, avatar: userAvatars(db).get(viewer.userId) } };
+    return { authMode: auth.mode, serverTimeZone: timeZone, user: { id: viewer.userId, name: viewer.userName, handle: viewer.userHandle, avatar: userAvatars(db).get(viewer.userId) } };
   });
 
   app.get('/api/guilds', async (request) => listGuilds(db).filter((guild) => auth.canSeeGuild(request, guild.id)));
 
-  app.get<{ Params: { guildId: string }; Querystring: { period?: string } }>('/api/guilds/:guildId/summary', async (request, reply) => {
+  app.get<{ Params: { guildId: string }; Querystring: { period?: string; tz?: string; ws?: string } }>('/api/guilds/:guildId/summary', async (request, reply) => {
     const period = request.query.period ?? '30d';
     if (!isPeriod(period)) return reply.code(400).send({ error: 'period must be one of 7d, 30d, 1y, all' });
     // A server the person cannot see answers exactly like one that does not exist.
     const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
-    return cached(`summary|${guild.id}|${period}`, () => buildSummary(db, guild, period as Period, now(), timeZone));
+    const zone = resolveTimeZone(request.query.tz, timeZone);
+    if (zone === null) return reply.code(400).send({ error: 'unknown time zone' });
+    const weekStart = resolveWeekStart(request.query.ws);
+    if (weekStart === null) return reply.code(400).send({ error: 'week start must be monday or sunday' });
+    return cached(`summary|${guild.id}|${period}|${zone}|${weekStart}`, () => buildSummary(db, guild, period as Period, now(), zone, weekStart));
   });
 
-  app.get<{ Params: { guildId: string; userId: string }; Querystring: { period?: string } }>(
+  app.get<{ Params: { guildId: string; userId: string }; Querystring: { period?: string; tz?: string; ws?: string } }>(
     '/api/guilds/:guildId/members/:userId',
     async (request, reply) => {
       const period = request.query.period ?? '30d';
@@ -91,41 +96,59 @@ export function buildApp(options: AppOptions): FastifyInstance {
       const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
       if (!guild) return reply.code(404).send({ error: 'unknown server' });
       if (!userHasEvents(db, guild.id, request.params.userId)) return reply.code(404).send({ error: 'unknown member' });
-      return cached(`member|${guild.id}|${request.params.userId}|${period}`, () =>
-        buildMemberProfile(db, guild, request.params.userId, period as Period, now(), timeZone),
+      const zone = resolveTimeZone(request.query.tz, timeZone);
+      if (zone === null) return reply.code(400).send({ error: 'unknown time zone' });
+      const weekStart = resolveWeekStart(request.query.ws);
+      if (weekStart === null) return reply.code(400).send({ error: 'week start must be monday or sunday' });
+      return cached(`member|${guild.id}|${request.params.userId}|${period}|${zone}|${weekStart}`, () =>
+        buildMemberProfile(db, guild, request.params.userId, period as Period, now(), zone, weekStart),
       );
     },
   );
 
-  app.get<{ Params: { guildId: string; dayKey: string } }>('/api/guilds/:guildId/days/:dayKey', async (request, reply) => {
+  app.get<{ Params: { guildId: string; dayKey: string }; Querystring: { tz?: string } }>('/api/guilds/:guildId/days/:dayKey', async (request, reply) => {
     if (!isDayKey(request.params.dayKey)) return reply.code(400).send({ error: 'day must be a date written YYYY-MM-DD' });
     const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
-    const view = cached(`day|${guild.id}|${request.params.dayKey}`, () => buildDayView(db, guild, request.params.dayKey, now(), timeZone));
+    const zone = resolveTimeZone(request.query.tz, timeZone);
+    if (zone === null) return reply.code(400).send({ error: 'unknown time zone' });
+    const view = cached(`day|${guild.id}|${request.params.dayKey}|${zone}`, () => buildDayView(db, guild, request.params.dayKey, now(), zone));
     return view ?? reply.code(404).send({ error: 'unknown day' });
   });
 
-  app.get<{ Params: { guildId: string; mondayKey: string } }>('/api/guilds/:guildId/weeks/:mondayKey', async (request, reply) => {
-    if (!isMondayKey(request.params.mondayKey)) return reply.code(400).send({ error: 'week must be the date of its Monday, written YYYY-MM-DD' });
+  app.get<{ Params: { guildId: string; startKey: string }; Querystring: { tz?: string; ws?: string } }>('/api/guilds/:guildId/weeks/:startKey', async (request, reply) => {
+    const weekStart = resolveWeekStart(request.query.ws);
+    if (weekStart === null) return reply.code(400).send({ error: 'week start must be monday or sunday' });
+    if (!isWeekStartKey(request.params.startKey, weekStart)) return reply.code(400).send({ error: 'week must be the date of its first day, written YYYY-MM-DD' });
     const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
-    const view = cached(`week|${guild.id}|${request.params.mondayKey}`, () => buildWeekView(db, guild, request.params.mondayKey, now(), timeZone));
+    const zone = resolveTimeZone(request.query.tz, timeZone);
+    if (zone === null) return reply.code(400).send({ error: 'unknown time zone' });
+    const view = cached(`week|${guild.id}|${request.params.startKey}|${zone}|${weekStart}`, () => buildWeekView(db, guild, request.params.startKey, now(), zone, weekStart));
     return view ?? reply.code(404).send({ error: 'unknown week' });
   });
 
-  app.get<{ Params: { guildId: string; monthKey: string } }>('/api/guilds/:guildId/months/:monthKey', async (request, reply) => {
+  app.get<{ Params: { guildId: string; monthKey: string }; Querystring: { tz?: string; ws?: string } }>('/api/guilds/:guildId/months/:monthKey', async (request, reply) => {
     if (!isMonthKey(request.params.monthKey)) return reply.code(400).send({ error: 'month must be written YYYY-MM' });
+    const weekStart = resolveWeekStart(request.query.ws);
+    if (weekStart === null) return reply.code(400).send({ error: 'week start must be monday or sunday' });
     const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
-    const view = cached(`month|${guild.id}|${request.params.monthKey}`, () => buildMonthView(db, guild, request.params.monthKey, now(), timeZone));
+    const zone = resolveTimeZone(request.query.tz, timeZone);
+    if (zone === null) return reply.code(400).send({ error: 'unknown time zone' });
+    const view = cached(`month|${guild.id}|${request.params.monthKey}|${zone}|${weekStart}`, () => buildMonthView(db, guild, request.params.monthKey, now(), zone, weekStart));
     return view ?? reply.code(404).send({ error: 'unknown month' });
   });
 
-  app.get<{ Params: { guildId: string; yearKey: string } }>('/api/guilds/:guildId/years/:yearKey', async (request, reply) => {
+  app.get<{ Params: { guildId: string; yearKey: string }; Querystring: { tz?: string; ws?: string } }>('/api/guilds/:guildId/years/:yearKey', async (request, reply) => {
     if (!isYearKey(request.params.yearKey)) return reply.code(400).send({ error: 'year must be written YYYY' });
+    const weekStart = resolveWeekStart(request.query.ws);
+    if (weekStart === null) return reply.code(400).send({ error: 'week start must be monday or sunday' });
     const guild = auth.canSeeGuild(request, request.params.guildId) ? findGuild(db, request.params.guildId) : null;
     if (!guild) return reply.code(404).send({ error: 'unknown server' });
-    const view = cached(`year|${guild.id}|${request.params.yearKey}`, () => buildYearView(db, guild, request.params.yearKey, now(), timeZone));
+    const zone = resolveTimeZone(request.query.tz, timeZone);
+    if (zone === null) return reply.code(400).send({ error: 'unknown time zone' });
+    const view = cached(`year|${guild.id}|${request.params.yearKey}|${zone}|${weekStart}`, () => buildYearView(db, guild, request.params.yearKey, now(), zone, weekStart));
     return view ?? reply.code(404).send({ error: 'unknown year' });
   });
 

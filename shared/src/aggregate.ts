@@ -1,5 +1,5 @@
 import { durationMs } from './sessions.ts';
-import type { Session } from './types.ts';
+import type { Session, WeekStart } from './types.ts';
 
 export interface AggregateOptions {
   /** Start of the window (UTC ms, inclusive). */
@@ -10,6 +10,8 @@ export interface AggregateOptions {
   nowMs: number;
   /** IANA time zone used for hours, weekdays and days, for example `Europe/Paris`. */
   timeZone: string;
+  /** The day weeks start on, for the weekly buckets. Monday when absent. */
+  weekStart?: WeekStart;
 }
 
 export interface MemberStat {
@@ -106,6 +108,14 @@ export function dayNumber(dayKey: string): number {
 /** The local `YYYY-MM-DD` key of a day number. */
 export function dayKeyOf(day: number): string {
   return new Date(day * DAY_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * Weekday of a day number counted from the first day of the week: 0 = Monday, or 0 = Sunday when weeks start on Sunday.
+ * (1970-01-01 was a Thursday.)
+ */
+export function weekdayIndex(day: number, weekStart: WeekStart = 'monday'): number {
+  return (weekdayOf(day) + (weekStart === 'sunday' ? 1 : 0)) % 7;
 }
 
 /** Weekday of a day number, 0 = Monday (1970-01-01 was a Thursday). */

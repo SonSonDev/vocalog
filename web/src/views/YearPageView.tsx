@@ -6,13 +6,14 @@ import type { Controls } from '../components/Header.tsx';
 import { Link } from '../components/Link.tsx';
 import { PeriodNav } from '../components/PeriodNav.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
-import { formatClock, formatDayKey, formatDayShort, formatDuration, formatMonthName, maxOf } from '../format.ts';
+import { weekdayOrder, formatClock, formatDayKey, formatDayShort, formatDuration, formatMonthName, maxOf } from '../format.ts';
 import { monthQuery, prefetchQuery, yearQuery } from '../queries.ts';
 import { monthPath, yearPath } from '../router.ts';
 import { useRemote } from '../useRemote.ts';
 import { buildYearGrid } from '../yearGrid.ts';
 
 const WEEKDAY_INITIALS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const initials = (): string[] => weekdayOrder().map((index) => WEEKDAY_INITIALS[index]!);
 
 interface Props {
   guildId: string | null;
@@ -172,7 +173,7 @@ function MonthCalendars({ year, guildId, search }: { year: YearView; guildId: st
             <span class="sr-only">{month.totalMs > 0 ? ` : ${formatDuration(month.totalMs)}, ${month.activeDays} jour${month.activeDays > 1 ? 's' : ''} actif${month.activeDays > 1 ? 's' : ''}` : ' : personne en vocal'}</span>
           </Link>
           <div class="mini-days" aria-hidden="true">
-            {WEEKDAY_INITIALS.map((initial, index) => (
+            {initials().map((initial, index) => (
               <span key={index} class="mini-dow">
                 {initial}
               </span>

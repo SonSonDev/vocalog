@@ -1,7 +1,7 @@
 import type { DayStrip, MonthStrip, Summary, WeekStrip, YearStrip } from '@vocalog/shared';
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { WEEKDAYS_SHORT, binClock, formatDayShort, formatDuration, formatMonthLong, formatMonthName, formatMonthShort, formatPeople, formatWeekShort, isoWeekNumber, maxOf } from '../format.ts';
+import { weekdaysShort, binClock, formatDayShort, formatDuration, formatMonthLong, formatMonthName, formatMonthShort, formatPeople, formatWeekShort, isoWeekNumber, maxOf } from '../format.ts';
 import { dayQuery, monthQuery, prefetchQuery, weekQuery, yearQuery } from '../queries.ts';
 import { dayPath, monthPath, weekPath, yearPath } from '../router.ts';
 import { Link } from './Link.tsx';
@@ -141,7 +141,7 @@ function WeekRows({ weeks, guildId, search }: { weeks: WeekStrip[]; guildId: str
           <div class="day-row day-axis-row" aria-hidden="true">
             <span class="day-label" />
             <span class="week-cells week-axis">
-              {WEEKDAYS_SHORT.map((label) => (
+              {weekdaysShort().map((label) => (
                 <span key={label} class="week-day">
                   {label}
                 </span>
@@ -151,19 +151,19 @@ function WeekRows({ weeks, guildId, search }: { weeks: WeekStrip[]; guildId: str
           </div>
           <ul class="day-list">
             {weeks.slice(0, limit).map((week) => {
-              const number = isoWeekNumber(week.mondayKey);
-              const range = formatWeekShort(week.mondayKey);
+              const number = isoWeekNumber(week.startKey);
+              const range = formatWeekShort(week.startKey);
               const summary = week.totalMs > 0 ? `${formatDuration(week.totalMs)}, ${formatPeople(week.people)}, jusqu’à ${week.peak} en même temps` : 'personne en vocal';
               return (
-                <li key={week.mondayKey}>
-                  <Link to={weekPath(week.mondayKey, search)} class="day-row" onPrefetch={() => prefetchQuery(weekQuery(guildId, week.mondayKey))}>
+                <li key={week.startKey}>
+                  <Link to={weekPath(week.startKey, search)} class="day-row" onPrefetch={() => prefetchQuery(weekQuery(guildId, week.startKey))}>
                     <span class="sr-only">{`Semaine ${number}, du ${range} : ${summary}`}</span>
                     <span class="day-label" aria-hidden="true">
                       <span class="lbl-main">S{number}</span>
                       <span class="lbl-sub">{range}</span>
                     </span>
                     <span class="week-cells" aria-hidden="true">
-                      {WEEKDAYS_SHORT.map((weekday, dayIndex) => (
+                      {weekdaysShort().map((weekday, dayIndex) => (
                         <span key={weekday} class="week-day">
                           {week.bins.slice(dayIndex * 24, dayIndex === 6 ? undefined : dayIndex * 24 + 24).map((value, index) => (
                             <span

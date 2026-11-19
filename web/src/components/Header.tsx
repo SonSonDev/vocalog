@@ -2,22 +2,20 @@ import { PERIODS } from '@vocalog/shared';
 import type { GuildInfo, NamedRef, Period } from '@vocalog/shared';
 import type { ComponentChildren } from 'preact';
 import { visibleHandle } from '../format.ts';
-import type { Theme } from '../theme.ts';
 import { Avatar } from './Avatar.tsx';
 import { GuildIcon } from './GuildIcon.tsx';
 import { Link } from './Link.tsx';
+import { SettingsMenu } from './SettingsMenu.tsx';
 
 const PERIOD_LABELS: Record<Period, string> = { '7d': '7 j', '30d': '30 j', '1y': '1 an', all: 'Tout' };
 
-/** The controls shared by every page: server, period and theme. */
+/** The controls shared by every page: server, period and who is looking. The theme and the rest are in the settings menu. */
 export interface Controls {
   guilds: GuildInfo[];
   guildId: string | null;
   period: Period;
-  theme: Theme;
   onGuild: (id: string) => void;
   onPeriod: (period: Period) => void;
-  onTheme: () => void;
   /** The logged-in person, or null when login is off (local development). */
   viewer: NamedRef | null;
   onLogout: () => void;
@@ -37,10 +35,10 @@ interface Props {
 
 /**
  * Two rows. Top bar: where you are (the server, with its picture) on the left, who you are (picture, name, @username,
- * log out) and the theme on the right. Title row: the page title and, when it applies, its period.
+ * log out) and the settings menu on the right. Title row: the page title and, when it applies, its period.
  */
 export function Header({ controls, title, handle, avatar, back, showPeriod = true }: Props) {
-  const { guilds, guildId, period, theme, onGuild, onPeriod, onTheme, viewer, onLogout } = controls;
+  const { guilds, guildId, period, onGuild, onPeriod, viewer, onLogout } = controls;
   const guild = guilds.find((entry) => entry.id === guildId) ?? null;
   const viewerHandle = viewer ? visibleHandle(viewer.name, viewer.handle) : null;
 
@@ -71,9 +69,7 @@ export function Header({ controls, title, handle, avatar, back, showPeriod = tru
               </button>
             </div>
           )}
-          <button type="button" class="topbar-button" onClick={onTheme} aria-label={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'}>
-            {theme === 'dark' ? 'Clair' : 'Sombre'}
-          </button>
+<SettingsMenu />
         </div>
       </div>
 

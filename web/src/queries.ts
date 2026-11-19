@@ -1,6 +1,10 @@
 import type { Period } from '@vocalog/shared';
 import { fetchDay, fetchMemberProfile, fetchMonth, fetchSummary, fetchWeek, fetchYear } from './api.ts';
 import { prefetch } from './remoteCache.ts';
+import { getSettings, timeZoneParam } from './settings.ts';
+
+/** Part of every key: an answer is only valid for the time zone it was asked in. */
+const zone = (): string => `${timeZoneParam(getSettings()) || 'server'}|${getSettings().weekStart}`;
 
 /**
  * Every request the pages make, as a cache key and the function that loads it. The page and the prefetch (hover, focus,
@@ -12,32 +16,32 @@ export interface Query<T> {
 }
 
 export const summaryQuery = (guildId: string, period: Period): Query<Awaited<ReturnType<typeof fetchSummary>>> => ({
-  key: `summary|${guildId}|${period}`,
+  key: `summary|${guildId}|${period}|${zone()}`,
   load: () => fetchSummary(guildId, period),
 });
 
 export const memberQuery = (guildId: string, userId: string, period: Period): Query<Awaited<ReturnType<typeof fetchMemberProfile>>> => ({
-  key: `member|${guildId}|${userId}|${period}`,
+  key: `member|${guildId}|${userId}|${period}|${zone()}`,
   load: () => fetchMemberProfile(guildId, userId, period),
 });
 
 export const dayQuery = (guildId: string, dayKey: string): Query<Awaited<ReturnType<typeof fetchDay>>> => ({
-  key: `day|${guildId}|${dayKey}`,
+  key: `day|${guildId}|${dayKey}|${zone()}`,
   load: () => fetchDay(guildId, dayKey),
 });
 
-export const weekQuery = (guildId: string, mondayKey: string): Query<Awaited<ReturnType<typeof fetchWeek>>> => ({
-  key: `week|${guildId}|${mondayKey}`,
-  load: () => fetchWeek(guildId, mondayKey),
+export const weekQuery = (guildId: string, startKey: string): Query<Awaited<ReturnType<typeof fetchWeek>>> => ({
+  key: `week|${guildId}|${startKey}|${zone()}`,
+  load: () => fetchWeek(guildId, startKey),
 });
 
 export const monthQuery = (guildId: string, monthKey: string): Query<Awaited<ReturnType<typeof fetchMonth>>> => ({
-  key: `month|${guildId}|${monthKey}`,
+  key: `month|${guildId}|${monthKey}|${zone()}`,
   load: () => fetchMonth(guildId, monthKey),
 });
 
 export const yearQuery = (guildId: string, yearKey: string): Query<Awaited<ReturnType<typeof fetchYear>>> => ({
-  key: `year|${guildId}|${yearKey}`,
+  key: `year|${guildId}|${yearKey}|${zone()}`,
   load: () => fetchYear(guildId, yearKey),
 });
 

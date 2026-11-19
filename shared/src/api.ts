@@ -59,14 +59,14 @@ export interface Summary {
 /** One week in detail (Monday 06:00 to the next Monday 06:00): who was in voice and when. */
 export interface WeekView {
   guild: GuildInfo;
-  mondayKey: string;
+  startKey: string;
   startMs: number;
   endMs: number;
   timeZone: string;
   generatedAtMs: number;
   /** The neighbouring weeks that can be opened, or null at either end. */
-  prevMondayKey: string | null;
-  nextMondayKey: string | null;
+  prevStartKey: string | null;
+  nextStartKey: string | null;
   days: { dayKey: string; startMs: number; endMs: number; totalMs: number }[];
   totalMs: number;
   peak: { count: number; atMs: number } | null;
@@ -126,6 +126,8 @@ export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' |
 /** Who is looking: the answer of GET /api/me. The `authMode` 'none' exists only for local development. */
 export interface MeResponse {
   authMode: 'discord' | 'none';
+  /** The server's own time zone, shown in the settings menu next to the one a person may choose. */
+  serverTimeZone: string;
   user: NamedRef | null;
 }
 
