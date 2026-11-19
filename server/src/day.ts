@@ -1,7 +1,8 @@
-import { buildDayTimeline, dayKeyOf, dayNumber, timelineDayKey } from '@vocalog/shared';
+import { buildDayTimeline, dayKeyOf, dayNumber, flagIntervalsByUser, timelineDayKey } from '@vocalog/shared';
 import type { DayView, GuildInfo } from '@vocalog/shared';
 import { createNamer } from './names.ts';
-import { firstEventMs, loadGuildSessions } from './queries.ts';
+import { deriveSessions } from '@vocalog/shared';
+import { firstEventMs, loadGuildEvents } from './queries.ts';
 import type { Db } from './queries.ts';
 
 /** One day in detail, or null when it is after today (nothing can have happened yet). */
@@ -9,7 +10,9 @@ export function buildDayView(db: Db, guild: GuildInfo, dayKey: string, nowMs: nu
   const today = timelineDayKey(nowMs, timeZone);
   if (dayNumber(dayKey) > dayNumber(today)) return null;
 
-  const day = buildDayTimeline(loadGuildSessions(db, guild.id), dayKey, nowMs, timeZone);
+  const events = loadGuildEvents(db, guild.id);
+  const day = buildDayTimeline(deriveSessions(events), dayKey, nowMs, timeZone);
+  const states = flagIntervalsByUser(events, { fromMs: day.startMs, toMs: day.endMs }, nowMs);
   const { user, channel } = createNamer(db, guild.id);
   const first = firstEventMs(db, guild.id);
   const firstDay = first === null ? today : timelineDayKey(first, timeZone);
@@ -30,6 +33,7 @@ export function buildDayView(db: Db, guild: GuildInfo, dayKey: string, nowMs: nu
       user: user(member.userId),
       totalMs: member.totalMs,
       spans: member.spans.map((span) => ({ channel: channel(span.channelId), startMs: span.startMs, endMs: span.endMs })),
+      states: states.get(member.userId) ?? { share: [], mute: [], deaf: [] },
     })),
   };
 }

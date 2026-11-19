@@ -66,3 +66,64 @@ export function flagTimesByUser(
 export function emptyFlagTimes(): FlagTimes {
   return empty();
 }
+
+/** A stretch of time, UTC epoch milliseconds, `endMs` exclusive. */
+export interface Interval {
+  startMs: number;
+  endMs: number;
+}
+
+/** When each voice state was on, for one user. Same meaning as `FlagTimes`: `mute` includes deafened, a server mute is not counted. */
+export interface FlagIntervals {
+  share: Interval[];
+  mute: Interval[];
+  deaf: Interval[];
+}
+
+const STATES: { key: keyof FlagIntervals; mask: number }[] = [
+  { key: 'share', mask: VoiceFlag.Streaming },
+  { key: 'mute', mask: VoiceFlag.SelfMute | VoiceFlag.SelfDeaf },
+  { key: 'deaf', mask: VoiceFlag.SelfDeaf },
+];
+
+/**
+ * The stretches of time in [fromMs, min(toMs, nowMs)) where each voice state was on, per user, from the journal of ONE server.
+ * Stretches that touch (a change of channel, an unrelated flag changing) are merged; leaving voice ends them.
+ */
+export function flagIntervalsByUser(
+  events: readonly VoiceEvent[],
+  window: { fromMs: number; toMs: number },
+  nowMs: number,
+): Map<string, FlagIntervals> {
+  const limit = Math.min(window.toMs, nowMs);
+  const result = new Map<string, FlagIntervals>();
+  const state = new Map<string, { channelId: string | null; flags: number; sinceMs: number }>();
+
+  const accrue = (userId: string, startMs: number, endMs: number, flags: number): void => {
+    const from = Math.max(startMs, window.fromMs);
+    const to = Math.min(endMs, limit);
+    if (to <= from) return;
+    let intervals = result.get(userId);
+    if (!intervals) {
+      intervals = { share: [], mute: [], deaf: [] };
+      result.set(userId, intervals);
+    }
+    for (const { key, mask } of STATES) {
+      if (!(flags & mask)) continue;
+      const list = intervals[key];
+      const last = list[list.length - 1];
+      if (last && last.endMs === from) last.endMs = to;
+      else list.push({ startMs: from, endMs: to });
+    }
+  };
+
+  for (const event of [...events].sort((a, b) => a.atMs - b.atMs)) {
+    const current = state.get(event.userId);
+    if (current && current.channelId !== null) accrue(event.userId, current.sinceMs, event.atMs, current.flags);
+    state.set(event.userId, { channelId: event.channelId, flags: event.channelId === null ? 0 : event.flags, sinceMs: event.atMs });
+  }
+  for (const [userId, current] of state) {
+    if (current.channelId !== null) accrue(userId, current.sinceMs, nowMs, current.flags);
+  }
+  return result;
+}

@@ -1,5 +1,5 @@
 /** Types of the JSON API, shared by the server and the web app. */
-import type { FlagTimes } from './flags.ts';
+import type { FlagIntervals, FlagTimes } from './flags.ts';
 import type { MemberStats } from './profile.ts';
 import type { MemberYear, MonthCalendar, MonthStrip, WeekStrip, YearCalendar, YearStrip } from './calendar.ts';
 import type { DayStrip } from './timeline.ts';
@@ -100,7 +100,13 @@ export interface DayView {
   peak: { count: number; atMs: number } | null;
   /** Average number of people in each quarter hour from `startMs`. */
   bins: number[];
-  members: { user: NamedRef; totalMs: number; spans: { channel: NamedRef; startMs: number; endMs: number }[] }[];
+  members: {
+    user: NamedRef;
+    totalMs: number;
+    spans: { channel: NamedRef; startMs: number; endMs: number }[];
+    /** When screen sharing, microphone off and headphones off were on, clipped to the day. */
+    states: FlagIntervals;
+  }[];
 }
 
 /** Personal statistics of one member, with names resolved. */

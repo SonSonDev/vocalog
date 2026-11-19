@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flagTimesByUser } from './flags.ts';
+import { flagIntervalsByUser, flagTimesByUser } from './flags.ts';
 import { VoiceFlag } from './types.ts';
 import type { VoiceEvent } from './types.ts';
 
@@ -103,5 +103,48 @@ describe('flagTimesByUser', () => {
 
   it('returns nothing for a user who was never in voice in the window', () => {
     expect(flagTimesByUser([], WINDOW, T0).size).toBe(0);
+  });
+});
+
+describe('flagIntervalsByUser', () => {
+  it('lists when each state was on, with deafened counting as microphone off', () => {
+    const events = [
+      ev('a', 'c1', T0 + 1 * HOUR, 0, 'join'),
+      ev('a', 'c1', T0 + 2 * HOUR, VoiceFlag.SelfMute),
+      ev('a', 'c1', T0 + 3 * HOUR, VoiceFlag.SelfDeaf | VoiceFlag.Streaming),
+      ev('a', null, T0 + 4 * HOUR, 0, 'leave'),
+    ];
+    const result = flagIntervalsByUser(events, WINDOW, T0 + 24 * HOUR).get('a')!;
+    expect(result.mute).toEqual([{ startMs: T0 + 2 * HOUR, endMs: T0 + 4 * HOUR }]);
+    expect(result.deaf).toEqual([{ startMs: T0 + 3 * HOUR, endMs: T0 + 4 * HOUR }]);
+    expect(result.share).toEqual([{ startMs: T0 + 3 * HOUR, endMs: T0 + 4 * HOUR }]);
+  });
+
+  it('merges stretches that touch (a move or an unrelated flag change) and splits on leaving voice', () => {
+    const events = [
+      ev('a', 'c1', T0 + 1 * HOUR, VoiceFlag.Streaming, 'join'),
+      ev('a', 'c2', T0 + 2 * HOUR, VoiceFlag.Streaming, 'move'),
+      ev('a', 'c2', T0 + 3 * HOUR, VoiceFlag.Streaming | VoiceFlag.SelfMute),
+      ev('a', null, T0 + 4 * HOUR, 0, 'leave'),
+      ev('a', 'c1', T0 + 5 * HOUR, VoiceFlag.Streaming, 'join'),
+      ev('a', null, T0 + 6 * HOUR, 0, 'leave'),
+    ];
+    const result = flagIntervalsByUser(events, WINDOW, T0 + 24 * HOUR).get('a')!;
+    expect(result.share).toEqual([
+      { startMs: T0 + 1 * HOUR, endMs: T0 + 4 * HOUR },
+      { startMs: T0 + 5 * HOUR, endMs: T0 + 6 * HOUR },
+    ]);
+    expect(result.mute).toEqual([{ startMs: T0 + 3 * HOUR, endMs: T0 + 4 * HOUR }]);
+  });
+
+  it('clips to the window and runs an open state to now', () => {
+    const events = [ev('a', 'c1', T0 - 2 * HOUR, VoiceFlag.SelfMute, 'join')];
+    const result = flagIntervalsByUser(events, WINDOW, T0 + 5 * HOUR).get('a')!;
+    expect(result.mute).toEqual([{ startMs: T0, endMs: T0 + 5 * HOUR }]);
+  });
+
+  it('gives empty lists for a user who never used a state', () => {
+    const events = [ev('a', 'c1', T0 + HOUR, 0, 'join'), ev('a', null, T0 + 2 * HOUR, 0, 'leave')];
+    expect(flagIntervalsByUser(events, WINDOW, T0 + 24 * HOUR).get('a')).toEqual({ share: [], mute: [], deaf: [] });
   });
 });

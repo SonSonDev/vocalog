@@ -242,6 +242,25 @@ describe('GET /api/guilds/:guildId/days/:dayKey', () => {
     expect(body.bins).toHaveLength(96);
   });
 
+  it('gives each member the stretches of screen sharing, microphone off and headphones off', async () => {
+    const db = testDb();
+    addNames(db);
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 5 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'state', atMs: NOW - 4 * HOUR, flags: 1 | 16 });
+    addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - 3 * HOUR });
+    addEvent(db, { userId: 'u2', channelId: 'c1', kind: 'join', atMs: NOW - 4 * HOUR });
+    addEvent(db, { userId: 'u2', channelId: null, kind: 'leave', atMs: NOW - 3 * HOUR });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    const body = (await app.inject('/api/guilds/g1/days/2026-11-17')).json();
+    const [alex, sam] = body.members;
+    expect(alex.states).toEqual({
+      share: [{ startMs: NOW - 4 * HOUR, endMs: NOW - 3 * HOUR }],
+      mute: [{ startMs: NOW - 4 * HOUR, endMs: NOW - 3 * HOUR }],
+      deaf: [],
+    });
+    expect(sam.states).toEqual({ share: [], mute: [], deaf: [] });
+  });
+
   it('answers an empty day without failing', async () => {
     const response = await seeded().inject('/api/guilds/g1/days/2026-11-16');
     expect(response.statusCode).toBe(200);
