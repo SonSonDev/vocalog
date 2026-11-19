@@ -17,7 +17,6 @@ export function LoginView() {
     <section class="card login" aria-labelledby="login-title">
       <p class="eyebrow">Vocalog</p>
       <h1 id="login-title">Connexion</h1>
-      <p>Les statistiques vocales sont réservées aux membres des serveurs suivis. Connecte-toi avec ton compte Discord : seuls ton identifiant, ton nom et la liste de tes serveurs sont lus, et rien d’autre n’est conservé.</p>
       {message && (
         <p class="notice" role="alert">
           {message}
