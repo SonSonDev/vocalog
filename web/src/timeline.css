@@ -208,21 +208,21 @@ a.tl-who:hover {
   height: 100%;
 }
 
-.tl-span {
+/* Bars are SVG (web/src/charts): real pixel widths, so a short stay is never padded wider than it lasted. */
+.tl-svg {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  box-sizing: border-box;
-  padding: 0 6px;
-  overflow: hidden;
-  border-right: 2px solid var(--card);
-  border-radius: 3px;
-  background: var(--accent);
-  color: var(--on-accent);
+  inset: 4px 0;
+  overflow: visible;
+}
+
+.tl-rect {
+  fill: var(--accent);
+}
+
+.tl-label {
+  fill: var(--on-accent);
   font-size: 11px;
-  line-height: 24px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  pointer-events: none;
 }
 
 .tl-axis {

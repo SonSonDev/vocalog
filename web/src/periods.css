@@ -118,11 +118,6 @@ a.wk-day:focus-visible {
   background: var(--card);
 }
 
-.wk-span {
-  min-width: 2px;
-  padding: 0;
-}
-
 /* Month page: a calendar, one cell per day. */
 .cal {
   display: flex;
