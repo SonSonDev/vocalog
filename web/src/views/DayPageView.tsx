@@ -6,7 +6,7 @@ import { PeriodNav } from '../components/PeriodNav.tsx';
 import { dayQuery, monthQuery, prefetchQuery, weekQuery } from '../queries.ts';
 import { Avatar } from '../components/Avatar.tsx';
 import { TimelineTrack } from '../charts/Timeline.tsx';
-import type { TimelineKind } from '../charts/Timeline.tsx';
+import type { OverlayKind } from '../charts/Timeline.tsx';
 import { Header } from '../components/Header.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
 import type { Controls } from '../components/Header.tsx';
@@ -46,11 +46,12 @@ function saveZoomed(zoomed: boolean): void {
   }
 }
 
+type Layer = 'voice' | OverlayKind;
 const LAYERS_KEY = 'vocalog-day-layers';
-const ALL_LAYERS: TimelineKind[] = ['voice', 'share', 'mute', 'deaf'];
-const LAYER_LABELS: Record<TimelineKind, string> = { voice: 'En vocal', share: 'Partage d’écran', mute: 'Micro coupé', deaf: 'Son coupé' };
+const ALL_LAYERS: Layer[] = ['voice', 'share', 'mute', 'deaf'];
+const LAYER_LABELS: Record<Layer, string> = { voice: 'En vocal', share: 'Partage d’écran', mute: 'Micro coupé', deaf: 'Son coupé' };
 
-function loadLayers(): TimelineKind[] {
+function loadLayers(): Layer[] {
   try {
     const stored: unknown = JSON.parse(window.localStorage.getItem(LAYERS_KEY) ?? 'null');
     if (Array.isArray(stored)) return ALL_LAYERS.filter((layer) => stored.includes(layer));
@@ -60,7 +61,7 @@ function loadLayers(): TimelineKind[] {
   return ['voice'];
 }
 
-function saveLayers(layers: TimelineKind[]): void {
+function saveLayers(layers: Layer[]): void {
   try {
     window.localStorage.setItem(LAYERS_KEY, JSON.stringify(layers));
   } catch {
@@ -76,7 +77,7 @@ export function DayPageView({ guildId, dayKey, search, controls }: Props) {
     saveZoomed(!zoomed);
   };
   const [layers, setLayers] = useState(loadLayers);
-  const toggleLayer = (layer: TimelineKind): void => {
+  const toggleLayer = (layer: Layer): void => {
     const next = ALL_LAYERS.filter((candidate) => (candidate === layer ? !layers.includes(candidate) : layers.includes(candidate)));
     setLayers(next);
     saveLayers(next);
@@ -183,12 +184,12 @@ interface TimelineProps {
   search: string;
   zoomed: boolean;
   onToggleZoom: () => void;
-  layers: TimelineKind[];
-  onToggleLayer: (layer: TimelineKind) => void;
+  layers: Layer[];
+  onToggleLayer: (layer: Layer) => void;
 }
 
 /** The time ranges of one layer for one member. */
-function layerSpans(member: DayView['members'][number], layer: TimelineKind, day: DayView) {
+function layerSpans(member: DayView['members'][number], layer: Layer, day: DayView) {
   if (layer === 'voice') {
     return member.spans.map((span) => ({
       startMs: span.startMs,
@@ -204,7 +205,7 @@ function layerSpans(member: DayView['members'][number], layer: TimelineKind, day
   }));
 }
 
-function layerTotal(day: DayView, layer: TimelineKind): number {
+function layerTotal(day: DayView, layer: Layer): number {
   return day.members.reduce((sum, member) => sum + (layer === 'voice' ? member.totalMs : member.states[layer].reduce((inner, range) => inner + range.endMs - range.startMs, 0)), 0);
 }
 
@@ -297,18 +298,13 @@ ${formatPeople(value)}`}
                 <span class="tl-sub muted mono">{formatDuration(member.totalMs)}</span>
               </span>
             </span>
-            <span class="tl-lanes">
-              {(layers.length === 0 ? (['voice'] as TimelineKind[]) : layers).map((layer) => (
-                <TimelineTrack
-                  key={layer}
-                  kind={layer}
-                  spans={layers.length === 0 ? [] : layerSpans(member, layer, day)}
-                  fromMs={view.startMs}
-                  toMs={view.endMs}
-                  style={trackStyle}
-                />
-              ))}
-            </span>
+            <TimelineTrack
+              spans={layers.includes('voice') ? layerSpans(member, 'voice', day) : []}
+              overlays={(['share', 'mute', 'deaf'] as const).filter((layer) => layers.includes(layer)).map((layer) => ({ kind: layer, spans: layerSpans(member, layer, day) }))}
+              fromMs={view.startMs}
+              toMs={view.endMs}
+              style={trackStyle}
+            />
           </div>
         ))}
       </div>

@@ -246,21 +246,6 @@ a.tl-who:hover {
 }
 
 /* The thin lanes of the optional layers, stacked under a member's voice bar. */
-.tl-lanes {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.tl-lane {
-  height: 12px;
-}
-
-.tl-lane .tl-svg {
-  inset: 2px 0;
-}
-
 .tl-layers {
   display: flex;
   flex-wrap: wrap;
