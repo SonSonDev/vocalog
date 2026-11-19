@@ -59,8 +59,8 @@ export function MemberTable({ members, guildId, period, search, viewerId }: { me
                   return (
                     <span
                       key={hour}
-                      class={value === peak && peak > 0 ? 'peak' : value === 0 ? 'none' : undefined}
-                      style={{ height: `${peak > 0 ? Math.max(value > 0 ? 6 : 0, Math.round((value / peak) * 100)) : 0}%` }}
+                      class={value === 0 ? 'none' : undefined}
+                      style={{ height: `${peak > 0 ? Math.max(value > 0 ? 6 : 0, Math.round((value / peak) * 100)) : 0}%`, '--v': peak > 0 ? (value / peak).toFixed(3) : '0' }}
                       data-tip={`${hour} h : ${formatDuration(value)}`}
                     />
                   );
