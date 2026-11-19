@@ -15,8 +15,7 @@ export function LoginView() {
   const message = messageFor(new URLSearchParams(window.location.search).get('erreur'));
   return (
     <section class="card login" aria-labelledby="login-title">
-      <p class="eyebrow">Vocalog</p>
-      <h1 id="login-title">Connexion</h1>
+      <h1 id="login-title">Vocalog</h1>
       {message && (
         <p class="notice" role="alert">
           {message}
