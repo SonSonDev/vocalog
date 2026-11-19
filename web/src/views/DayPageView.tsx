@@ -5,6 +5,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { PeriodNav } from '../components/PeriodNav.tsx';
 import { dayQuery, monthQuery, prefetchQuery, weekQuery } from '../queries.ts';
 import { Avatar } from '../components/Avatar.tsx';
+import { TimelineTrack } from '../charts/Timeline.tsx';
 import { Header } from '../components/Header.tsx';
 import { PageSkeleton } from '../components/Skeleton.tsx';
 import type { Controls } from '../components/Header.tsx';
@@ -214,19 +215,18 @@ ${formatPeople(value)}`}
                 <span class="tl-sub muted mono">{formatDuration(member.totalMs)}</span>
               </span>
             </span>
-            <span class="tl-track" style={trackStyle} aria-hidden="true">
-              {member.spans.map((span, index) => (
-                <span
-                  key={index}
-                  class="tl-span"
-                  style={{ left: `${((span.startMs - view.startMs) / length) * 100}%`, width: `${Math.max(0.4, ((span.endMs - span.startMs) / length) * 100)}%` }}
-                  data-tip={`${span.channel.name}
-${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`}
-                >
-                  {span.channel.name}
-                </span>
-              ))}
-            </span>
+            <TimelineTrack
+              spans={member.spans.map((span) => ({
+                startMs: span.startMs,
+                endMs: span.endMs,
+                label: span.channel.name,
+                tip: `${span.channel.name}
+${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`,
+              }))}
+              fromMs={view.startMs}
+              toMs={view.endMs}
+              style={trackStyle}
+            />
           </div>
         ))}
       </div>
