@@ -2,6 +2,7 @@ import type { Period, WeekView } from '@vocalog/shared';
 import { monthOf } from '@vocalog/shared';
 import { useEffect } from 'preact/hooks';
 import { Avatar } from '../components/Avatar.tsx';
+import { TimelineTrack } from '../charts/Timeline.tsx';
 import { Header } from '../components/Header.tsx';
 import type { Controls } from '../components/Header.tsx';
 import { Link } from '../components/Link.tsx';
@@ -171,19 +172,20 @@ function WeekTimeline({ week, guildId, search }: { week: WeekView; guildId: stri
                 <span class="tl-sub muted mono">{formatDuration(member.totalMs)}</span>
               </span>
             </span>
-            <span class="tl-track" aria-hidden="true">
+            <TimelineTrack
+              spans={member.spans.map((span) => ({
+                startMs: span.startMs,
+                endMs: span.endMs,
+                tip: `${span.channel.name}
+${formatDateTime(span.startMs, week.timeZone)}–${formatClock(span.endMs, week.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`,
+              }))}
+              fromMs={week.startMs}
+              toMs={week.endMs}
+            >
               {separators.map((left) => (
                 <span key={left} class="wk-sep" style={{ left: `${left}%` }} />
               ))}
-              {member.spans.map((span, index) => (
-                <span
-                  key={index}
-                  class="tl-span wk-span"
-                  style={{ left: `${percent(span.startMs)}%`, width: `${Math.max(0.25, ((span.endMs - span.startMs) / length) * 100)}%` }}
-                  data-tip={`${span.channel.name}\n${formatDateTime(span.startMs, week.timeZone)}–${formatClock(span.endMs, week.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`}
-                />
-              ))}
-            </span>
+            </TimelineTrack>
           </div>
         ))}
       </div>
