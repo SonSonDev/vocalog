@@ -2,6 +2,19 @@
 One entry per decision, newest first. A decision is only changed by a new entry that supersedes it.
 Not logged: visual tweaks, tuning values, reverted trials.
 
+## 2026-11-20 — AFK time stays voice time, shown apart on the day page
+- Decision: time in the server's AFK channel still counts as voice time (journal and figures unchanged); the day API marks each stay `afk` and gives `afkMs` (member and group), and the day page draws AFK bars in a paler tone of the accent and shows "dont … AFK" next to the totals.
+- Why: the owner wants AFK visible as its own state without changing what "time in voice" means.
+- Alternatives rejected: excluding AFK from totals (changes every figure, needs a product decision); a fifth toggle layer (the AFK channel is already a channel, a tint is enough).
+- Consequences / risks accepted: uses the AFK channel last seen by the bot (no history); week and member pages not covered yet (backlog U-10).
+
+## 2026-11-20 — Day layers stay inside the voice bar and take tones of the accent
+- Decision: state layers are cut to the voice bars in pure layout code (`clipToBars`), with the bar's corner radius and no stroke. Their colours are tones of the chosen accent, precomputed per accent and theme in `accents.ts` (`layers`: share, hatch base, microphone stripes, headphone bars): light tints in the light theme, deep tones in the dark one, found in OKLCH by moving the accent's lightness until the contrast target is met. Patterns (diagonal for microphone off, vertical bars for headphones off) keep colour from being the only signal. This supersedes the blue/amber/red layer colours of 2026-11-19.
+- Why: the layers spilled out of the bar (1 px gap, centred 1 px stroke, smaller radius) and crossed the separator at a change of channel; and four saturated hues in a 24 px bar went against "one accent colour", red suggesting an error for a normal state.
+- Alternatives rejected: neutral ink (text colour) for every accent (too stark, and below 3:1 against the light dark-theme accents); analogous hues 50° away from the accent (muddy pairs in the dark theme, e.g. orange to olive).
+- Consequences / risks accepted: 64 colour values to keep in step with the accents, locked by `accents.test.ts`; microphone stripes are soft (about 2:1 against their base), the pattern carries the meaning.
+- Same day, smaller: `layoutSpans` draws nothing for a stay outside the window and keeps a stay in the last minute inside the track; the tooltip no longer closes on the "pointer leave" of a finger lift (touch tips close on their timer).
+
 ## 2026-11-19 — Day timeline layers: screen sharing, microphone off, headphones off
 - Decision: the day page shows optional layers over each member's voice bar, drawn over the green voice bar and switched by four global toggle buttons (variant A of three mock-ups; kept per device in local storage, only voice on by default). The day API now gives each member `states` (stretches of screen sharing, microphone off, headphones off), computed by a new pure `flagIntervalsByUser` in `shared/` from the same flags as `flagTimesByUser`.
 - Why: the journal already records the states; the owner wanted to see who was muted or sharing and when. A global switch is the simplest control and fits a phone.

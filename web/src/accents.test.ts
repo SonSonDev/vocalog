@@ -40,10 +40,13 @@ describe('accents', () => {
     expect(contrast(accent.dark.onAccent, accent.dark.accent)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it.each(ACCENTS.map((accent) => [accent.id, accent] as const))('keeps screen sharing in %s distinct from the accent bar, in both themes', (_id, accent) => {
-    expect(accent.light.share).toMatch(/^#[0-9a-f]{6}$/);
-    expect(accent.dark.share).toMatch(/^#[0-9a-f]{6}$/);
-    expect(contrast(accent.light.share, accent.light.accent)).toBeGreaterThanOrEqual(3.4);
-    expect(contrast(accent.dark.share, accent.dark.accent)).toBeGreaterThanOrEqual(3.4);
+  it.each(ACCENTS.map((accent) => [accent.id, accent] as const))('keeps the day layers of %s apart from the accent bar and readable, in both themes', (_id, accent) => {
+    for (const colours of [accent.light, accent.dark]) {
+      const { share, base, mute, deaf } = colours.layers;
+      for (const hex of [share, base, mute, deaf]) expect(hex).toMatch(/^#[0-9a-f]{6}$/);
+      expect(contrast(share, colours.accent)).toBeGreaterThanOrEqual(3);
+      expect(contrast(base, colours.accent)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(deaf, base)).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

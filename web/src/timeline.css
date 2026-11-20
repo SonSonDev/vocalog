@@ -219,31 +219,37 @@ a.tl-who:hover {
   fill: var(--accent);
 }
 
+/* AFK: still voice time, a paler tone of the accent so it reads apart from active time. */
+.tl-rect-afk {
+  fill: color-mix(in srgb, var(--accent) 40%, var(--card));
+}
+
+.tl-label-afk {
+  fill: var(--fg);
+}
+
 .tl-rect-share {
-  fill: var(--share);
-  stroke: var(--share-edge);
+  fill: var(--layer-share);
 }
 
 .tl-rect-mute {
   fill: url(#tl-hatch-mute);
-  stroke: var(--mute);
 }
 
 .tl-rect-deaf {
   fill: url(#tl-hatch-deaf);
-  stroke: var(--deaf);
 }
 
 .tl-hatch-base {
-  fill: var(--card);
+  fill: var(--layer-base);
 }
 
 .tl-hatch-mute {
-  fill: var(--mute);
+  fill: var(--layer-mute);
 }
 
 .tl-hatch-deaf {
-  fill: var(--deaf);
+  fill: var(--layer-deaf);
 }
 
 .tl-defs {
@@ -260,19 +266,6 @@ a.tl-who:hover {
 
 .tl-chip {
   position: relative;
-  --chip: var(--accent);
-}
-
-.tl-chip-share {
-  --chip: var(--share-edge);
-}
-
-.tl-chip-mute {
-  --chip: var(--mute);
-}
-
-.tl-chip-deaf {
-  --chip: var(--deaf);
 }
 
 .tl-chip input {
@@ -297,31 +290,34 @@ a.tl-who:hover {
   font-weight: 600;
 }
 
+/* A swatch of the layer itself: same colour or same pattern as on the bar. */
 .tl-chip i {
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--chip);
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--line);
   border-radius: 3px;
+  background: var(--layer-base);
 }
 
-.tl-chip em {
-  color: var(--muted);
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
+.tl-chip-voice i {
+  background: var(--accent);
+}
+
+.tl-chip-share i {
+  background: var(--layer-share);
+}
+
+.tl-chip-mute i {
+  background: repeating-linear-gradient(45deg, var(--layer-base) 0 3px, var(--layer-mute) 3px 6px);
+}
+
+.tl-chip-deaf i {
+  background: repeating-linear-gradient(90deg, var(--layer-base) 0 2px, var(--layer-deaf) 2px 4px);
 }
 
 .tl-chip input:checked + span {
-  border-color: var(--chip);
-  background: color-mix(in srgb, var(--chip) 12%, transparent);
-}
-
-.tl-chip input:checked + span i {
-  background: var(--chip);
-}
-
-.tl-chip-share input:checked + span i {
-  background: var(--share);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .tl-chip input:focus-visible + span {

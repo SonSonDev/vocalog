@@ -38,7 +38,7 @@ web/      Vite + Preact app, French UI, design "Rail and table" (built; not yet 
   src/useRemote.ts  loads data for a key; never shows the previous key's data; retry
   src/views/        HomeView (summary), MemberView (profile)
   src/components/   Header (with back link), Link, KeyFigures, MemberTable (list, links to profiles), Heatmap, Lists (Records, Channels), ProfileCards (member figures, activity, together, voice states, habits, group, rooms)
-  src/charts/       hand-written SVG (`TimelineTrack` also draws the state overlays) for time bars: layout.ts (pure `layoutSpans`, tested), useWidth.ts (ResizeObserver), Timeline.tsx (`TimelineTrack`, used by the day and week pages)
+  src/charts/       hand-written SVG (`TimelineTrack` also draws the state overlays) for time bars: layout.ts (pure `layoutSpans` and `clipToBars`, tested), useWidth.ts (ResizeObserver), Timeline.tsx (`TimelineTrack`, used by the day and week pages)
   src/format.ts     durations, dates, bars (pure, tested); src/settings.ts + accents.ts + components/SettingsMenu.tsx: client settings (theme, accent, density, motion, default period, time zone, first weekday) in browser storage, applied as data attributes and CSS variables
   src/styles.css    tokens from docs/DESIGN.md; system fonts
 scripts/  seed-demo.ts: demo database with fictional members (refuses to overwrite an existing file)

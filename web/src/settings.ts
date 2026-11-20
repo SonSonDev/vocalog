@@ -97,6 +97,8 @@ function systemPrefersDark(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
+const LAYER_VARS = ['--layer-share', '--layer-base', '--layer-mute', '--layer-deaf'];
+
 /** Puts the settings on the page: the theme, the accent, the density and the motion are attributes and variables of the root. */
 export function applySettings(settings: Settings): void {
   const root = document.documentElement;
@@ -109,11 +111,15 @@ export function applySettings(settings: Settings): void {
   if (!accent || accent.id === DEFAULT_ACCENT) {
     root.style.removeProperty('--accent');
     root.style.removeProperty('--on-accent');
-    root.style.removeProperty('--share');
+    for (const name of LAYER_VARS) root.style.removeProperty(name);
   } else {
     root.style.setProperty('--accent', accent[theme].accent);
     root.style.setProperty('--on-accent', accent[theme].onAccent);
-    root.style.setProperty('--share', accent[theme].share);
+    const { layers } = accent[theme];
+    root.style.setProperty('--layer-share', layers.share);
+    root.style.setProperty('--layer-base', layers.base);
+    root.style.setProperty('--layer-mute', layers.mute);
+    root.style.setProperty('--layer-deaf', layers.deaf);
   }
 }
 

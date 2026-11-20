@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { layoutSpans } from './layout.ts';
+import { clipToBars, layoutSpans } from './layout.ts';
 import { useWidth } from './useWidth.ts';
 
 export interface TimelineSpan {
@@ -8,6 +8,8 @@ export interface TimelineSpan {
   tip: string;
   /** Shown inside the bar when it is wide enough. */
   label?: string;
+  /** Time in the AFK channel: still voice time, drawn in a paler tone of the accent. */
+  afk?: boolean;
 }
 
 /** A state drawn over the voice bar. Deafened always includes microphone off, so `deaf` is drawn over `mute` in the same band. */
@@ -49,13 +51,14 @@ export function TimelineTrack({ spans, overlays = [], fromMs, toMs, style, child
       {children}
       <svg class="tl-svg" width="100%" height={HEIGHT}>
         {rects.map((rect, index) => {
+          if (rect.w === 0) return null; // outside the window
           const span = spans[index]!;
           return (
             // A nested <svg> clips its content: a name never spills out of its bar.
             <svg key={index} x={rect.x} width={rect.w} height={HEIGHT} data-tip={span.tip}>
-              <rect class="tl-rect" width={rect.w} height={HEIGHT} rx={Math.min(3, rect.w / 2)} />
+              <rect class={span.afk ? 'tl-rect tl-rect-afk' : 'tl-rect'} width={rect.w} height={HEIGHT} rx={Math.min(3, rect.w / 2)} />
               {showLabels && span.label && rect.w >= LABEL_MIN_PX && (
-                <text class="tl-label" x={6} y={HEIGHT / 2} dominant-baseline="central">
+                <text class={span.afk ? 'tl-label tl-label-afk' : 'tl-label'} x={6} y={HEIGHT / 2} dominant-baseline="central">
                   {span.label}
                 </text>
               )}
@@ -63,16 +66,18 @@ export function TimelineTrack({ spans, overlays = [], fromMs, toMs, style, child
           );
         })}
         {overlays.map((overlay) =>
-          layoutSpans(overlay.spans, fromMs, toMs, width, { gapPx: 0 }).map((rect, index) => (
+          clipToBars(layoutSpans(overlay.spans, fromMs, toMs, width, { gapPx: 0 }), rects)
+            .filter((rect) => rect.w > 0)
+            .map((rect) => (
             <rect
-              key={`${overlay.kind}${index}`}
+              key={`${overlay.kind}${rect.source}-${rect.x}`}
               class={`tl-rect tl-rect-${overlay.kind}`}
               x={rect.x}
               y={BAND_ROW[overlay.kind] * BAND}
               width={rect.w}
               height={BAND}
-              rx={Math.min(1.5, rect.w / 2)}
-              data-tip={overlay.spans[index]!.tip}
+              rx={Math.min(3, rect.w / 2)}
+              data-tip={overlay.spans[rect.source]!.tip}
             />
           )),
         )}

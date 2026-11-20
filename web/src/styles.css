@@ -7,11 +7,11 @@
   --line: #d3ddd9;
   --accent: #0e7c66;
   --on-accent: #ffffff;
-  /* Voice states on the day timeline. --share is replaced by the chosen accent's own value (accents.ts) so it always stands out from the accent. */
-  --share: #bedafe;
-  --mute: #a8650a;
-  --deaf: #b03636;
-  --share-edge: color-mix(in srgb, var(--share) 45%, var(--fg));
+  /* Day-timeline state layers: tones of the accent (accents.ts replaces them for the other accents). */
+  --layer-share: #8bddc5;
+  --layer-base: #e4f9f2;
+  --layer-mute: #6fb5a1;
+  --layer-deaf: #024e3f;
   --radius: 8px;
   /* Spacing scale: be generous. Cards 22-24 px inside, rows 12 px above and below, 16-24 px between blocks. */
   --space-1: calc(4px * var(--density, 1));
@@ -34,9 +34,10 @@
     --line: #27322f;
     --accent: #3ddbb5;
     --on-accent: #06201a;
-    --share: #2b61a3;
-    --mute: #e5a53c;
-    --deaf: #ef7b7b;
+    --layer-share: #04755e;
+    --layer-base: #00261d;
+    --layer-mute: #02755e;
+    --layer-deaf: #7be9c9;
     color-scheme: dark;
   }
 }
@@ -49,9 +50,10 @@
   --line: #27322f;
   --accent: #3ddbb5;
   --on-accent: #06201a;
-  --share: #2b61a3;
-  --mute: #e5a53c;
-  --deaf: #ef7b7b;
+  --layer-share: #04755e;
+  --layer-base: #00261d;
+  --layer-mute: #02755e;
+  --layer-deaf: #7be9c9;
   color-scheme: dark;
 }
 
