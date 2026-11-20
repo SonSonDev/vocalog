@@ -67,7 +67,10 @@ export function TooltipLayer() {
     document.addEventListener('focusin', onFocus);
     document.addEventListener('focusout', hide);
     document.addEventListener('keydown', onKey);
-    document.documentElement.addEventListener('pointerleave', hide);
+    const onLeave = (event: PointerEvent): void => {
+      if (event.pointerType !== 'touch') hide(); // with a finger, the browser reports a leave on every lift: the timer closes the tip
+    };
+    document.documentElement.addEventListener('pointerleave', onLeave);
     window.addEventListener('scroll', hide, { passive: true });
     return () => {
       window.cancelAnimationFrame(frame);
@@ -78,7 +81,7 @@ export function TooltipLayer() {
       document.removeEventListener('focusin', onFocus);
       document.removeEventListener('focusout', hide);
       document.removeEventListener('keydown', onKey);
-      document.documentElement.removeEventListener('pointerleave', hide);
+      document.documentElement.removeEventListener('pointerleave', onLeave);
       window.removeEventListener('scroll', hide);
     };
   }, []);
