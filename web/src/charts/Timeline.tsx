@@ -8,7 +8,7 @@ export interface TimelineSpan {
   tip: string;
   /** Shown inside the bar when it is wide enough. */
   label?: string;
-  /** Time in the AFK channel: still voice time, drawn in a paler tone of the accent. */
+  /** Time in the AFK channel: still voice time, drawn in a desaturated neutral. */
   afk?: boolean;
 }
 

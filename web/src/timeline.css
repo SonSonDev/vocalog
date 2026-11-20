@@ -219,9 +219,9 @@ a.tl-who:hover {
   fill: var(--accent);
 }
 
-/* AFK: still voice time, a paler tone of the accent so it reads apart from active time. */
+/* AFK: still voice time, a desaturated neutral, so it reads apart from active time and from the tinted layers. */
 .tl-rect-afk {
-  fill: color-mix(in srgb, var(--accent) 40%, var(--card));
+  fill: color-mix(in srgb, var(--muted) 45%, var(--card));
 }
 
 .tl-label-afk {

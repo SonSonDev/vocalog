@@ -3,7 +3,7 @@ One entry per decision, newest first. A decision is only changed by a new entry 
 Not logged: visual tweaks, tuning values, reverted trials.
 
 ## 2026-11-20 — AFK time stays voice time, shown apart on the day page
-- Decision: time in the server's AFK channel still counts as voice time (journal and figures unchanged); the day API marks each stay `afk` and gives `afkMs` (member and group), and the day page draws AFK bars in a paler tone of the accent and shows "dont … AFK" next to the totals.
+- Decision: time in the server's AFK channel still counts as voice time (journal and figures unchanged); the day API marks each stay `afk` and gives `afkMs` (member and group), and the day page draws AFK bars in a desaturated neutral tone (not a tone of the accent: the screen-sharing layer is already a pale tint of it) and shows "dont … AFK" next to the totals.
 - Why: the owner wants AFK visible as its own state without changing what "time in voice" means.
 - Alternatives rejected: excluding AFK from totals (changes every figure, needs a product decision); a fifth toggle layer (the AFK channel is already a channel, a tint is enough).
 - Consequences / risks accepted: uses the AFK channel last seen by the bot (no history); week and member pages not covered yet (backlog U-10).
