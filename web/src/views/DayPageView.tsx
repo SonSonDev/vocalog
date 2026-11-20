@@ -157,7 +157,7 @@ function DayNav({ day, guildId, search }: { day: DayView; guildId: string; searc
 
 function DayFigures({ day }: { day: DayView }) {
   const figures = [
-    { label: 'Temps total', value: formatDuration(day.totalMs) },
+    { label: 'Temps total', value: formatDuration(day.totalMs), note: day.afkMs > 0 ? `dont ${formatDuration(day.afkMs)} AFK` : undefined },
     { label: 'Présents', value: String(day.members.length) },
     {
       label: 'Plus de monde en même temps',
@@ -195,7 +195,8 @@ function layerSpans(member: DayView['members'][number], layer: Layer, day: DayVi
       startMs: span.startMs,
       endMs: span.endMs,
       label: span.channel.name,
-      tip: `${span.channel.name}\n${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`,
+      afk: span.afk,
+      tip: `${span.channel.name}${span.afk ? ' (AFK)' : ''}\n${formatClock(span.startMs, day.timeZone)}–${formatClock(span.endMs, day.timeZone)} · ${formatDuration(span.endMs - span.startMs)}`,
     }));
   }
   return member.states[layer].map((range) => ({
@@ -297,7 +298,10 @@ ${formatPeople(value)}`}
                 <Link to={memberPath(member.user.id, search)} class="tl-who">
                   {member.user.name}
                 </Link>
-                <span class="tl-sub muted mono">{formatDuration(member.totalMs)}</span>
+                <span class="tl-sub muted mono">
+                  {formatDuration(member.totalMs)}
+                  {member.afkMs > 0 && ` · dont ${formatDuration(member.afkMs)} AFK`}
+                </span>
               </span>
             </span>
             <TimelineTrack
@@ -328,6 +332,7 @@ ${formatPeople(value)}`}
                   {member.spans.map((span, index) => (
                     <span class="tl-table-span" key={index}>
                       {formatClock(span.startMs, day.timeZone)}–{formatClock(span.endMs, day.timeZone)} · {span.channel.name}
+                      {span.afk && ' (AFK)'}
                     </span>
                   ))}
                   {(['share', 'mute', 'deaf'] as const).flatMap((layer) =>

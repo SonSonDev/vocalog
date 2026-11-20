@@ -63,6 +63,7 @@ No critical flaw found: signed cookie with constant-time check, `HttpOnly`, `Sam
 | U-7 | P2 | S | Loading shows a plain "Chargement…" line: use skeleton blocks of the final height so the page does not jump (also fixes the layout shift between collapsed and expanded lists). |
 | U-8 | P3 | S | Print or PNG export of the yearly recap and of a member page (share in the Discord server). |
 | U-9 | P3 | S | A `/healthz` route (no data) for raspi-manager and for you to see that the server runs. |
+| U-10 | P3 | S | AFK is shown apart on the day page since 2026-11-20 (paler bars, "dont … AFK"). Left: the week page, the member page and the home figures (AFK share, optionally excluded from averages) and a per-day record of the AFK channel so a change of AFK channel does not rewrite the past. |
 
 ## 5. New figures and cross-reading
 Everything below is computable from the existing journal; nothing needs a new Discord permission.

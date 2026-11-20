@@ -2,7 +2,7 @@ import { buildDayTimeline, dayKeyOf, dayNumber, flagIntervalsByUser, timelineDay
 import type { DayView, GuildInfo } from '@vocalog/shared';
 import { createNamer } from './names.ts';
 import { deriveSessions } from '@vocalog/shared';
-import { firstEventMs, loadGuildEvents } from './queries.ts';
+import { afkChannelId, firstEventMs, loadGuildEvents } from './queries.ts';
 import type { Db } from './queries.ts';
 
 /** One day in detail, or null when it is after today (nothing can have happened yet). */
@@ -14,6 +14,17 @@ export function buildDayView(db: Db, guild: GuildInfo, dayKey: string, nowMs: nu
   const day = buildDayTimeline(deriveSessions(events), dayKey, nowMs, timeZone);
   const states = flagIntervalsByUser(events, { fromMs: day.startMs, toMs: day.endMs }, nowMs);
   const { user, channel } = createNamer(db, guild.id);
+  const afkId = afkChannelId(db, guild.id);
+  const members = day.members.map((member) => {
+    const spans = member.spans.map((span) => ({ channel: channel(span.channelId), startMs: span.startMs, endMs: span.endMs, afk: afkId !== null && span.channelId === afkId }));
+    return {
+      user: user(member.userId),
+      totalMs: member.totalMs,
+      afkMs: spans.reduce((sum, span) => sum + (span.afk ? span.endMs - span.startMs : 0), 0),
+      spans,
+      states: states.get(member.userId) ?? { share: [], mute: [], deaf: [] },
+    };
+  });
   const first = firstEventMs(db, guild.id);
   const firstDay = first === null ? today : timelineDayKey(first, timeZone);
 
@@ -29,11 +40,7 @@ export function buildDayView(db: Db, guild: GuildInfo, dayKey: string, nowMs: nu
     totalMs: day.totalMs,
     peak: day.peak,
     bins: day.bins,
-    members: day.members.map((member) => ({
-      user: user(member.userId),
-      totalMs: member.totalMs,
-      spans: member.spans.map((span) => ({ channel: channel(span.channelId), startMs: span.startMs, endMs: span.endMs })),
-      states: states.get(member.userId) ?? { share: [], mute: [], deaf: [] },
-    })),
+    afkMs: members.reduce((sum, member) => sum + member.afkMs, 0),
+    members,
   };
 }

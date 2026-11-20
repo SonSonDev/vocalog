@@ -235,7 +235,7 @@ describe('GET /api/guilds/:guildId/days/:dayKey', () => {
     expect(body.guild.id).toBe('g1');
     expect(body.totalMs).toBe(4 * HOUR);
     expect(body.members.map((m: { user: { name: string } }) => m.user.name)).toEqual(['Alex', 'Sam']);
-    expect(body.members[0].spans).toEqual([{ channel: { id: 'c1', name: 'General' }, startMs: NOW - 5 * HOUR, endMs: NOW - 2 * HOUR }]);
+    expect(body.members[0].spans).toEqual([{ channel: { id: 'c1', name: 'General' }, startMs: NOW - 5 * HOUR, endMs: NOW - 2 * HOUR, afk: false }]);
     expect(body.peak.count).toBe(2);
     expect(body.prevDayKey).toBeNull(); // the first event is on that day
     expect(body.nextDayKey).toBeNull(); // and it is today
@@ -259,6 +259,21 @@ describe('GET /api/guilds/:guildId/days/:dayKey', () => {
       deaf: [],
     });
     expect(sam.states).toEqual({ share: [], mute: [], deaf: [] });
+  });
+
+  it('marks time in the AFK channel and totals it apart from active time', async () => {
+    const db = testDb();
+    addNames(db);
+    db.prepare("UPDATE guilds SET afk_channel_id = 'c2' WHERE id = 'g1'").run();
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 5 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: 'c2', kind: 'move', atMs: NOW - 3 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - 2 * HOUR });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    const body = (await app.inject('/api/guilds/g1/days/2026-11-17')).json();
+    expect(body.totalMs).toBe(3 * HOUR); // AFK still counts as voice time
+    expect(body.afkMs).toBe(1 * HOUR);
+    expect(body.members[0].afkMs).toBe(1 * HOUR);
+    expect(body.members[0].spans.map((span: { afk: boolean }) => span.afk)).toEqual([false, true]);
   });
 
   it('answers an empty day without failing', async () => {

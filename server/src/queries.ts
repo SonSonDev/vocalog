@@ -110,6 +110,12 @@ export function userAvatars(db: Db): Map<string, string> {
   return new Map(rows.map((row) => [row.id, row.avatar]));
 }
 
+/** The server's AFK channel as last seen by the bot (a later change of AFK channel is not replayed on past days). */
+export function afkChannelId(db: Db, guildId: string): string | null {
+  const row = db.prepare('SELECT afk_channel_id FROM guilds WHERE id = ?').get(guildId) as { afk_channel_id: string | null } | undefined;
+  return row?.afk_channel_id ?? null;
+}
+
 export function channelNames(db: Db, guildId: string): Map<string, string> {
   const rows = db.prepare('SELECT id, name FROM channels WHERE guild_id = ?').all(guildId) as { id: string; name: string }[];
   return new Map(rows.map((row) => [row.id, row.name]));

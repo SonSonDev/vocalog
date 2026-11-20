@@ -97,13 +97,16 @@ export interface DayView {
   prevDayKey: string | null;
   nextDayKey: string | null;
   totalMs: number;
+  /** Part of `totalMs` spent in the server's AFK channel (still voice time, shown apart). */
+  afkMs: number;
   peak: { count: number; atMs: number } | null;
   /** Average number of people in each quarter hour from `startMs`. */
   bins: number[];
   members: {
     user: NamedRef;
     totalMs: number;
-    spans: { channel: NamedRef; startMs: number; endMs: number }[];
+    afkMs: number;
+    spans: { channel: NamedRef; startMs: number; endMs: number; afk: boolean }[];
     /** When screen sharing, microphone off and headphones off were on, clipped to the day. */
     states: FlagIntervals;
   }[];
