@@ -34,7 +34,7 @@ export function Channels({ channels }: { channels: Summary['channels'] }) {
       <ul class="bars">
         {channels.map((entry) => (
           <li key={entry.channel.id}>
-            <span class="bar-name">{entry.channel.name}</span>
+            <span class="bar-name">{entry.channel.name}{entry.afk && <span class="afk-tag">AFK</span>}</span>
             <span class="bar-track" aria-hidden="true">
               <span class="bar-fill neutral" style={{ width: `${barPercent(entry.totalMs, max)}%` }} />
             </span>

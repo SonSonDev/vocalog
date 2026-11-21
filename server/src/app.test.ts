@@ -30,6 +30,21 @@ describe('GET /api/guilds', () => {
   });
 });
 
+describe('AFK channel in the channel lists', () => {
+  it('flags the AFK channel on the summary and on a member page', async () => {
+    const db = testDb();
+    addNames(db);
+    db.prepare("UPDATE guilds SET afk_channel_id = 'c2' WHERE id = 'g1'").run();
+    addEvent(db, { userId: 'u1', channelId: 'c1', kind: 'join', atMs: NOW - 5 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: 'c2', kind: 'move', atMs: NOW - 3 * HOUR });
+    addEvent(db, { userId: 'u1', channelId: null, kind: 'leave', atMs: NOW - 2 * HOUR });
+    const app = buildApp({ db, timeZone: 'UTC', webDir: null, auth: { mode: 'none' }, now: () => NOW });
+    const flags = (body: { channels: { channel: { id: string }; afk: boolean }[] }) => body.channels.map((entry) => [entry.channel.id, entry.afk]);
+    expect(flags((await app.inject('/api/guilds/g1/summary?period=7d')).json())).toEqual(expect.arrayContaining([['c1', false], ['c2', true]]));
+    expect(flags((await app.inject('/api/guilds/g1/members/u1?period=7d')).json())).toEqual(expect.arrayContaining([['c1', false], ['c2', true]]));
+  });
+});
+
 describe('GET /api/guilds/:guildId/summary', () => {
   it('returns totals, members and channels with names', async () => {
     const response = await seeded().inject('/api/guilds/g1/summary?period=7d');

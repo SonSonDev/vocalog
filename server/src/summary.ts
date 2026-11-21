@@ -2,7 +2,7 @@ import { aggregate, buildMemberYear, dayStrips, monthStrips, weekStrips, yearStr
 import type { GuildInfo, Period, Summary, WeekStart } from '@vocalog/shared';
 import { periodWindow } from './period.ts';
 import { createNamer } from './names.ts';
-import { firstEventMs, loadGuildSessions } from './queries.ts';
+import { afkChannelId, firstEventMs, loadGuildSessions } from './queries.ts';
 import type { Db } from './queries.ts';
 
 const MAX_STRIP_DAYS = 31;
@@ -14,6 +14,7 @@ export function buildSummary(db: Db, guild: GuildInfo, period: Period, nowMs: nu
   const sessions = loadGuildSessions(db, guild.id);
   const result = aggregate(sessions, { fromMs, toMs, nowMs, timeZone });
   const { user, channel } = createNamer(db, guild.id);
+  const afkId = afkChannelId(db, guild.id);
 
   return {
     guild,
@@ -40,7 +41,7 @@ export function buildSummary(db: Db, guild: GuildInfo, period: Period, nowMs: nu
       : null,
     peak: result.peak,
     members: result.members.map((member) => ({ user: user(member.userId), totalMs: member.totalMs, sessions: member.sessions, hourMs: member.hourMs })),
-    channels: result.channels.map((entry) => ({ channel: channel(entry.channelId), totalMs: entry.totalMs })),
+    channels: result.channels.map((entry) => ({ channel: channel(entry.channelId), totalMs: entry.totalMs, afk: entry.channelId === afkId })),
     heat: result.heat,
     days: dayStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, maxDays: MAX_STRIP_DAYS }),
     weeks: weekStrips(sessions, { fromMs, limitMs: Math.min(toMs, nowMs), nowMs, timeZone, max: MAX_STRIP_PERIODS, weekStart }),

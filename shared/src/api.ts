@@ -41,7 +41,7 @@ export interface Summary {
   longestSession: { user: NamedRef; channel: NamedRef; startMs: number; durationMs: number } | null;
   peak: { count: number; atMs: number } | null;
   members: { user: NamedRef; totalMs: number; sessions: number; hourMs: number[] }[];
-  channels: { channel: NamedRef; totalMs: number }[];
+  channels: { channel: NamedRef; totalMs: number; afk: boolean }[];
   /** Voice time in ms, indexed [weekday 0=Monday..6=Sunday][local hour 0..23]. */
   heat: number[][];
   /** One presence strip per day (06:00 to 06:00) of the period, newest first, at most 31. */
@@ -124,7 +124,7 @@ export interface MemberProfile extends Omit<MemberStats, 'userId' | 'channels' |
   timeZone: string;
   generatedAtMs: number;
   longestSession: { channel: NamedRef; startMs: number; durationMs: number } | null;
-  channels: { channel: NamedRef; totalMs: number }[];
+  channels: { channel: NamedRef; totalMs: number; afk: boolean }[];
   together: {
     withOthersMs: number;
     aloneMs: number;
